@@ -3,23 +3,19 @@
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { FaChevronRight } from "react-icons/fa";
-import { ImExit } from "react-icons/im";
-import { IoNotificationsOutline } from "react-icons/io5";
 import { LuSun, LuMoon } from "react-icons/lu";
+import Notification from "../button/Notification";
+import LogOut from "../button/LogOut";
 
 const Navbar = () => {
   const pathname = usePathname();
-  const [openLogout, setOpenLogout] = useState(false);
-  const [openNotif, setOpenNotif] = useState(false);
+
   const [darkMode, setDarkMode] = useState(false);
 
   // animasi matahari/bulan
   const [anim, setAnim] = useState<
     "sunrise" | "sunset" | "moonrise" | "moonset" | null
   >(null);
-
-  const logoutRef = useRef<HTMLDivElement | null>(null);
-  const notifRef = useRef<HTMLDivElement | null>(null);
 
   /* Load theme */
   useEffect(() => {
@@ -30,23 +26,6 @@ const Navbar = () => {
 
     // animasi awal
     setAnim(isDark ? "moonrise" : "sunrise");
-  }, []);
-
-  /* Close dropdown on outside click */
-  useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (
-        logoutRef.current &&
-        !logoutRef.current.contains(event.target) &&
-        notifRef.current &&
-        !notifRef.current.contains(event.target)
-      ) {
-        setOpenLogout(false);
-        setOpenNotif(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   /* Toggle theme with animation */
@@ -98,7 +77,7 @@ const Navbar = () => {
                 }
               `}
                   >
-                    {itemPath || "home"}
+                    {itemPath || "/"}
                   </span>
                 </div>
               );
@@ -142,10 +121,9 @@ const Navbar = () => {
           className="h-10 w-10 rounded-lg bg-white shadow-xs hover:bg-gray-200 cursor-pointer flex items-center justify-center transition-all duration-300"
         >
           <div
-            className={`
-      transition-transform duration-500
-      ${darkMode ? "rotate-360" : "rotate-0"}
-    `}
+            className={`transition-transform duration-500 ${
+              darkMode ? "rotate-360" : "rotate-0"
+            }`}
           >
             {darkMode ? (
               <LuMoon size={22} className="text-blue-300" />
@@ -155,82 +133,11 @@ const Navbar = () => {
           </div>
         </button>
 
-        {/* ==========================
-          NOTIFICATION BUTTON
-      =========================== */}
-        <div className="relative" ref={notifRef}>
-          <div
-            className="relative h-10 w-10 bg-white shadow-xs hover:bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
-            onClick={() => {
-              setOpenNotif(!openNotif);
-              setOpenLogout(false);
-            }}
-          >
-            <IoNotificationsOutline fontSize={20} className="text-gray-700" />
+        {/* ========================== NOTIFICATION BUTTON  =========================== */}
+        <Notification />
 
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
-              10
-            </span>
-          </div>
-
-          {/* Notif dropdown */}
-          {openNotif && (
-            <div className="absolute top-12 right-0 w-72 bg-white border border-gray-200 rounded-md shadow-lg p-3 z-50 animate-fadeIn">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold ">Notifications</h2>
-
-                <button className="text-xs text-blue-600 hover:underline cursor-pointer">
-                  Read All
-                </button>
-              </div>
-
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {Array(5)
-                  .fill(null)
-                  .map((_, i) => (
-                    <div
-                      key={i}
-                      className="p-2 rounded-md border border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <p className="text-sm text-gray-700">
-                        Pesan notifikasi ke-{i + 1}
-                      </p>
-                      <span className="text-[10px] text-gray-400">
-                        2 minutes ago
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ==========================
-          USER + LOGOUT
-      =========================== */}
-        <div
-          className="relative flex items-center gap-2 cursor-pointer"
-          ref={logoutRef}
-          onClick={() => {
-            setOpenLogout(!openLogout);
-            setOpenNotif(false);
-          }}
-        >
-          <div className="h-10 w-10 rounded-lg text-center flex items-center justify-center bg-white shadow-xs font-semibold">
-            AN
-          </div>
-
-          <h1 className="text-lg font-semibold ">Hola, acep</h1>
-
-          {openLogout && (
-            <div className="absolute top-12 shadow-xs right-0 bg-white rounded-md p-2 w-40 animate-fadeIn z-50">
-              <button className="w-full flex gap-2 items-center p-2 rounded-md text-sm hover:bg-gray-100 ">
-                <ImExit fontSize={18} />
-                <span>Logout</span>
-              </button>
-            </div>
-          )}
-        </div>
+        {/* ========================== USER + LOGOUT =========================== */}
+        <LogOut />
       </div>
     </div>
   );
