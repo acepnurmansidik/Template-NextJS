@@ -101,7 +101,7 @@ const Sidebar = () => {
       {/* === MENU === */}
       <div className="overflow-x-scroll">
         {menuGroups.map((group: MenuGroup, groupIndex) => (
-          <div key={groupIndex} className="space-y-2">
+          <div key={groupIndex} className="space-y-2 mb-3">
             {!collapsed && (
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
                 {group.title}
@@ -148,25 +148,36 @@ const Sidebar = () => {
 
                   {/* === CHILDREN === */}
                   {!collapsed && isOpen && hasChild && (
-                    <div className="ml-5 pl-4 border-l border-gray-300 flex flex-col gap-1 animate-fadeIn">
+                    <div className="relative ml-5 flex flex-col">
                       {item.children.map((child, childIndex) => {
                         const isActiveChild = pathname === child.path;
+                        const isLast = childIndex === item.children.length - 1;
 
                         return (
-                          <div
-                            key={childIndex}
-                            onClick={() => {
-                              expandIfCollapsed();
-                              router.push(child.path);
-                            }}
-                            className={`flex items-center gap-2 p-2 text-sm rounded-md hover:bg-gray-100 cursor-pointer
-                              ${
+                          <div key={childIndex} className="relative pl-4">
+                            {/* === GARIS VERTICAL ( | ) === */}
+                            <span
+                              className={`absolute left-0 top-0 w-px bg-[#3a3a3a] opacity-60 ${
+                                isLast ? "h-5" : "h-full"
+                              }`}
+                            ></span>
+
+                            {/* === GARIS HORIZONTAL ( ─ ) === */}
+                            <span className="absolute left-0 top-4 w-4 h-px bg-[#3a3a3a] opacity-60"></span>
+
+                            {/* === ITEM CHILD === */}
+                            <div
+                              onClick={() => {
+                                expandIfCollapsed();
+                                router.push(child.path);
+                              }}
+                              className={`flex items-center gap-2 p-2 text-sm rounded-md hover:bg-gray-100 cursor-pointer${
                                 isActiveChild ? "bg-gray-100 font-semibold" : ""
-                              }
-                            `}
-                          >
-                            {child.icon}
-                            <span>{child.name}</span>
+                              }`}
+                            >
+                              {child.icon}
+                              <span>{child.name}</span>
+                            </div>
                           </div>
                         );
                       })}
