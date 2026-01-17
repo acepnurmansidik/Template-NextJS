@@ -1,24 +1,64 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BiodataSection from "./BiodataSection";
 import SkillSection from "./SkillSection";
 import ExperienceSection from "./ExperienceSection";
 import EducationSection from "./EducationSection";
 import ShowCaseSection from "./ShowCaseSection";
+import TestimonialSection from "./TestimonialSection";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const Page = () => {
   const [selectedMenu, setSelectedMenu] = useState<string>("biodata");
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(true);
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const menus = [
-    { key: "biodata", label: "Biodata" },
-    { key: "skill", label: "Skill" },
-    { key: "experience", label: "Experience" },
-    { key: "education", label: "Education" },
-    { key: "showcase", label: "Show Case" },
-    { key: "contact", label: "Contact" },
+    { key: "biodata", label: "🥳 Biodata" },
+    { key: "skill", label: "🎁 Skill" },
+    { key: "experience", label: "⚙️ Experience" },
+    { key: "education", label: "🎓 Education" },
+    { key: "showcase", label: "🌟 Show Case" },
+    { key: "contact", label: "📞 Contact" },
+    { key: "testimonial", label: "🗣️ Testimonial" },
   ];
+
+  /* ======== HANDLE VISIBILITY OF SCROLL BUTTONS ======== */
+  const updateArrowVisibility = () => {
+    if (!scrollRef.current) return;
+
+    const el = scrollRef.current;
+
+    setShowLeft(el.scrollLeft > 0);
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 5);
+  };
+
+  useEffect(() => {
+    updateArrowVisibility();
+  }, []);
+
+  /* ======== SCROLL BY ONE ITEM ======== */
+  const scrollByOneItem = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+
+    const el = scrollRef.current;
+    const items = el.querySelectorAll(".menu-item");
+
+    if (items.length === 0) return;
+
+    // ambil ukuran item pertama
+    const itemWidth = (items[0] as HTMLElement).offsetWidth + 12; // + gap
+
+    const amount = dir === "left" ? -itemWidth : itemWidth;
+
+    el.scrollBy({ left: amount, behavior: "smooth" });
+
+    setTimeout(updateArrowVisibility, 300);
+  };
 
   return (
     <CMSLayout>
@@ -26,24 +66,52 @@ const Page = () => {
         <h5 className="text-3xl font-bold mb-7">Profile</h5>
 
         {/* MENU TABS */}
-        <div className=" flex justify-between items-center mb-5 py-1">
-          <div className="flex gap-3 items-center overflow-x-auto">
-            {menus.map((m) => (
+        <div className="relative flex justify-between items-center mb-5 py-1">
+          <div className="relative flex items-center">
+            {/* LEFT BUTTON */}
+            {showLeft && (
               <div
-                key={m.key}
-                onClick={() => setSelectedMenu(m.key)}
-                className={`px-4 py-2 rounded-lg hover:cursor-pointer duration-300 shadow-xs text-sm bg-white whitespace-nowrap ${
-                  selectedMenu === m.key ? "font-bold bg-gray-100" : ""
-                }`}
+                className="h-6 w-6 flex items-center justify-center rounded-full bg-white shadow-sm hover:cursor-pointer absolute left-0 z-10"
+                onClick={() => scrollByOneItem("left")}
               >
-                {m.label}
+                <FaChevronLeft />
               </div>
-            ))}
-          </div>
-          <div className="flex gap-3 items-center overflow-x-auto">
-            <button
-              className={`px-4 py-2 bg-blue-600 font-bold rounded-lg hover:cursor-pointer duration-300 shadow-xs text-sm text-white whitespace-nowrap `}
+            )}
+
+            {/* SCROLL AREA */}
+            <div
+              id="menu-scroll"
+              ref={scrollRef}
+              onScroll={updateArrowVisibility}
+              className="flex gap-3 items-center scrollbar-hide overflow-x-auto px-2"
+              style={{ maxWidth: "calc(70vw - 150px)" }}
             >
+              {menus.map((m) => (
+                <div
+                  key={m.key}
+                  onClick={() => setSelectedMenu(m.key)}
+                  className={`menu-item px-4 py-2 rounded-lg hover:cursor-pointer duration-300 shadow-xs text-sm bg-white whitespace-nowrap ${
+                    selectedMenu === m.key ? "font-bold bg-gray-100" : ""
+                  }`}
+                >
+                  {m.label}
+                </div>
+              ))}
+            </div>
+
+            {/* RIGHT BUTTON */}
+            {showRight && (
+              <div
+                className="h-6 w-6 flex items-center justify-center rounded-full bg-white shadow-sm hover:cursor-pointer absolute right-0 z-10"
+                onClick={() => scrollByOneItem("right")}
+              >
+                <FaChevronRight />
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 items-center">
+            <button className="px-4 py-2 bg-blue-600 font-bold rounded-lg hover:cursor-pointer duration-300 shadow-xs text-sm text-white whitespace-nowrap">
               Update
             </button>
           </div>
@@ -56,12 +124,12 @@ const Page = () => {
           {selectedMenu === "experience" && <ExperienceSection />}
           {selectedMenu === "education" && <EducationSection />}
           {selectedMenu === "showcase" && <ShowCaseSection />}
-
           {selectedMenu === "contact" && (
             <div className="p-5 bg-white rounded-lg shadow-xs">
               Contact Content
             </div>
           )}
+          {selectedMenu === "testimonial" && <TestimonialSection />}
         </div>
       </div>
     </CMSLayout>

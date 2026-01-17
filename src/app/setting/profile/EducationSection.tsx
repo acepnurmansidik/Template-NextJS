@@ -7,7 +7,7 @@ import { FaPlus } from "react-icons/fa";
 const EducationeSection = () => {
   const [list, setList] = useState<any[]>([]);
 
-  const addEducation = () => {
+  const addItem = () => {
     setList([...list, { start: "", end: "", role: "", description: "" }]);
   };
 
@@ -23,7 +23,7 @@ const EducationeSection = () => {
     el.style.height = `${el.scrollHeight}px`;
   };
 
-  const removeEducation = (index: number) => {
+  const removeItem = (index: number) => {
     setList((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -33,90 +33,110 @@ const EducationeSection = () => {
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold">Education</h3>
         <button
-          onClick={addEducation}
+          onClick={addItem}
           className="p-3 hover:cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
         >
           <FaPlus />
         </button>
       </div>
 
-      {/* Scroll Area */}
+      {/* SCROLL DI LUAR */}
       <div
         className="overflow-y-auto pr-2"
         style={{ maxHeight: "calc(87vh - 200px)" }}
       >
-        <div className="relative border-l-2 border-slate-300 ml-4 flex flex-col gap-6">
-          {list.map((exp, i) => (
-            <div key={i} className="relative pl-6">
-              {/* Bullet point */}
-              <span className="absolute -left-2 top-2 w-4 h-4 bg-blue-600 rounded-full border-4 border-white"></span>
+        {/* WRAPPER TANPA SCROLL → GARIS TIDAK TERPUTUS */}
+        <div className="relative ml-6 pb-4">
+          {/* GARIS VERTICAL UTAMA (SELALU PANJANG MENGIKUTI KONTEN) */}
+          {list.length > 0 && (
+            <span className="absolute left-0 top-0 w-px bg-blue-600 opacity-60 h-full"></span>
+          )}
 
-              <div className="p-4 rounded-lg bg-white shadow-sm flex gap-3 w-full">
-                <div className="grid gap-3 w-full">
-                  {/* Start/End */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input
-                      placeholder="Start (MM YYYY)"
-                      className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                      onChange={(e) => update(i, "start", e.target.value)}
-                    />
-                    <input
-                      placeholder="End (MM YYYY)"
-                      className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                      onChange={(e) => update(i, "end", e.target.value)}
-                    />
+          <div className="flex flex-col gap-8">
+            {list.map((exp, i) => {
+              const isLast = i === list.length - 1;
+
+              return (
+                <div key={i} className="relative pl-6">
+                  {/* GARIS VERTICAL PER ITEM — FIX FINAL */}
+                  {!isLast && (
+                    <span className="absolute left-0 top-0 bottom-0 w-px bg-blue-600 opacity-60" />
+                  )}
+
+                  {/* GARIS HORIZONTAL */}
+                  <span className="absolute left-0 top-4 w-4 h-px bg-blue-600 opacity-60"></span>
+
+                  {/* BULLET */}
+                  <span className="absolute left-4 top-3 w-3 h-3 bg-blue-600"></span>
+
+                  {/* CARD */}
+                  <div className="p-4 rounded-lg bg-white shadow-sm flex gap-3 w-full">
+                    <div className="grid gap-3 w-full">
+                      {/* Start/End */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input
+                          placeholder="Start (MM YYYY)"
+                          className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                          onChange={(e) => update(i, "start", e.target.value)}
+                        />
+                        <input
+                          placeholder="End (MM YYYY)"
+                          className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                          onChange={(e) => update(i, "end", e.target.value)}
+                        />
+                      </div>
+
+                      {/* School Name / Degree */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input
+                          placeholder="School Name"
+                          className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                          onChange={(e) =>
+                            update(i, "school_name", e.target.value)
+                          }
+                        />
+                        <input
+                          placeholder="Degree / Major"
+                          className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                          onChange={(e) => update(i, "degree", e.target.value)}
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <textarea
+                        rows={3}
+                        placeholder="Description"
+                        className="p-2 border border-slate-300 outline-none rounded-lg text-sm transition-all duration-300"
+                        onFocus={(e) =>
+                          autoResize(e.target as HTMLTextAreaElement)
+                        }
+                        onInput={(e) =>
+                          autoResize(e.target as HTMLTextAreaElement)
+                        }
+                        onBlur={(e) => {
+                          const el = e.target as HTMLTextAreaElement;
+                          el.style.height = "70px";
+                        }}
+                        onChange={(e) =>
+                          update(i, "description", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <div
+                      className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
+                      onClick={() => removeItem(i)}
+                    >
+                      <GoTrash
+                        fontSize={20}
+                        className="text-red-500 font-bold"
+                      />
+                    </div>
                   </div>
-
-                  {/* Company/Role */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input
-                      placeholder="School Name"
-                      className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                      onChange={(e) => update(i, "school_name", e.target.value)}
-                    />
-                    <input
-                      placeholder="Degree / Major"
-                      className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                      onChange={(e) =>
-                        update(
-                          i,
-                          "degree",
-                          (e.target as HTMLInputElement).value,
-                        )
-                      }
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <textarea
-                    rows={3}
-                    placeholder="Description"
-                    className="p-2 border border-slate-300 outline-none rounded-lg text-sm transition-all duration-300"
-                    onFocus={(e) => autoResize(e.target as HTMLTextAreaElement)}
-                    onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
-                    onBlur={(e) => {
-                      const el = e.target as HTMLTextAreaElement;
-                      el.style.height = "70px";
-                    }}
-                    onChange={(e) =>
-                      update(
-                        i,
-                        "description",
-                        (e.target as HTMLTextAreaElement).value,
-                      )
-                    }
-                  />
                 </div>
-
-                <div
-                  className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
-                  onClick={() => removeEducation(i)}
-                >
-                  <GoTrash fontSize={20} className="text-red-500 font-bold" />
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

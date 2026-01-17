@@ -36,7 +36,7 @@ const BiodataSection = () => {
   };
 
   return (
-    <div className="p-6 rounded-lg">
+    <div className="rounded-lg">
       <h3 className="text-xl font-semibold mb-4">Biodata</h3>
 
       <div

@@ -101,7 +101,7 @@ const Sidebar = () => {
       {/* === MENU === */}
       <div className="overflow-x-scroll">
         {menuGroups.map((group: MenuGroup, groupIndex) => (
-          <div key={groupIndex} className="space-y-2 mb-3">
+          <div key={groupIndex} className="space-y-2 mb-4">
             {!collapsed && (
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
                 {group.title}
