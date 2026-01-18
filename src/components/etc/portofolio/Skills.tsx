@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { easeInOut, motion, Variants } from "framer-motion";
 import Image from "next/image";
 
 const skills = [
@@ -18,6 +18,29 @@ const skills = [
 ];
 
 export default function SkillSection() {
+  const fadeIn = (
+    direction: "up" | "down" | "left" | "right",
+    delay: number,
+  ): Variants => {
+    return {
+      hidden: {
+        opacity: 0,
+        y: direction === "up" ? 40 : direction === "down" ? -40 : 0,
+        x: direction === "left" ? 40 : direction === "right" ? -40 : 0,
+      },
+      show: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        transition: {
+          duration: 0.6,
+          delay,
+          ease: easeInOut, // <-- FIXED
+        },
+      },
+    };
+  };
+
   return (
     <section id="skills" className="py-24 bg-gray-50">
       <div className="max-w-6xl mx-auto px-6">
@@ -31,29 +54,28 @@ export default function SkillSection() {
           Skills & Technologies
         </motion.h2>
 
-        {/* GRID ITEMS */}
-        <div className="flex gap-8 flex-wrap justify-center">
-          {skills.map((s, i) => (
+        {/* SKILLS LIST STYLE CONTOH GITHUB LOGOS */}
+        <section className="w-full flex justify-around md:justify-between flex-wrap gap-x-4 gap-y-12 relative">
+          {skills.map((s, i: number) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              whileHover={{ scale: 1.07 }}
-              className="bg-white rounded-xl shadow-sm hover:cursor-pointer flex flex-col items-center justify-center gap-2 w-32.5 h-32.5"
+              variants={fadeIn("up", i % 2 === 0 ? 0.5 : 0.2)}
+              initial="hidden"
+              whileInView={"show"}
+              viewport={{ once: false, amount: 0.7 }}
+              className={`h-20 flex items-center ${i % 2 === 0 ? "mt-12" : ""}`}
             >
-              <div className="w-20.5 h-20.5 relative">
+              <div className="w-20 h-20 relative flex items-center justify-center">
                 <Image
                   src={s.logo}
                   alt={s.name}
                   fill
-                  className="object-contain"
+                  className="object-contain transition duration-300 ease-in-out grayscale hover:grayscale-0 hover:cursor-pointer"
                 />
               </div>
             </motion.div>
           ))}
-        </div>
+        </section>
       </div>
     </section>
   );

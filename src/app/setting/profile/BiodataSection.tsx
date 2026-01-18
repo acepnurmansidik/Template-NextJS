@@ -10,6 +10,7 @@ const BiodataSection = () => {
     description: "",
     email: "",
     phone: "",
+    tagline: "",
   });
 
   const [socialMedias, setSocialMedias] = useState<
@@ -101,6 +102,17 @@ const BiodataSection = () => {
                 placeholder="+62..."
                 onChange={(e) =>
                   setBiodata({ ...biodata, phone: e.target.value })
+                }
+              />
+            </div>
+            {/* Tagline */}
+            <div>
+              <label className="text-sm font-semibold">Tagline</label>
+              <input
+                className="w-full mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                placeholder="Tagline."
+                onChange={(e) =>
+                  setBiodata({ ...biodata, tagline: e.target.value })
                 }
               />
             </div>

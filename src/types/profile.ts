@@ -4,6 +4,7 @@ export type Biodata = {
   full_name: string;
   avatar: string;
   description: string;
+  tagline: string;
   email: string;
   phone: string;
   social_media: SocialMedia[];

@@ -189,7 +189,7 @@ const Page = () => {
           <div className="relative inline-block mb-4">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="text-xs border-[1.5px] border-gray-300 px-4 py-1 outline-none text-black"
+              className="text-xs border-[1.5px] cursor-pointer border-gray-300 px-4 py-1 outline-none text-black"
             >
               <span className="me-2">Select Columns</span>
               <div>
@@ -239,15 +239,12 @@ const Page = () => {
             <div className="overflow-hidden">
               <div className="overflow-y-auto max-h-100">
                 <table className="w-full text-left">
-                  <thead className="bg-gray-100 sticky top-0 z-10">
-                    <tr className="text-md">
+                  <thead className="bg-white sticky top-0 z-10">
+                    <tr className="text-sm">
                       {columns
                         .filter((col) => visibleColumns.includes(col.value))
                         .map((col, index) => (
-                          <th
-                            key={index}
-                            className="py-2 px-3 text-gray-600 font-medium bg-gray-200"
-                          >
+                          <th key={index} className="py-2 px-3 font-bold">
                             {col.title}
                           </th>
                         ))}
@@ -258,7 +255,9 @@ const Page = () => {
                     {data.map((row, rowIndex) => (
                       <tr
                         key={rowIndex}
-                        className="border-b hover:bg-gray-50 transition text-sm"
+                        className={`transition text-sm ${
+                          rowIndex % 2 === 0 ? "bg-gray-100" : "bg-white"
+                        }`}
                       >
                         {columns
                           .filter((col) => visibleColumns.includes(col.value))

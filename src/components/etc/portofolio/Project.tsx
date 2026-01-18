@@ -43,10 +43,12 @@ export default function ShowcaseSection() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.2 }}
               whileHover={{ scale: 1.03 }}
-              className="rounded-xl overflow-hidden shadow-md bg-white"
+              className="rounded-xl overflow-hidden shadow-md cursor-pointer bg-white"
             >
               <Image
-                src={p.image}
+                src={
+                  "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"
+                }
                 alt={p.title}
                 width={500}
                 height={350}
