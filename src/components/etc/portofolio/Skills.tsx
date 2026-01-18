@@ -70,7 +70,7 @@ export default function SkillSection() {
                   src={s.logo}
                   alt={s.name}
                   fill
-                  className="object-contain transition duration-300 ease-in-out grayscale hover:grayscale-0 hover:cursor-pointer"
+                  className="object-contain transition duration-300 ease-in-out md:grayscale hover:grayscale-0 hover:cursor-pointer"
                 />
               </div>
             </motion.div>

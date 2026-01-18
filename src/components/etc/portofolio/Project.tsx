@@ -31,7 +31,7 @@ export default function ShowcaseSection() {
           viewport={{ once: true }}
           className="text-4xl font-bold text-center mb-16"
         >
-          Showcase Projects
+          🌟 Showcase Projects 🌟
         </motion.h2>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10">

@@ -24,8 +24,10 @@ export type Experiences = {
   start_date: string;
   end_date: string;
   role: string;
+  type: string;
   company_name: string;
   description: string;
+  list_task?: string[];
 };
 
 export type Educations = {

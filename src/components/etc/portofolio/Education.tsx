@@ -1,5 +1,6 @@
 "use client";
 
+import { Educations } from "@/types/profile";
 import { motion } from "framer-motion";
 
 const education = [
@@ -17,9 +18,13 @@ const education = [
   },
 ];
 
-export default function EducationSection() {
+interface DataProps {
+  initiateData: Educations[] | [];
+}
+
+export default function EducationSection({ initiateData }: DataProps) {
   return (
-    <section id="education" className="py-28 bg-white">
+    <section id="education" className="py-28">
       <div className="max-w-6xl mx-auto px-6">
         <motion.h2
           initial={{ opacity: 0, y: 10 }}
@@ -27,14 +32,14 @@ export default function EducationSection() {
           viewport={{ once: true }}
           className="text-4xl font-bold text-end mb-16"
         >
-          Education
+          🎓 Education
         </motion.h2>
 
         {/* GARIS UTAMA SAMPING KANAN */}
         <div className="relative mr-6">
           <div className="absolute right-0 top-0 w-px h-full bg-black"></div>
 
-          {education.map((edu, i) => (
+          {initiateData.map((edu, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: 20 }}
@@ -48,10 +53,11 @@ export default function EducationSection() {
 
               {/* CARD */}
               <div className="bg-gray-50 p-6 rounded-xl shadow-sm inline-block">
-                <h3 className="font-bold text-xl">{edu.title}</h3>
-                <p className="text-sm text-gray-600">{edu.place}</p>
-                <p className="text-sm text-gray-400 mb-2">{edu.year}</p>
-                <p className="text-gray-600">{edu.desc}</p>
+                <h3 className="font-bold text-xl">{edu.degree}</h3>
+                <p className="text-sm text-gray-600">{edu.school_name}</p>
+                <p className="text-sm text-gray-400 mb-2">
+                  {edu.start_date} - {edu.end_date}
+                </p>
               </div>
             </motion.div>
           ))}
