@@ -1,56 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { BiodataDaum } from "@/types/profile";
 import { FaPlus } from "react-icons/fa";
 import { GoTrash } from "react-icons/go";
 import Select from "react-select";
 
 const techOptions = [
-  { value: "React", label: "React" },
-  { value: "Next.js", label: "Next.js" },
-  { value: "Node.js", label: "Node.js" },
-  { value: "Express", label: "Express" },
-  { value: "MongoDB", label: "MongoDB" },
-  { value: "TailwindCSS", label: "TailwindCSS" },
+  { value: "React", label: "React", name: "React", slug: "react" },
+  { value: "Next.js", label: "Next.js", name: "NextJS", slug: "nextjs" },
+  { value: "Node.js", label: "Node.js", name: "NodeJS", slug: "nodejs" },
+  { value: "Express", label: "Express", name: "ExpressJS", slug: "expressjs" },
+  { value: "MongoDB", label: "MongoDB", name: "MongoDB", slug: "mongodb" },
+  {
+    value: "TailwindCSS",
+    label: "TailwindCSS",
+    name: "TailwindCSS",
+    slug: "tailwindcss",
+  },
 ];
 
-const ShowCaseSection = () => {
-  const [list, setList] = useState<any[]>([]);
+interface DataProps {
+  initiateData: BiodataDaum;
+  onSetForm: React.Dispatch<React.SetStateAction<BiodataDaum>>;
+}
 
-  const addShowCase = () => {
-    setList([
-      ...list,
+const ShowCaseSection = ({ initiateData, onSetForm }: DataProps) => {
+  const handleAddItem = () => {
+    const newDataUpdate = [
+      ...(initiateData.showcase || []),
       {
         title: "",
         thumbnail: "",
         description: "",
-        tech_stack: [],
-        contributor: [],
-        web_link: "",
-        app_store_link: "",
-        google_play_link: "",
-        repo_backend: "",
-        repo_frontend: "",
-        repo_mobile: "",
+        tech_stacks: [],
+        contributors: [],
+        repositories: [],
+        platforms: [],
       },
-    ]);
+    ];
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        showcase: newDataUpdate,
+      };
+    });
   };
 
-  const removeShowCase = (index: number) => {
-    setList(list.filter((_, i) => i !== index));
+  const handleRemoveItem = (index: number) => {
+    const newDataUpdate = initiateData.showcase.filter(
+      (item, i) => i !== index,
+    );
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        showcase: newDataUpdate,
+      };
+    });
   };
 
-  const update = (i: number, field: string, value: any) => {
-    const copy = [...list];
-    copy[i][field] = value;
-    setList(copy);
+  const handleChangeItem = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const newDataUpdate = [...initiateData.showcase];
+    newDataUpdate[index] = {
+      ...newDataUpdate[index],
+      [e.target.name]: e.target.value,
+    };
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        showcase: newDataUpdate,
+      };
+    });
   };
 
   const handleThumbnail = (i: number, e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    update(i, "thumbnail", url);
+    // update(i, "thumbnail", url);
+  };
+
+  const handleChangeSubItem = (index: number, field: string, value: any) => {
+    onSetForm((prev) => {
+      const updated = [...prev.showcase];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+
+      return { ...prev, showcase: updated };
+    });
   };
 
   const autoResize = (el: HTMLTextAreaElement) => {
@@ -62,9 +105,9 @@ const ShowCaseSection = () => {
     <div className="p-6 rounded-lg h-full flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold">Showcase</h3>
+        <h3 className="text-xl font-semibold">{`Showcase (${initiateData.showcase.length})`}</h3>
         <button
-          onClick={addShowCase}
+          onClick={handleAddItem}
           className="p-3 hover:cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
         >
           <FaPlus />
@@ -78,13 +121,13 @@ const ShowCaseSection = () => {
       >
         {/* WRAPPER GARIS UTAMA */}
         <div className="relative ml-6 pb-4">
-          {list.length > 0 && (
+          {initiateData.showcase.length > 0 && (
             <span className="absolute left-0 top-0 w-px bg-blue-600 opacity-60 h-full"></span>
           )}
 
           <div className="flex flex-col gap-8">
-            {list.map((item, i) => {
-              const isLast = i === list.length - 1;
+            {initiateData.showcase.map((item, i) => {
+              const isLast = i === initiateData.showcase.length - 1;
 
               return (
                 <div key={i} className="relative pl-6">
@@ -108,25 +151,33 @@ const ShowCaseSection = () => {
                         <input
                           placeholder="Title"
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "title", e.target.value)}
+                          name="title"
+                          onChange={(e) => handleChangeItem(i, e)}
                         />
                       </div>
 
                       {/* Tech Stack */}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium">
-                          Tech Stack
-                        </label>
-                        <Select
-                          isMulti
-                          options={techOptions}
-                          className="text-sm"
-                          value={item.tech_stack}
-                          onChange={(selected) =>
-                            update(i, "tech_stack", selected)
-                          }
-                        />
-                      </div>
+                      <Select
+                        isMulti
+                        options={techOptions}
+                        className="text-sm"
+                        value={item.tech_stacks.map((t) => ({
+                          value: t.name,
+                          label: t.name,
+                          name: t.name,
+                          slug: t.slug,
+                        }))}
+                        onChange={(selected) => {
+                          const mapped = selected.map((s: any) => ({
+                            name: s.value,
+                            slug:
+                              s.slug ||
+                              s.value.toLowerCase().replace(/\W+/g, ""),
+                          }));
+
+                          handleChangeSubItem(i, "tech_stacks", mapped);
+                        }}
+                      />
 
                       {/* Thumbnail + Repo */}
                       <div className="grid grid-cols-3 gap-3">
@@ -195,147 +246,226 @@ const ShowCaseSection = () => {
                             <input
                               placeholder="Repo Backend"
                               className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                              onChange={(e) =>
-                                update(i, "backend_link", e.target.value)
-                              }
                             />
                             <input
                               placeholder="Repo Frontend"
                               className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                              onChange={(e) =>
-                                update(i, "frontend_link", e.target.value)
-                              }
                             />
                             <input
                               placeholder="Repo Mobile"
                               className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                              onChange={(e) =>
-                                update(i, "mobile_link", e.target.value)
-                              }
                             />
                           </div>
                         </div>
                       </div>
 
-                      {/* Platform Links */}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium">Platform</label>
-                        <div className="grid grid-cols-2 gap-2 p-2 border border-slate-200 rounded-lg">
-                          <input
-                            placeholder="Web Link"
-                            className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                            onChange={(e) =>
-                              update(i, "web_link", e.target.value)
-                            }
-                          />
-                          <input
-                            placeholder="App Store Link"
-                            className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                            onChange={(e) =>
-                              update(i, "app_store_link", e.target.value)
-                            }
-                          />
-                          <input
-                            placeholder="Google Play Link"
-                            className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                            onChange={(e) =>
-                              update(i, "google_play_link", e.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      {/* Contributors */}
+                      {/* PLATFORM */}
                       <div className="flex flex-col gap-3">
                         <div className="flex justify-between">
                           <label className="text-sm font-medium">
-                            Contributors
+                            {`Platform (${item.platforms?.length || 0})`}
                           </label>
 
                           <button
                             onClick={() => {
-                              const copy = [...list];
-                              if (!Array.isArray(copy[i].contributor)) {
-                                copy[i].contributor = [];
-                              }
-                              copy[i].contributor.push({
-                                name: "",
-                                role: "",
-                                github_link: "",
+                              onSetForm((prev) => {
+                                const updated = structuredClone(prev);
+                                updated.showcase[i].platforms.push({
+                                  name: "",
+                                  slug: "",
+                                  reference_link: "",
+                                });
+
+                                return updated;
                               });
-                              setList(copy);
                             }}
-                            className="px-3 py-1 hover:cursor-pointer bg-slate-200 rounded text-xs hover:bg-slate-300"
+                            className="px-3 py-1 bg-slate-200 rounded text-xs hover:bg-slate-300"
+                          >
+                            + Add Platform
+                          </button>
+                        </div>
+
+                        <div className="border border-slate-200 rounded-lg p-3 flex flex-col gap-2">
+                          {item.platforms?.map((p, pIndex) => (
+                            <div
+                              key={pIndex}
+                              className="flex gap-3 w-full items-start border border-slate-200 rounded-lg p-2"
+                            >
+                              <div className="p-3 w-full grid gap-3 relative">
+                                {/* Platform Name */}
+                                <input
+                                  placeholder="Platform Name"
+                                  className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                                  value={p.name}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    onSetForm((prev) => {
+                                      const updated = structuredClone(prev);
+                                      updated.showcase[i].platforms[
+                                        pIndex
+                                      ].name = value;
+                                      updated.showcase[i].platforms[
+                                        pIndex
+                                      ].slug = value
+                                        .toLowerCase()
+                                        .replace(/\W+/g, "");
+                                      return updated;
+                                    });
+                                  }}
+                                />
+
+                                {/* Reference Link */}
+                                <input
+                                  placeholder="Reference Link"
+                                  className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                                  value={p.reference_link}
+                                  onChange={(e) => {
+                                    onSetForm((prev) => {
+                                      const updated = [...prev.showcase];
+                                      updated[i].platforms[
+                                        pIndex
+                                      ].reference_link = e.target.value;
+                                      return { ...prev, showcase: updated };
+                                    });
+                                  }}
+                                />
+                              </div>
+
+                              {/* Remove Button */}
+                              <div
+                                className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer"
+                                onClick={() => {
+                                  onSetForm((prev) => {
+                                    const updated = structuredClone(prev);
+                                    updated.showcase[i].platforms =
+                                      updated.showcase[i].platforms.filter(
+                                        (_, idx) => idx !== pIndex,
+                                      );
+
+                                    return updated;
+                                  });
+                                }}
+                              >
+                                <GoTrash
+                                  fontSize={20}
+                                  className="text-red-500 font-bold"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* CONTRIBUTORS */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between">
+                          <label className="text-sm font-medium">
+                            Contributors ({item.contributors?.length || 0})
+                          </label>
+
+                          <button
+                            onClick={() => {
+                              onSetForm((prev) => {
+                                const updated = structuredClone(prev);
+                                updated.showcase[i].contributors.push({
+                                  name: "",
+                                  role: "",
+                                  github_link: "",
+                                });
+
+                                return updated;
+                              });
+                            }}
+                            className="px-3 py-1 bg-slate-200 rounded text-xs hover:bg-slate-300"
                           >
                             + Add Contributor
                           </button>
                         </div>
 
-                        {item.contributor?.map((c: any, cIndex: number) => (
-                          <div
-                            key={cIndex}
-                            className="flex gap-3 w-full items-start border border-slate-200 rounded-lg p-2"
-                          >
-                            <div className="p-3 border w-full border-slate-200 rounded-lg grid gap-3 relative">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input
-                                  placeholder="Contributor Name"
-                                  className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                                  value={c.name}
-                                  onChange={(e) => {
-                                    const copy = [...list];
-                                    copy[i].contributor[cIndex].name =
-                                      e.target.value;
-                                    setList(copy);
-                                  }}
-                                />
+                        <div className="border border-slate-200 rounded-lg p-3 flex flex-col gap-2">
+                          {item.contributors?.map((c, cIndex) => (
+                            <div
+                              key={cIndex}
+                              className="flex gap-3 w-full items-start border border-slate-200 rounded-lg p-2"
+                            >
+                              <div className="grid w-full gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {/* Contributor Name */}
+                                  <input
+                                    placeholder="Contributor Name"
+                                    className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                                    value={c.name}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      onSetForm((prev) => {
+                                        const updated = structuredClone(prev);
+                                        updated.showcase[i].contributors[
+                                          cIndex
+                                        ].name = value;
+                                        return updated;
+                                      });
+                                    }}
+                                  />
 
+                                  {/* Role */}
+                                  <input
+                                    placeholder="Role"
+                                    className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
+                                    value={c.role}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      onSetForm((prev) => {
+                                        const updated = structuredClone(prev);
+                                        updated.showcase[i].contributors[
+                                          cIndex
+                                        ].name = value;
+                                        return updated;
+                                      });
+                                    }}
+                                  />
+                                </div>
+
+                                {/* Github Link */}
                                 <input
-                                  placeholder="Role"
+                                  placeholder="Github Link"
                                   className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                                  value={c.role}
+                                  value={c.github_link}
                                   onChange={(e) => {
-                                    const copy = [...list];
-                                    copy[i].contributor[cIndex].role =
-                                      e.target.value;
-                                    setList(copy);
+                                    const value = e.target.value;
+                                    onSetForm((prev) => {
+                                      const updated = structuredClone(prev);
+                                      updated.showcase[i].contributors[
+                                        cIndex
+                                      ].name = value;
+                                      return updated;
+                                    });
                                   }}
                                 />
                               </div>
 
-                              <input
-                                placeholder="Github Link"
-                                className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                                value={c.github_link}
-                                onChange={(e) => {
-                                  const copy = [...list];
-                                  copy[i].contributor[cIndex].github_link =
-                                    e.target.value;
-                                  setList(copy);
-                                }}
-                              />
-                            </div>
+                              {/* Remove Button */}
+                              <div
+                                className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer"
+                                onClick={() => {
+                                  onSetForm((prev) => {
+                                    const updated = structuredClone(prev);
+                                    updated.showcase[i].contributors =
+                                      updated.showcase[i].contributors.filter(
+                                        (_, idx) => idx !== cIndex,
+                                      );
 
-                            {/* Remove contributor */}
-                            <div
-                              className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer"
-                              onClick={() => {
-                                const copy = [...list];
-                                copy[i].contributor = copy[
-                                  i
-                                ].contributor.filter(
-                                  (_: any, idx: number) => idx !== cIndex,
-                                );
-                                setList(copy);
-                              }}
-                            >
-                              <GoTrash
-                                fontSize={20}
-                                className="text-red-500 font-bold"
-                              />
+                                    return updated;
+                                  });
+                                }}
+                              >
+                                <GoTrash
+                                  fontSize={20}
+                                  className="text-red-500 font-bold"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
 
                       {/* Description */}
@@ -350,16 +480,15 @@ const ShowCaseSection = () => {
                           autoResize(e.target as HTMLTextAreaElement)
                         }
                         onBlur={(e) => (e.target.style.height = "60px")}
-                        onChange={(e) =>
-                          update(i, "description", e.target.value)
-                        }
+                        name="description"
+                        onChange={(e) => handleChangeItem(i, e)}
                       />
                     </div>
 
                     {/* Remove showcase button */}
                     <div
                       className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer"
-                      onClick={() => removeShowCase(i)}
+                      onClick={() => handleRemoveItem(i)}
                     >
                       <GoTrash
                         fontSize={20}

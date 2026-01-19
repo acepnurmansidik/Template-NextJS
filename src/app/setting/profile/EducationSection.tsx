@@ -1,20 +1,63 @@
 "use client";
 
-import { useState } from "react";
 import { GoTrash } from "react-icons/go";
 import { FaPlus } from "react-icons/fa";
+import { BiodataDaum } from "@/types/profile";
 
-const EducationeSection = () => {
-  const [list, setList] = useState<any[]>([]);
+interface DataProps {
+  initiateData: BiodataDaum;
+  onSetForm: React.Dispatch<React.SetStateAction<BiodataDaum>>;
+}
 
-  const addItem = () => {
-    setList([...list, { start: "", end: "", role: "", description: "" }]);
+const EducationeSection = ({ initiateData, onSetForm }: DataProps) => {
+  const handleAddItem = () => {
+    const newDataUpdate = [
+      ...(initiateData.educations || []),
+      {
+        start_date: "",
+        end_date: "",
+        school_name: "",
+        degree: "",
+        description: "",
+      },
+    ];
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        educations: newDataUpdate,
+      };
+    });
   };
 
-  const update = (i: number, field: string, value: string) => {
-    const temp = [...list];
-    temp[i][field] = value;
-    setList(temp);
+  const handleRemoveItem = (index: number) => {
+    const newDataUpdate = initiateData.educations.filter(
+      (item, i) => i !== index,
+    );
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        educations: newDataUpdate,
+      };
+    });
+  };
+
+  const handleChangeItem = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const newDataUpdate = [...initiateData.educations];
+    newDataUpdate[index] = {
+      ...newDataUpdate[index],
+      [e.target.name]: e.target.value,
+    };
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        educations: newDataUpdate,
+      };
+    });
   };
 
   // Auto expand textarea logic
@@ -22,18 +65,13 @@ const EducationeSection = () => {
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   };
-
-  const removeItem = (index: number) => {
-    setList((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="p-6 rounded-lg h-full flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold">Education</h3>
+        <h3 className="text-xl font-semibold">{`Education (${initiateData.educations.length})`}</h3>
         <button
-          onClick={addItem}
+          onClick={handleAddItem}
           className="p-3 hover:cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
         >
           <FaPlus />
@@ -48,13 +86,13 @@ const EducationeSection = () => {
         {/* WRAPPER TANPA SCROLL → GARIS TIDAK TERPUTUS */}
         <div className="relative ml-6 pb-4">
           {/* GARIS VERTICAL UTAMA (SELALU PANJANG MENGIKUTI KONTEN) */}
-          {list.length > 0 && (
+          {initiateData.educations.length > 0 && (
             <span className="absolute left-0 top-0 w-px bg-blue-600 opacity-60 h-full"></span>
           )}
 
           <div className="flex flex-col gap-8">
-            {list.map((exp, i) => {
-              const isLast = i === list.length - 1;
+            {initiateData.educations.map((exp, i) => {
+              const isLast = i === initiateData.educations.length - 1;
 
               return (
                 <div key={i} className="relative pl-6">
@@ -75,14 +113,18 @@ const EducationeSection = () => {
                       {/* Start/End */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
-                          placeholder="Start (MM YYYY)"
+                          type="month"
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "start", e.target.value)}
+                          value={exp.start_date}
+                          name="start_date"
+                          onChange={(e) => handleChangeItem(i, e)}
                         />
                         <input
-                          placeholder="End (MM YYYY)"
+                          type="month"
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "end", e.target.value)}
+                          value={exp.end_date}
+                          name="end_date"
+                          onChange={(e) => handleChangeItem(i, e)}
                         />
                       </div>
 
@@ -90,21 +132,24 @@ const EducationeSection = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
                           placeholder="School Name"
+                          name="school_name"
+                          value={exp.school_name}
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) =>
-                            update(i, "school_name", e.target.value)
-                          }
+                          onChange={(e) => handleChangeItem(i, e)}
                         />
                         <input
                           placeholder="Degree / Major"
+                          name="degree"
+                          value={exp.degree}
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "degree", e.target.value)}
+                          onChange={(e) => handleChangeItem(i, e)}
                         />
                       </div>
 
                       {/* Description */}
                       <textarea
                         rows={3}
+                        value={exp.description}
                         placeholder="Description"
                         className="p-2 border border-slate-300 outline-none rounded-lg text-sm transition-all duration-300"
                         onFocus={(e) =>
@@ -117,15 +162,13 @@ const EducationeSection = () => {
                           const el = e.target as HTMLTextAreaElement;
                           el.style.height = "70px";
                         }}
-                        onChange={(e) =>
-                          update(i, "description", e.target.value)
-                        }
+                        onChange={(e) => handleChangeItem(i, e)}
                       />
                     </div>
 
                     <div
                       className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
-                      onClick={() => removeItem(i)}
+                      onClick={() => handleRemoveItem(i)}
                     >
                       <GoTrash
                         fontSize={20}

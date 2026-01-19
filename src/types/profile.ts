@@ -1,26 +1,32 @@
 export interface ProfileProps {}
 
-export type Biodata = {
+export type BiodataDaum = {
   full_name: string;
   avatar: string;
   description: string;
   tagline: string;
   email: string;
   phone: string;
-  social_media: SocialMedia[];
-  experiences: Experiences[];
-  educations: Educations[];
-  skills: Skills[];
-  showcase: ShowCase[];
+  social_media: SocialMediaDaum[];
+  experiences: ExperiencesDaum[];
+  educations: EducationsDaum[];
+  skills: SkillsDaum[];
+  showcase: ShowCaseDaum[];
+  testimonials: TestimoniDaum[];
 };
 
-export type SocialMedia = {
+export type TestimoniDaum = {
+  fullname: string;
+  role: string;
+  description: string;
+};
+export type SocialMediaDaum = {
   name: string;
   slug: string;
   link: string;
 };
 
-export type Experiences = {
+export type ExperiencesDaum = {
   start_date: string;
   end_date: string;
   role: string;
@@ -30,7 +36,7 @@ export type Experiences = {
   list_task?: string[];
 };
 
-export type Educations = {
+export type EducationsDaum = {
   start_date: string;
   end_date: string;
   school_name: string;
@@ -38,39 +44,39 @@ export type Educations = {
   description: string;
 };
 
-export type Skills = {
+export type SkillsDaum = {
   name: string;
   slug: string;
 };
 
-export type ShowCase = {
+export type ShowCaseDaum = {
   title: string;
   thumbnail: string;
   description: string;
-  tech_stacks: TechStack[];
-  contributors: Contributor[];
-  repositories: Repository[];
-  platforms: Platform[];
+  tech_stacks: TechStackDaum[];
+  contributors: ContributorDaum[];
+  repositories: RepositoryDaum[];
+  platforms: PlatformDaum[];
 };
 
-interface Platform {
-  app_store_link: string;
-  google_play_link: string;
-  web_link: string;
+interface PlatformDaum {
+  name: string;
+  slug?: string;
+  reference_link: string;
 }
 
-interface Repository {
+interface RepositoryDaum {
   backend_link: string;
   frontend_link: string;
   mobile_link: string;
 }
 
-interface TechStack {
+interface TechStackDaum {
   name: string;
   slug: string;
 }
 
-interface Contributor {
+interface ContributorDaum {
   name: string;
   role: string;
   github_link: string;

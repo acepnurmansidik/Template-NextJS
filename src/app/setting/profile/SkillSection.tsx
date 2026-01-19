@@ -1,8 +1,14 @@
 "use client";
 
+import { BiodataDaum } from "@/types/profile";
 import { useState } from "react";
 
-const SkillSection = () => {
+interface DataProps {
+  initiateData: BiodataDaum;
+  onSetForm: React.Dispatch<React.SetStateAction<BiodataDaum>>;
+}
+
+const SkillSection = ({ initiateData, onSetForm }: DataProps) => {
   const [skills, setSkills] = useState<string[]>([]);
   const [input, setInput] = useState("");
 
@@ -10,6 +16,26 @@ const SkillSection = () => {
     if (!input.trim()) return;
     setSkills([...skills, input]);
     setInput("");
+  };
+
+  const handleAddItem = () => {
+    const newSkill = [...(initiateData.skills || []), { name: "", slug: "" }];
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        skills: newSkill,
+      };
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newSkill = initiateData.skills.filter((item, i) => i !== index);
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        skills: newSkill,
+      };
+    });
   };
 
   return (

@@ -33,7 +33,7 @@ export default function Navbar() {
         </div>
 
         {/* BUTTON CONTACT */}
-        <motion.button
+        {/* <motion.button
           whileHover={{ scale: 1.05 }}
           className="hidden md:block hover:cursor-pointer bg-black text-white px-5 py-2 rounded-lg"
           onClick={() => router.push("/auth/login")}
@@ -57,7 +57,7 @@ export default function Navbar() {
             </svg>
             <span>Login</span>
           </div>
-        </motion.button>
+        </motion.button> */}
 
         {/* MOBILE BUTTON */}
         <button className="md:hidden text-2xl" onClick={() => setOpen(!open)}>

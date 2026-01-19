@@ -9,8 +9,25 @@ import EducationSection from "./EducationSection";
 import ShowCaseSection from "./ShowCaseSection";
 import TestimonialSection from "./TestimonialSection";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { BiodataDaum } from "@/types/profile";
+
+const defaultValue = {
+  full_name: "",
+  avatar: "",
+  description: "",
+  tagline: "",
+  email: "",
+  phone: "",
+  social_media: [],
+  experiences: [],
+  educations: [],
+  skills: [],
+  showcase: [],
+  testimonials: [],
+};
 
 const Page = () => {
+  const [form, setForm] = useState<BiodataDaum>(defaultValue);
   const [selectedMenu, setSelectedMenu] = useState<string>("biodata");
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
@@ -20,11 +37,14 @@ const Page = () => {
   const menus = [
     { key: "biodata", label: "🥳 Biodata" },
     { key: "skill", label: "🎁 Skill" },
-    { key: "experience", label: "⚙️ Experience" },
-    { key: "education", label: "🎓 Education" },
-    { key: "showcase", label: "🌟 Show Case" },
+    { key: "experience", label: `⚙️ Experience (${form.experiences.length})` },
+    { key: "education", label: `🎓 Education (${form.educations.length})` },
+    { key: "showcase", label: `🌟 Show Case (${form.showcase.length})` },
     { key: "contact", label: "📞 Contact" },
-    { key: "testimonial", label: "🗣️ Testimonial" },
+    {
+      key: "testimonial",
+      label: `🗣️ Testimonial (${form.testimonials.length})`,
+    },
   ];
 
   /* ======== HANDLE VISIBILITY OF SCROLL BUTTONS ======== */
@@ -119,17 +139,29 @@ const Page = () => {
 
         {/* CONTENT */}
         <div className="mt-4">
-          {selectedMenu === "biodata" && <BiodataSection />}
-          {selectedMenu === "skill" && <SkillSection />}
-          {selectedMenu === "experience" && <ExperienceSection />}
-          {selectedMenu === "education" && <EducationSection />}
-          {selectedMenu === "showcase" && <ShowCaseSection />}
+          {selectedMenu === "biodata" && (
+            <BiodataSection initiateData={form} onSetForm={setForm} />
+          )}
+          {selectedMenu === "skill" && (
+            <SkillSection initiateData={form} onSetForm={setForm} />
+          )}
+          {selectedMenu === "experience" && (
+            <ExperienceSection initiateData={form} onSetForm={setForm} />
+          )}
+          {selectedMenu === "education" && (
+            <EducationSection initiateData={form} onSetForm={setForm} />
+          )}
+          {selectedMenu === "showcase" && (
+            <ShowCaseSection initiateData={form} onSetForm={setForm} />
+          )}
           {selectedMenu === "contact" && (
             <div className="p-5 bg-white rounded-lg shadow-xs">
               Contact Content
             </div>
           )}
-          {selectedMenu === "testimonial" && <TestimonialSection />}
+          {selectedMenu === "testimonial" && (
+            <TestimonialSection initiateData={form} onSetForm={setForm} />
+          )}
         </div>
       </div>
     </CMSLayout>

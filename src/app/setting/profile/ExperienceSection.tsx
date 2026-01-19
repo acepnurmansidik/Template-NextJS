@@ -1,20 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { BiodataDaum } from "@/types/profile";
 import { FaPlus } from "react-icons/fa";
 import { GoTrash } from "react-icons/go";
 
-const ExperienceSection = () => {
-  const [list, setList] = useState<any[]>([]);
+interface DataProps {
+  initiateData: BiodataDaum;
+  onSetForm: React.Dispatch<React.SetStateAction<BiodataDaum>>;
+}
 
-  const addItem = () => {
-    setList([...list, { start: "", end: "", role: "", description: "" }]);
+const ExperienceSection = ({ initiateData, onSetForm }: DataProps) => {
+  const handleAddItem = () => {
+    const newDataUpdate = [
+      ...(initiateData.experiences || []),
+      {
+        start_date: "",
+        end_date: "",
+        role: "",
+        type: "",
+        company_name: "",
+        description: "",
+        list_task: [],
+      },
+    ];
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        experiences: newDataUpdate,
+      };
+    });
   };
 
-  const update = (i: number, field: string, value: string) => {
-    const temp = [...list];
-    temp[i][field] = value;
-    setList(temp);
+  const handleRemoveItem = (index: number) => {
+    const newDataUpdate = initiateData.experiences.filter(
+      (item, i) => i !== index,
+    );
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        experiences: newDataUpdate,
+      };
+    });
+  };
+
+  const handleChangeItem = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const newDataUpdate = [...initiateData.experiences];
+    newDataUpdate[index] = {
+      ...newDataUpdate[index],
+      [e.target.name]: e.target.value,
+    };
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        experiences: newDataUpdate,
+      };
+    });
   };
 
   const autoResize = (el: HTMLTextAreaElement) => {
@@ -22,17 +67,13 @@ const ExperienceSection = () => {
     el.style.height = `${el.scrollHeight}px`;
   };
 
-  const removeItem = (index: number) => {
-    setList((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="p-6 rounded-lg h-full flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold">Experience</h3>
+        <h3 className="text-xl font-semibold">{`Experience (${initiateData.experiences.length})`}</h3>
         <button
-          onClick={addItem}
+          onClick={handleAddItem}
           className="p-3 hover:cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
         >
           <FaPlus />
@@ -47,16 +88,16 @@ const ExperienceSection = () => {
         {/* WRAPPER TANPA SCROLL → GARIS TIDAK TERPUTUS */}
         <div className="relative ml-6 pb-4">
           {/* GARIS VERTICAL UTAMA (SELALU PANJANG MENGIKUTI KONTEN) */}
-          {list.length > 0 && (
+          {initiateData.experiences.length > 0 && (
             <span className="absolute left-0 top-0 w-px bg-blue-600 opacity-60 h-full"></span>
           )}
 
           <div className="flex flex-col gap-8">
-            {list.map((exp, i) => {
-              const isLast = i === list.length - 1;
+            {initiateData.experiences.map((exp, index) => {
+              const isLast = index === initiateData.experiences.length - 1;
 
               return (
-                <div key={i} className="relative pl-6">
+                <div key={index} className="relative pl-6">
                   {/* GARIS VERTICAL PER ITEM — FIX FINAL */}
                   {!isLast && (
                     <span className="absolute left-0 top-0 bottom-0 w-px bg-blue-600 opacity-60" />
@@ -74,14 +115,18 @@ const ExperienceSection = () => {
                       {/* Start/End */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
-                          placeholder="Start (MM YYYY)"
+                          type="month"
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "start", e.target.value)}
+                          value={exp.start_date}
+                          name="start_date"
+                          onChange={(e) => handleChangeItem(index, e)}
                         />
                         <input
-                          placeholder="End (MM YYYY)"
+                          type="month"
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "end", e.target.value)}
+                          value={exp.end_date}
+                          name="end_date"
+                          onChange={(e) => handleChangeItem(index, e)}
                         />
                       </div>
 
@@ -89,21 +134,25 @@ const ExperienceSection = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
                           placeholder="Company Name"
+                          name="company_name"
+                          value={exp.company_name}
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) =>
-                            update(i, "company_name", e.target.value)
-                          }
+                          onChange={(e) => handleChangeItem(index, e)}
                         />
                         <input
                           placeholder="Role"
+                          name="role"
+                          value={exp.role}
                           className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                          onChange={(e) => update(i, "role", e.target.value)}
+                          onChange={(e) => handleChangeItem(index, e)}
                         />
                       </div>
 
                       {/* Description */}
                       <textarea
                         rows={3}
+                        name="description"
+                        value={exp.description}
                         placeholder="Description"
                         className="p-2 border border-slate-300 outline-none rounded-lg text-sm transition-all duration-300"
                         onFocus={(e) =>
@@ -116,15 +165,13 @@ const ExperienceSection = () => {
                           const el = e.target as HTMLTextAreaElement;
                           el.style.height = "70px";
                         }}
-                        onChange={(e) =>
-                          update(i, "description", e.target.value)
-                        }
+                        onChange={(e) => handleChangeItem(index, e)}
                       />
                     </div>
 
                     <div
                       className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
-                      onClick={() => removeItem(i)}
+                      onClick={() => handleRemoveItem(index)}
                     >
                       <GoTrash
                         fontSize={20}

@@ -6,10 +6,10 @@ import Navbar from "@/components/etc/portofolio/Navbar";
 import Projects from "@/components/etc/portofolio/Project";
 import Skills from "@/components/etc/portofolio/Skills";
 import Testimonials from "@/components/etc/portofolio/Testimonial";
-import { Educations, Experiences } from "@/types/profile";
+import { EducationsDaum, ExperiencesDaum } from "@/types/profile";
 
 export default function Home() {
-  const experiences: Experiences[] = [
+  const experiences: ExperiencesDaum[] = [
     {
       role: "DevOps Engineer",
       start_date: "Feb 2024",
@@ -103,7 +103,7 @@ export default function Home() {
     },
   ];
 
-  const educations: Educations[] = [
+  const educations: EducationsDaum[] = [
     {
       school_name: "Universitas Komputer Indonesia",
       degree: "Associate Degree (D3)",

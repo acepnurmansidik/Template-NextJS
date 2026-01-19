@@ -1,21 +1,58 @@
 "use client";
 
+import { BiodataDaum } from "@/types/profile";
 import { useState } from "react";
 import { GoTrash } from "react-icons/go";
 
-const BiodataSection = () => {
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [biodata, setBiodata] = useState({
-    full_name: "",
-    description: "",
-    email: "",
-    phone: "",
-    tagline: "",
-  });
+interface DataProps {
+  initiateData: BiodataDaum;
+  onSetForm: React.Dispatch<React.SetStateAction<BiodataDaum>>;
+}
 
-  const [socialMedias, setSocialMedias] = useState<
-    { name: string; slug: string; link: string }[]
-  >([]);
+const BiodataSection = ({ initiateData, onSetForm }: DataProps) => {
+  const [photo, setPhoto] = useState<string | null>(null);
+  const handleChangeSubItem = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const newSocialMedia = [...initiateData.social_media];
+    newSocialMedia[index] = {
+      ...newSocialMedia[index],
+      [e.target.name]: e.target.value,
+    };
+
+    onSetForm((prev) => {
+      return {
+        ...prev,
+        social_media: newSocialMedia,
+      };
+    });
+  };
+
+  const handleAddSocialMedia = () => {
+    onSetForm((prev) => {
+      const newSocialMedia = [
+        ...(prev.social_media || []),
+        { name: "", slug: "", link: "" },
+      ];
+
+      return {
+        ...prev,
+        social_media: newSocialMedia,
+      };
+    });
+  };
+
+  const handleRemoveSocialMedia = (index: number) => {
+    onSetForm((prev) => {
+      const filtered = prev.social_media.filter((_, i) => i !== index);
+
+      return {
+        ...prev,
+        social_media: filtered,
+      };
+    });
+  };
 
   const handleUpload = (e: any) => {
     const file = e.target.files?.[0];
@@ -78,7 +115,7 @@ const BiodataSection = () => {
                 className="w-full mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
                 placeholder="John Doe"
                 onChange={(e) =>
-                  setBiodata({ ...biodata, full_name: e.target.value })
+                  onSetForm({ ...initiateData, full_name: e.target.value })
                 }
               />
             </div>
@@ -90,7 +127,7 @@ const BiodataSection = () => {
                 className="w-full mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
                 placeholder="email@mail.com"
                 onChange={(e) =>
-                  setBiodata({ ...biodata, email: e.target.value })
+                  onSetForm({ ...initiateData, email: e.target.value })
                 }
               />
             </div>
@@ -101,7 +138,7 @@ const BiodataSection = () => {
                 className="w-full mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
                 placeholder="+62..."
                 onChange={(e) =>
-                  setBiodata({ ...biodata, phone: e.target.value })
+                  onSetForm({ ...initiateData, phone: e.target.value })
                 }
               />
             </div>
@@ -112,7 +149,7 @@ const BiodataSection = () => {
                 className="w-full mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
                 placeholder="Tagline."
                 onChange={(e) =>
-                  setBiodata({ ...biodata, tagline: e.target.value })
+                  onSetForm({ ...initiateData, tagline: e.target.value })
                 }
               />
             </div>
@@ -126,7 +163,7 @@ const BiodataSection = () => {
               placeholder="Short description about yourself"
               onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
               onChange={(e) =>
-                setBiodata({ ...biodata, description: e.target.value })
+                onSetForm({ ...initiateData, description: e.target.value })
               }
             ></textarea>
           </div>
@@ -139,12 +176,7 @@ const BiodataSection = () => {
 
             {/* ADD BUTTON */}
             <button
-              onClick={() =>
-                setSocialMedias([
-                  ...socialMedias,
-                  { name: "", slug: "", link: "" },
-                ])
-              }
+              onClick={handleAddSocialMedia}
               className="px-3 py-1 bg-slate-200 rounded-md hover:cursor-pointer text-xs hover:bg-slate-300 w-fit"
             >
               + Add Social Media
@@ -152,7 +184,7 @@ const BiodataSection = () => {
           </div>
 
           <div className="flex flex-col gap-4">
-            {socialMedias.map((soc, index) => (
+            {initiateData.social_media.map((soc, index) => (
               <div
                 key={index}
                 className="p-3 shadow-xs bg-white rounded-lg flex gap-3 relative"
@@ -163,12 +195,8 @@ const BiodataSection = () => {
                     placeholder="Social Media Name (e.g. Instagram)"
                     className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
                     value={soc.name}
-                    onChange={(e) => {
-                      const copy = [...socialMedias];
-                      copy[index].name = e.target.value;
-                      copy[index].slug = autoSlug(e.target.value);
-                      setSocialMedias(copy);
-                    }}
+                    name="name"
+                    onChange={(e) => handleChangeSubItem(index, e)}
                   />
 
                   {/* Slug (HIDDEN) */}
@@ -179,20 +207,15 @@ const BiodataSection = () => {
                     placeholder="URL (e.g. https://instagram.com/username)"
                     className="p-2 border border-slate-300 outline-none rounded-lg text-sm"
                     value={soc.link}
-                    onChange={(e) => {
-                      const copy = [...socialMedias];
-                      copy[index].link = e.target.value;
-                      setSocialMedias(copy);
-                    }}
+                    name="link"
+                    onChange={(e) => handleChangeSubItem(index, e)}
                   />
                 </div>
 
                 {/* REMOVE BUTTON */}
                 <button
                   className="relative h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center cursor-pointer transition-all text-red-500"
-                  onClick={() =>
-                    setSocialMedias(socialMedias.filter((_, i) => i !== index))
-                  }
+                  onClick={() => handleRemoveSocialMedia(index)}
                 >
                   <GoTrash size={18} />
                 </button>
