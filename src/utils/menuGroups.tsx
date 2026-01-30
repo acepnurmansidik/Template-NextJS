@@ -153,16 +153,15 @@ const menuGroups: MenuGroup[] = [
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-rectangle-ellipsis-icon lucide-rectangle-ellipsis"
+            className="lucide lucide-asterisk-icon lucide-asterisk"
           >
-            <rect width="20" height="12" x="2" y="6" rx="2" />
-            <path d="M12 12h.01" />
-            <path d="M17 12h.01" />
-            <path d="M7 12h.01" />
+            <path d="M12 6v12" />
+            <path d="M17.196 9 6.804 15" />
+            <path d="m6.804 9 10.392 6" />
           </svg>
         ),
-        name: "Input Field",
-        path: "/documentation/input-field",
+        name: "Misc",
+        path: "/documentation/misc",
         children: [],
       },
     ],

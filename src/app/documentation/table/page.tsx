@@ -257,7 +257,7 @@ const Page = () => {
   return (
     <CMSLayout>
       <div className="w-full px-6 ">
-        <h5 className="text-3xl font-bold mb-7">Home</h5>
+        <h5 className="text-3xl font-bold mb-7">Table</h5>
         <div className="px-6 py-4 rounded-lg shadow-xs bg-white">
           {/* =========================== TOP FILTER + SEARCH + BUTTON ============================ */}
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
