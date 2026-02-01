@@ -2,6 +2,7 @@
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import SearchPanel from "@/components/atoms/sharedComponents/SearchResult";
+import Tooltip from "@/components/atoms/sharedComponents/Tooltip";
 
 import { useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaSearch } from "react-icons/fa";
@@ -203,7 +204,11 @@ const Page = () => {
           {/* Input Section */}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <h2 className="font-bold">Search Input</h2>
+              <h2 className="font-bold">
+                <Tooltip text="Search Input" position="top">
+                  Search Input
+                </Tooltip>
+              </h2>
               <div
                 className="relative mt-1"
                 onClick={() => setShowSearchOpen(true)}
@@ -237,8 +242,8 @@ const Page = () => {
               <label className="text-sm font-semibold">Text Input</label>
               <input
                 type="text"
-                className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm"
-                placeholder="insert here..."
+                className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm placeholder:italic"
+                placeholder="Input here..."
               />
             </div>
 
@@ -247,8 +252,8 @@ const Page = () => {
               <label className="text-sm font-semibold">Number Input</label>
               <input
                 type="number"
-                className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="insert here..."
+                className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm placeholder:italic [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="Input here..."
                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
               />
             </div>

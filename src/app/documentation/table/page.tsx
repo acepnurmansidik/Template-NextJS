@@ -7,6 +7,7 @@ import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
 
 const Page = () => {
   const columns = [
+    { title: "Mark All", value: "*" },
     { title: "Contact Name", value: "name" },
     { title: "Company", value: "company" },
     { title: "Cards", value: "cards" },
@@ -254,6 +255,30 @@ const Page = () => {
         : [...prev, column],
     );
   };
+
+  // Mark All
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const handleSelectAll = () => {
+    const allNames = data.map((item) => item.name); // Semua nama
+    const isAllSelected = selectedNames.length === allNames.length; // Sudah full select?
+
+    if (isAllSelected) {
+      // UNSELECT SEMUA
+      setSelectedNames([]);
+    } else {
+      // SELECT SEMUA
+      setSelectedNames(allNames);
+    }
+  };
+
+  const toggleSelectName = (name: string) => {
+    setSelectedNames((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  };
+
+  const handleDeleteAll = () => {};
+
   return (
     <CMSLayout>
       <div className="w-full px-6 ">
@@ -281,13 +306,13 @@ const Page = () => {
             </div>
           </div>
 
-          <div className="relative inline-block mb-4" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="text-xs border-[1.5px] cursor-pointer rounded-md border-gray-300 px-4 py-1 outline-none text-black"
-            >
-              <span className="me-2">Select Columns</span>
-              <div>
+          <div className="flex gap-2">
+            <div className="relative inline-block mb-4" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="text-xs border-[1.5px] cursor-pointer rounded-md border-gray-300 px-4 py-1 outline-none text-black"
+              >
+                <span className="me-2">Select Columns</span>
                 <svg
                   className={`absolute right-0 top-1/2 -translate-y-1/2 fill-current ${
                     isDropdownOpen ? "rotate-180" : ""
@@ -305,27 +330,35 @@ const Page = () => {
                     fill=""
                   />
                 </svg>
-              </div>
-            </button>
+              </button>
 
-            {isDropdownOpen && (
-              <div className="absolute left-0 mt-2 w-48 z-50 bg-white border border-gray-300 rounded-lg shadow-lg">
-                <div className="p-2 max-h-60 overflow-y-auto">
-                  {columns.map((col, index) => (
-                    <label
-                      key={index}
-                      className="flex items-center space-x-2 text-xs p-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={visibleColumns.includes(col.value)}
-                        onChange={() => toggleColumnVisibility(col.value)}
-                      />
-                      <span>{col.title}</span>
-                    </label>
-                  ))}
+              {isDropdownOpen && (
+                <div className="absolute left-0 mt-2 w-48 z-50 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="p-2 max-h-60 overflow-y-auto">
+                    {columns.map((col, index) => (
+                      <label
+                        key={index}
+                        className="flex items-center space-x-2 text-xs p-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.includes(col.value)}
+                          onChange={() => toggleColumnVisibility(col.value)}
+                        />
+                        <span>{col.title}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+            {selectedNames.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="relative duration-300 font-bold hover:cursor-pointer text-xs flex gap-2 justify-center text-white items-center bg-red-500 px-3 rounded-md mb-4"
+              >
+                <FaTrash size={14} /> Delete All
+              </button>
             )}
           </div>
 
@@ -339,8 +372,38 @@ const Page = () => {
                       {columns
                         .filter((col) => visibleColumns.includes(col.value))
                         .map((col, index) => (
-                          <th key={index} className="py-2 px-3 font-bold">
-                            {col.title}
+                          <th
+                            key={index}
+                            className="py-2 px-3 font-bold cursor-pointer select-none"
+                          >
+                            {col.value === "*" ? (
+                              <>
+                                {/* CUSTOM CHECKBOX CSS */}
+                                <style jsx>{`
+                                  input[type="checkbox"].custom-checkbox:checked::after {
+                                    content: "✓";
+                                    position: absolute;
+                                    color: white;
+                                    font-size: 13px;
+                                    font-weight: bold;
+                                    top: -2px;
+                                    left: 2px;
+                                  }
+                                `}</style>
+
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    selectedNames.length === data.length &&
+                                    data.length > 0
+                                  }
+                                  onChange={handleSelectAll}
+                                  className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 checked:bg-blue-600 checked:border-blue-600 relative transition-all hover:border-blue-500 hover:shadow-md"
+                                />
+                              </>
+                            ) : (
+                              col.title
+                            )}
                           </th>
                         ))}
                     </tr>
@@ -361,7 +424,30 @@ const Page = () => {
                               key={indexCol}
                               className="py-3 px-3 text-gray-700"
                             >
-                              {col.value == "action" ? (
+                              {/* ======================= CHECKBOX SELECT COLUMN ========================== */}
+                              {col.value === "*" ? (
+                                <>
+                                  {/* CUSTOM CHECKBOX CSS */}
+                                  <style jsx>{`
+                                    input[type="checkbox"].custom-checkbox:checked::after {
+                                      content: "✓";
+                                      position: absolute;
+                                      color: white;
+                                      font-size: 13px;
+                                      font-weight: bold;
+                                      top: -2px;
+                                      left: 2px;
+                                    }
+                                  `}</style>
+
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedNames.includes(row.name)}
+                                    onChange={() => toggleSelectName(row.name)}
+                                    className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 checked:bg-blue-600 checked:border-blue-600 relative transition-all hover:border-blue-500 hover:shadow-md"
+                                  />
+                                </>
+                              ) : col.value === "action" ? (
                                 <div>
                                   <button className="cursor-pointer me-3">
                                     <FaEye size={18} />
@@ -375,7 +461,7 @@ const Page = () => {
                                 </div>
                               ) : col.value === "cards" ? (
                                 <div className="flex flex-col gap-1">
-                                  {/* LIST CARDS (dengan animasi expand) */}
+                                  {/* Expand cards */}
                                   <div
                                     className={`overflow-hidden transition-all duration-300 ${
                                       expandedRow === rowIndex
@@ -396,7 +482,7 @@ const Page = () => {
                                     ))}
                                   </div>
 
-                                  {/* SHOW MORE / SHOW LESS BUTTON */}
+                                  {/* Show more / less */}
                                   {row.cards.length > 2 && (
                                     <button
                                       onClick={() => toggleRow(rowIndex)}
