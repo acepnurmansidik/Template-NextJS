@@ -41,7 +41,7 @@ const Notification = () => {
             <h2 className="text-sm font-semibold ">Notifications</h2>
 
             <button className="text-xs text-blue-600 hover:underline cursor-pointer">
-              Read All
+              Mark as read
             </button>
           </div>
 

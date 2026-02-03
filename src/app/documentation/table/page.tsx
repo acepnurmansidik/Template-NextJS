@@ -277,7 +277,9 @@ const Page = () => {
     );
   };
 
-  const handleDeleteAll = () => {};
+  const handleDeleteAll = () => {
+    setSelectedNames([]);
+  };
 
   return (
     <CMSLayout>
