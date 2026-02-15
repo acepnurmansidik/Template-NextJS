@@ -1,5 +1,57 @@
 @import "tailwindcss";
 
+/* ======== REMOVE FOCUS OUTLINE FOR RECHARTS ======== */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chart-card * {
+  outline: none !important;
+  border: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reset fokus & border semua elemen chart */
+.recharts-wrapper *,
+.recharts-wrapper:focus,
+.recharts-surface,
+.recharts-surface:focus,
+.recharts-layer,
+.recharts-cartesian-grid,
+.recharts-x-axis,
+.recharts-y-axis,
+.recharts-line,
+.recharts-tooltip-wrapper:focus,
+svg,
+svg *,
+g,
+g *,
+line,
+path,
+text {
+  outline: none !important;
+  border: none !important;
+}
+
+/* Allow shadow on tooltip (biarkan shadow tetap muncul) */
+.custom-tooltip,
+.custom-tooltip * {
+  box-shadow: initial !important;
+}
+
+/* remove tap highlight (mobile/webkit) */
+.recharts-wrapper *,
+svg {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Safari/Chrome focus ring */
+.recharts-wrapper:focus,
+svg:focus,
+div:focus {
+  outline: none !important;
+}
+
 /* Hide scrollbar but keep scroll functionality */
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
