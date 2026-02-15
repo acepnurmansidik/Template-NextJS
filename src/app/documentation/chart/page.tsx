@@ -165,13 +165,13 @@ const Page = () => {
           <PieChartCard data={dataOneData} title="Traffic Sources" />
         </div>
 
-        {/* PIE CHART */}
+        {/* Radar CHART */}
         <div className="w-full">
           <h5 className="text-3xl font-bold mb-7">Radar Chart</h5>
           <RadarChartCard title="Traffic Sources" data={dataRadar} />
         </div>
 
-        {/* PIE CHART */}
+        {/* Line Area Gradient CHART */}
         <div className="w-full">
           <h5 className="text-3xl font-bold mb-7">Line Area Gradient Chart</h5>
           <LineAreaChartGradientCard
@@ -238,7 +238,7 @@ const Page = () => {
 
         {/* Rose CHART */}
         <div className="w-full">
-          <h5 className="text-3xl font-bold mb-7">Rose Chart</h5>
+          <h5 className="text-3xl font-bold mb-7">Donut Chart</h5>
           <DonutChartCard data={dataOneData} title="Traffic Distribution" />
         </div>
       </div>
