@@ -19,7 +19,7 @@ interface DataProps {
 export default function BarChartCard({ data }: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
   return (
-    <div className="p-6 rounded-xl bg-white border border-slate-200 shadow-xs hover:shadow-md hover:cursor-pointer transition-all duration-300">
+    <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold text-slate-800">Weekly Sales</h3>
         <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">

@@ -27,7 +27,7 @@ export default function LineAreaChartGradientCard() {
   const keys = Object.keys(data[0]).filter((k) => k !== "month");
 
   return (
-    <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+    <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
       <h3 className="font-semibold text-slate-800 mb-3">Earnings Overview</h3>
 
       <div className="h-64 chart-no-focus">

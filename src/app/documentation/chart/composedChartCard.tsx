@@ -25,7 +25,7 @@ const data = [
 
 export default function ComposedChartCard() {
   return (
-    <div className="p-6 rounded-xl bg-white border border-slate-200 shadow-sm">
+    <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
       <h3 className="font-semibold text-slate-800 mb-3">Visitors Overview</h3>
 
       <div className="h-60 chart-no-focus">
