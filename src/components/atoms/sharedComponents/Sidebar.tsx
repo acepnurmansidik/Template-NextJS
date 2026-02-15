@@ -95,7 +95,7 @@ const Sidebar = () => {
           width={collapsed ? 40 : 50}
           height={collapsed ? 40 : 100}
         />
-        {!collapsed && <h2 className="text-2xl font-bold mb-4">History</h2>}
+        {!collapsed && <h2 className="text-2xl font-bold mb-4">Journey</h2>}
       </div>
 
       {/* === MENU === */}
