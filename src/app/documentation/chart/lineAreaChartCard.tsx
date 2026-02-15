@@ -15,9 +15,18 @@ import { COLOR_PALETTE } from "@/utils/utility";
 interface DataProps {
   data: any[];
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
-export default function LineAreaChartCard({ data, title }: DataProps) {
+export default function LineAreaChartCard({
+  data,
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
 
   return (
@@ -36,15 +45,23 @@ export default function LineAreaChartCard({ data, title }: DataProps) {
 
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
 
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+            {xAxis && (
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
             {keys.map((key, idx) => (
               <Area
                 key={key}

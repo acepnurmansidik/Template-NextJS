@@ -18,9 +18,20 @@ import { CustomLegend } from "./custom/CustomeLegend";
 interface DataProps {
   data: any[];
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
+  legend?: boolean;
 }
 
-export default function ComposedChartCard({ data, title }: DataProps) {
+export default function ComposedChartCard({
+  data,
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+  legend = true,
+}: DataProps) {
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
       <h3 className="font-semibold text-slate-800 mb-3">{title}</h3>
@@ -30,25 +41,31 @@ export default function ComposedChartCard({ data, title }: DataProps) {
           <ComposedChart data={data}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
 
-            <XAxis
-              dataKey="name"
-              tick={{ fill: "#6b7280", fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: "#6b7280", fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
             {/* Custom Tooltip */}
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
-            />
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
+              />
+            )}
 
-            <Legend content={<CustomLegend />} />
+            {legend && <Legend content={<CustomLegend />} />}
 
             {/* Bar */}
             <Bar

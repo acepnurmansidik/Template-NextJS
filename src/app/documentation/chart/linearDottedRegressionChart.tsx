@@ -14,6 +14,9 @@ import { CustomTooltip } from "./custom/CustomTooltip";
 
 interface DataProps {
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
 // ===== Generate dummy data (tanpa minus) =====
@@ -56,6 +59,9 @@ const regressionLine = computeRegression(scatterData);
 
 export default function LinearDottedRegressionScatterChart({
   title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
 }: DataProps) {
   return (
     <div className="w-full bg-white rounded-xl shadow p-6">
@@ -66,27 +72,33 @@ export default function LinearDottedRegressionScatterChart({
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
-            <XAxis
-              type="number"
-              dataKey="x"
-              name="X Value"
-              domain={[0, "auto"]}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              name="Y Value"
-              domain={[0, "auto"]}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                type="number"
+                dataKey="x"
+                name="X Value"
+                domain={[0, "auto"]}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                type="number"
+                dataKey="y"
+                name="Y Value"
+                domain={[0, "auto"]}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ strokeDasharray: "3 3" }}
-            />
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ strokeDasharray: "3 3" }}
+              />
+            )}
 
             {/* TITIK SCATTER (soft red + opacity) */}
             <Scatter

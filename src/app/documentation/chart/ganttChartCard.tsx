@@ -15,6 +15,7 @@ import { useState } from "react";
 interface DataProps {
   data: any[];
   title: string;
+  tooltip?: boolean;
 }
 
 type Task = {
@@ -27,7 +28,11 @@ type Task = {
 /* ===============================
    Component
 ================================ */
-export default function GanttChartCard({ data, title }: DataProps) {
+export default function GanttChartCard({
+  data,
+  title,
+  tooltip = true,
+}: DataProps) {
   const tasks: Task[] = data.map((t) => ({
     ...t,
     range: [t.start, t.end],
@@ -55,7 +60,6 @@ export default function GanttChartCard({ data, title }: DataProps) {
             onMouseLeave={() => setHoverX(null)}
           >
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-
             <XAxis
               type="number"
               domain={[minTime, maxTime]}
@@ -79,11 +83,13 @@ export default function GanttChartCard({ data, title }: DataProps) {
               tick={{ fill: "#334155", fontSize: 13 }}
             />
 
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={false}
-              wrapperStyle={{ outline: "none" }}
-            />
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={false}
+                wrapperStyle={{ outline: "none" }}
+              />
+            )}
 
             {/* ✅ Vertical highlight only */}
             <Customized

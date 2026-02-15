@@ -13,6 +13,11 @@ import {
 } from "recharts";
 import { useState } from "react";
 
+interface DataProps {
+  title: string;
+  tooltip?: boolean;
+}
+
 // =====================
 // Tipe data task
 // =====================
@@ -96,14 +101,15 @@ function CustomTooltip({ active, payload }: any) {
 // =====================
 // Component utama
 // =====================
-export default function QuarterGanttChart() {
+export default function QuarterGanttChart({
+  title,
+  tooltip = true,
+}: DataProps) {
   const [hoverX, setHoverX] = useState<number | null>(null);
 
   return (
     <div className="w-full bg-white rounded-xl shadow py-6 px-4">
-      <h3 className="font-semibold text-slate-800 mb-4">
-        Project Timeline {currentYear}
-      </h3>
+      <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
 
       {/* Header Kuartal */}
       <div className="grid grid-cols-4 text-center font-semibold text-slate-600 mb-2 ml-30">
@@ -173,11 +179,13 @@ export default function QuarterGanttChart() {
               tick={{ fill: "#334155", fontSize: 13 }}
             />
 
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={false}
-              wrapperStyle={{ outline: "none" }}
-            />
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={false}
+                wrapperStyle={{ outline: "none" }}
+              />
+            )}
 
             {/* ✅ Vertical highlight only */}
             <Customized

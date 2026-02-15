@@ -14,9 +14,17 @@ import { COLOR_PALETTE } from "@/utils/utility";
 
 interface DataProps {
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
-export default function ScatterChartCard({ title }: DataProps) {
+export default function ScatterChartCard({
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   const data = [
     { x: 10, y: 30 },
     { x: 15, y: 22 },
@@ -33,26 +41,32 @@ export default function ScatterChartCard({ title }: DataProps) {
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="x"
-              name="Age"
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              dataKey="y"
-              name="Spend"
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="x"
+                name="Age"
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                dataKey="y"
+                name="Spend"
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
             {/* Custom Tooltip */}
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
-            />
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
+              />
+            )}
 
             <Scatter
               name="Customers"

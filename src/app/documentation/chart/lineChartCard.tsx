@@ -17,9 +17,20 @@ import { CustomLegend } from "./custom/CustomeLegend";
 interface DataProps {
   data: any[];
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
+  legend?: boolean;
 }
 
-export default function LineChartCard({ data, title }: DataProps) {
+export default function LineChartCard({
+  data,
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+  legend = true,
+}: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
 
   return (
@@ -46,17 +57,31 @@ export default function LineChartCard({ data, title }: DataProps) {
               stroke="#E5E7EB"
               opacity={0.7}
             />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12, fill: "#94A3B8" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 12, fill: "#94A3B8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12, fill: "#94A3B8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fontSize: 12, fill: "#94A3B8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+
+            {/* Custom Tooltip */}
+            {tooltip && (
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
+              />
+            )}
+
+            {legend && <Legend content={<CustomLegend />} />}
 
             {/* Smooth Line */}
             {keys.map((key, index) => (
@@ -77,14 +102,6 @@ export default function LineChartCard({ data, title }: DataProps) {
                 activeDot={false}
               />
             ))}
-
-            {/* Custom Tooltip */}
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ stroke: "#6366F1", strokeWidth: 1, opacity: 0.2 }}
-            />
-
-            <Legend content={<CustomLegend />} />
           </LineChart>
         </ResponsiveContainer>
       </div>

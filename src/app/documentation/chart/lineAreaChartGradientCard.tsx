@@ -17,9 +17,20 @@ import { CustomLegend } from "./custom/CustomeLegend";
 interface DataProps {
   data: any[];
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
+  legend?: boolean;
 }
 
-export default function LineAreaChartGradientCard({ data, title }: DataProps) {
+export default function LineAreaChartGradientCard({
+  data,
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+  legend = true,
+}: DataProps) {
   const keys = Object.keys(data[0]).filter((k) => k !== "month");
 
   return (
@@ -55,22 +66,26 @@ export default function LineAreaChartGradientCard({ data, title }: DataProps) {
 
             <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" />
 
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12, fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <YAxis
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {yAxis && (
+              <YAxis
+                tick={{ fontSize: 12, fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
 
-            <Legend content={<CustomLegend />} />
+            {legend && <Legend content={<CustomLegend />} />}
 
             {keys.map((k, idx) => (
               <Area

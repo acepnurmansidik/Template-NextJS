@@ -132,7 +132,7 @@ const Page = () => {
         {/* Quratal Gantt CHART */}
         <div className="w-full col-span-2">
           <h5 className="text-3xl font-bold mb-7">Quartal Gantt Chart</h5>
-          <QuarterGanttChart />
+          <QuarterGanttChart title="Project Timeline 2026" />
         </div>
 
         {/* Gantt CHART */}

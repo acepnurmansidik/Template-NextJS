@@ -6,9 +6,10 @@ import { CustomTreemapCell } from "./custom/CustomTreemapCell";
 
 interface DataProps {
   title: string;
+  tooltip?: boolean;
 }
 
-export default function TreemapChartCard({ title }: DataProps) {
+export default function TreemapChartCard({ title, tooltip = true }: DataProps) {
   const data = [
     { name: "Documents", size: 400 },
     { name: "Images", size: 800 },
@@ -30,7 +31,7 @@ export default function TreemapChartCard({ title }: DataProps) {
             stroke="#fff"
             content={<CustomTreemapCell />}
           >
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
           </Treemap>
         </ResponsiveContainer>
       </div>

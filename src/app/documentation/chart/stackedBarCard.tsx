@@ -14,9 +14,17 @@ import { COLOR_PALETTE } from "@/utils/utility";
 
 interface DataProps {
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
-export default function StackedBarChartCard({ title }: DataProps) {
+export default function StackedBarChartCard({
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   const data = [
     { name: "Mon", food: 300, drink: 180, snack: 90 },
     { name: "Tue", food: 280, drink: 160, snack: 110 },
@@ -32,19 +40,23 @@ export default function StackedBarChartCard({ title }: DataProps) {
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
 
-            <XAxis
-              dataKey="name"
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
 
             <Bar dataKey="food" stackId="a" fill={COLOR_PALETTE[0]} />
             <Bar dataKey="drink" stackId="a" fill={COLOR_PALETTE[1]} />

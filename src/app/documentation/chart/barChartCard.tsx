@@ -15,9 +15,19 @@ import { COLOR_PALETTE } from "@/utils/utility";
 interface DataProps {
   data: any[];
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
+  legend?: boolean;
 }
 
-export default function BarChartCard({ data, title }: DataProps) {
+export default function BarChartCard({
+  data,
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
@@ -32,14 +42,23 @@ export default function BarChartCard({ data, title }: DataProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip />} />
+            {xAxis && (
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
+
             {keys.map((key, idx) => (
               <Bar
                 key={key}

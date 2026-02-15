@@ -14,9 +14,17 @@ import { COLOR_PALETTE } from "@/utils/utility";
 
 interface DataProps {
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
-export default function StackedAreaChartCard({ title }: DataProps) {
+export default function StackedAreaChartCard({
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   const data = [
     { month: "Jan", mobile: 1200, desktop: 800, tablet: 400 },
     { month: "Feb", mobile: 1600, desktop: 1000, tablet: 500 },
@@ -73,19 +81,23 @@ export default function StackedAreaChartCard({ title }: DataProps) {
 
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
 
-            <XAxis
-              dataKey="month"
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: "#94a3b8" }}
-              axisLine={false}
-              tickLine={false}
-            />
+            {xAxis && (
+              <XAxis
+                dataKey="month"
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
+            {yAxis && (
+              <YAxis
+                tick={{ fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+            )}
 
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
 
             <Area
               type="monotone"

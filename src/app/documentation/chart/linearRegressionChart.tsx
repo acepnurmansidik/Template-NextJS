@@ -12,6 +12,9 @@ import {
 
 interface DataProps {
   title: string;
+  xAxis?: boolean;
+  yAxis?: boolean;
+  tooltip?: boolean;
 }
 
 // === FUNCTION: Hitung regression line ===
@@ -43,7 +46,12 @@ const rawData = [
 
 const regressionData = computeLinearRegression(rawData, "day", "value");
 
-export default function LinearRegressionChart({ title }: DataProps) {
+export default function LinearRegressionChart({
+  title,
+  xAxis = true,
+  yAxis = true,
+  tooltip = true,
+}: DataProps) {
   return (
     <div className="w-full bg-white rounded-xl shadow p-4">
       <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
@@ -57,11 +65,11 @@ export default function LinearRegressionChart({ title }: DataProps) {
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
 
-            <XAxis dataKey="day" axisLine={false} tickLine={false} />
+            {xAxis && <XAxis dataKey="day" axisLine={false} tickLine={false} />}
 
-            <YAxis axisLine={false} tickLine={false} />
+            {yAxis && <YAxis axisLine={false} tickLine={false} />}
 
-            <Tooltip />
+            {tooltip && <Tooltip />}
 
             <Line
               type="monotone"

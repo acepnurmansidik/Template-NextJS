@@ -12,9 +12,14 @@ import { COLOR_PALETTE } from "@/utils/utility";
 interface DataProps {
   data: any[];
   title: string;
+  tooltip?: boolean;
 }
 
-export default function FunnelChartCard({ data, title }: DataProps) {
+export default function FunnelChartCard({
+  data,
+  title,
+  tooltip = true,
+}: DataProps) {
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
       <h3 className="font-semibold text-slate-800 mb-3">{title}</h3>
@@ -22,7 +27,7 @@ export default function FunnelChartCard({ data, title }: DataProps) {
       <div className="h-72 chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">
           <FunnelChart>
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
 
             <Funnel dataKey="value" data={data} isAnimationActive>
               <LabelList

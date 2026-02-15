@@ -10,6 +10,7 @@ import {
 
 interface DataProps {
   title: string;
+  tooltip?: boolean;
 }
 
 const data = [
@@ -27,7 +28,7 @@ const data = [
   { name: "Des", value: 60, fill: "#e0e7ff" },
 ];
 
-export default function RoseChartCard({ title }: DataProps) {
+export default function RoseChartCard({ title, tooltip = true }: DataProps) {
   return (
     <div className="w-full bg-white rounded-xl shadow p-6">
       <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
@@ -48,7 +49,7 @@ export default function RoseChartCard({ title }: DataProps) {
               dataKey="name"
               tick={{ fill: "#334155", fontSize: 12 }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            {tooltip && <Tooltip content={<CustomTooltip />} />}
             <RadialBar
               dataKey="value"
               cornerRadius={6}

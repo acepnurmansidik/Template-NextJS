@@ -16,10 +16,15 @@ import { COLOR_PALETTE } from "@/utils/utility";
 interface DataProps {
   data: Array<Record<string, number | string>>;
   title: string;
+  tooltip?: boolean;
 }
 
 // =======================
-export default function RadarChartCard({ data, title }: DataProps) {
+export default function RadarChartCard({
+  data,
+  title,
+  tooltip = true,
+}: DataProps) {
   if (!data || !data.length) return null;
 
   // dynamic keys except subject
@@ -47,7 +52,7 @@ export default function RadarChartCard({ data, title }: DataProps) {
                 stroke="#cbd5e1"
               />
 
-              <Tooltip content={<CustomTooltip />} />
+              {tooltip && <Tooltip content={<CustomTooltip />} />}
 
               {keys.map((key, idx) => {
                 const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];

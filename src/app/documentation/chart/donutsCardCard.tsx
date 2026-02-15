@@ -11,9 +11,14 @@ interface DonutChartCardProps {
     value: number;
   }[];
   title: string;
+  tooltip?: boolean;
 }
 
-export default function DonutChartCard({ data, title }: DonutChartCardProps) {
+export default function DonutChartCard({
+  data,
+  title,
+  tooltip = true,
+}: DonutChartCardProps) {
   if (!data || !data.length) return null;
 
   return (
@@ -24,7 +29,7 @@ export default function DonutChartCard({ data, title }: DonutChartCardProps) {
         <ResponsiveContainer width="100%" height="100%">
           <>
             <PieChart>
-              <Tooltip content={<CustomTooltip />} />
+              {tooltip && <Tooltip content={<CustomTooltip />} />}
 
               <Pie
                 data={data}
