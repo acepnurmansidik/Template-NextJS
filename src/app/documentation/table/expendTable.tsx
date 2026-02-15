@@ -191,7 +191,9 @@ export default function ExpendTable({
                   </tr>
 
                   {expandedRow === rowIndex && (
-                    <tr className="bg-gray-50">
+                    <tr
+                      className={rowIndex % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                    >
                       <td
                         colSpan={
                           columns.filter((col) =>

@@ -278,6 +278,7 @@ const Page = () => {
 
   return (
     <CMSLayout>
+      {/* BASIC TABLE */}
       <div className="w-full px-6 ">
         <h5 className="text-3xl font-bold mb-7">Basic Table</h5>
         <div className="px-6 py-4 rounded-lg shadow-xs bg-white">
@@ -297,8 +298,8 @@ const Page = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {/* Add New Contact */}
-              <button className="bg-black flex gap-2 hover:cursor-pointer justify-center items-center text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 transition">
-                <FaPlus /> Create
+              <button className="bg-black flex gap-2 hover:cursor-pointer justify-center items-center text-white p-2.5 rounded-lg hover:bg-gray-800 transition">
+                <FaPlus />
               </button>
             </div>
           </div>
@@ -379,6 +380,8 @@ const Page = () => {
           />
         </div>
       </div>
+
+      {/* EXPEND TABLE */}
       <div className="w-full px-6 mt-5">
         <h5 className="text-3xl font-bold mb-7">Expend Table</h5>
         <div className="px-6 py-4 rounded-lg shadow-xs bg-white">
@@ -398,8 +401,8 @@ const Page = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {/* Add New Contact */}
-              <button className="bg-black flex gap-2 hover:cursor-pointer justify-center items-center text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 transition">
-                <FaPlus /> Create
+              <button className="bg-black flex gap-2 hover:cursor-pointer justify-center items-center text-white p-2.5 rounded-lg hover:bg-gray-800 transition">
+                <FaPlus />
               </button>
             </div>
           </div>
