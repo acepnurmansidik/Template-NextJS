@@ -12,7 +12,11 @@ import {
 import { CustomTooltip } from "./custom/CustomTooltip";
 import { COLOR_PALETTE } from "@/utils/utility";
 
-export default function ScatterChartCard() {
+interface DataProps {
+  title: string;
+}
+
+export default function ScatterChartCard({ title }: DataProps) {
   const data = [
     { x: 10, y: 30 },
     { x: 15, y: 22 },
@@ -23,16 +27,26 @@ export default function ScatterChartCard() {
 
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-4">
-        Customer Distribution
-      </h3>
+      <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
 
       <div className="h-72 chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-            <XAxis dataKey="x" name="Age" tick={{ fill: "#94a3b8" }} />
-            <YAxis dataKey="y" name="Spend" tick={{ fill: "#94a3b8" }} />
+            <XAxis
+              dataKey="x"
+              name="Age"
+              tick={{ fill: "#94a3b8" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              dataKey="y"
+              name="Spend"
+              tick={{ fill: "#94a3b8" }}
+              axisLine={false}
+              tickLine={false}
+            />
 
             {/* Custom Tooltip */}
             <Tooltip

@@ -13,12 +13,13 @@ import { CustomTooltip } from "./custom/CustomTooltip";
 import { CustomLegend } from "./custom/CustomeLegend";
 import { COLOR_PALETTE } from "@/utils/utility";
 
-interface RadarChartCardProps {
+interface DataProps {
   data: Array<Record<string, number | string>>;
+  title: string;
 }
 
 // =======================
-export default function RadarChartCard({ data }: RadarChartCardProps) {
+export default function RadarChartCard({ data, title }: DataProps) {
   if (!data || !data.length) return null;
 
   // dynamic keys except subject
@@ -26,7 +27,7 @@ export default function RadarChartCard({ data }: RadarChartCardProps) {
 
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-4">Traffic Sources</h3>
+      <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
 
       <div className="h-64 chart-no-focus relative">
         <ResponsiveContainer width="100%" height="100%">

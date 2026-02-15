@@ -14,21 +14,17 @@ import {
 import { CustomTooltip } from "./custom/CustomTooltip";
 import { CustomLegend } from "./custom/CustomeLegend";
 
-const data = [
-  { month: "Jan", revenue: 120, profit: 80 },
-  { month: "Feb", revenue: 200, profit: 110 },
-  { month: "Mar", revenue: 150, profit: 95 },
-  { month: "Apr", revenue: 300, profit: 180 },
-  { month: "May", revenue: 250, profit: 160 },
-  { month: "Jun", revenue: 400, profit: 240 },
-];
+interface DataProps {
+  data: any[];
+  title: string;
+}
 
-export default function LineAreaChartGradientCard() {
+export default function LineAreaChartGradientCard({ data, title }: DataProps) {
   const keys = Object.keys(data[0]).filter((k) => k !== "month");
 
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-3">Earnings Overview</h3>
+      <h3 className="font-semibold text-slate-800 mb-3">{title}</h3>
 
       <div className="h-64 chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">

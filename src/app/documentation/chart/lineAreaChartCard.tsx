@@ -14,14 +14,15 @@ import { COLOR_PALETTE } from "@/utils/utility";
 
 interface DataProps {
   data: any[];
+  title: string;
 }
 
-export default function LineAreaChartCard({ data }: DataProps) {
+export default function LineAreaChartCard({ data, title }: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
 
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-4">User Growth</h3>
+      <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
 
       <div className="h-56 chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">
@@ -35,8 +36,13 @@ export default function LineAreaChartCard({ data }: DataProps) {
 
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
 
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
 
             <Tooltip content={<CustomTooltip />} />
             {keys.map((key, idx) => (

@@ -16,9 +16,10 @@ import { CustomLegend } from "./custom/CustomeLegend";
 
 interface DataProps {
   data: any[];
+  title: string;
 }
 
-export default function LineChartCard({ data }: DataProps) {
+export default function LineChartCard({ data, title }: DataProps) {
   const keys = Object.keys(data[0]).filter((key) => key !== "name");
 
   return (
@@ -26,9 +27,7 @@ export default function LineChartCard({ data }: DataProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-lg text-slate-700">
-            Revenue Overview
-          </h3>
+          <h3 className="font-semibold text-lg text-slate-700">{title}</h3>
           <p className="text-xs text-slate-400">Last 6 Months</p>
         </div>
 

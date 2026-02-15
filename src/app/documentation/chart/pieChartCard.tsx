@@ -5,12 +5,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface DataProps {
   data: { name: string; value: number }[];
+  title: string;
 }
 
-export default function PieChartCard({ data }: DataProps) {
+export default function PieChartCard({ data, title }: DataProps) {
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-3">Traffic Sources</h3>
+      <h3 className="font-semibold text-slate-800 mb-3">{title}</h3>
 
       <div className="h-56 flex items-center justify-center chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">

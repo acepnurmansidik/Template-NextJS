@@ -15,26 +15,32 @@ import { CustomTooltip } from "./custom/CustomTooltip";
 import { COLOR_PALETTE } from "@/utils/utility";
 import { CustomLegend } from "./custom/CustomeLegend";
 
-const data = [
-  { name: "Mon", uv: 120, pv: 80 },
-  { name: "Tue", uv: 200, pv: 140 },
-  { name: "Wed", uv: 150, pv: 100 },
-  { name: "Thu", uv: 300, pv: 180 },
-  { name: "Fri", uv: 250, pv: 160 },
-];
+interface DataProps {
+  data: any[];
+  title: string;
+}
 
-export default function ComposedChartCard() {
+export default function ComposedChartCard({ data, title }: DataProps) {
   return (
     <div className="p-5 rounded-2xl shadow-xs bg-white border border-slate-100 hover:shadow-md hover:cursor-pointer transition-all duration-300">
-      <h3 className="font-semibold text-slate-800 mb-3">Visitors Overview</h3>
+      <h3 className="font-semibold text-slate-800 mb-3">{title}</h3>
 
       <div className="h-60 chart-no-focus">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
 
-            <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
-            <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
 
             {/* Custom Tooltip */}
             <Tooltip
