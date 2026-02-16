@@ -3,17 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-export default function ScrollNavigation() {
+interface DataProps {
+  data: any[];
+}
+
+export default function ScrollNavigation({ data }: DataProps) {
   /* ================= SCROLL NAVIGATION =================== */
-  const menus = [
-    { key: "biodata", label: "🥳 Biodata" },
-    { key: "skill", label: "🎁 Skill" },
-    { key: "experience", label: `⚙️ Experience (3)` },
-    { key: "education", label: `🎓 Education (4)` },
-    { key: "showcase", label: `🌟 Show Case (10)` },
-    { key: "contact", label: "📞 Contact" },
-    { key: "testimonial", label: `🗣️ Testimonial (5)` },
-  ];
 
   const [selectedMenu, setSelectedMenu] = useState<string>("biodata");
   const [showLeft, setShowLeft] = useState<boolean>(false);
@@ -51,8 +46,6 @@ export default function ScrollNavigation() {
   }, []);
   return (
     <>
-      <label className="text-sm font-semibold">Scroll Navigation</label>
-
       <div className="relative flex mt-3 justify-between items-center mb-5 py-1">
         <div className="relative flex items-center">
           {showLeft && (
@@ -71,7 +64,7 @@ export default function ScrollNavigation() {
             className="flex gap-3 items-center scrollbar-hide overflow-x-auto px-2"
             style={{ maxWidth: "calc(70vw - 150px)" }}
           >
-            {menus.map((m) => (
+            {data.map((m) => (
               <div
                 key={m.key}
                 onClick={() => setSelectedMenu(m.key)}

@@ -12,6 +12,20 @@ import TextAreaInput from "./textAreaInput";
 import NumberSeparatorInput from "./NumberSeparatorInput";
 import NumberCurrencyInput from "./NumberCurrencyInput";
 import SearchInputCustom from "./SearchInputCustom";
+import SmallModal from "./modals/smallModal";
+import MediumModal from "./modals/mediumModal";
+import LargeModal from "./modals/largeModal";
+import XLargeModal from "./modals/xLargeModal";
+
+const dataMenus = [
+  { key: "biodata", label: "🥳 Biodata" },
+  { key: "skill", label: "🎁 Skill" },
+  { key: "experience", label: `⚙️ Experience (3)` },
+  { key: "education", label: `🎓 Education (4)` },
+  { key: "showcase", label: `🌟 Show Case (10)` },
+  { key: "contact", label: "📞 Contact" },
+  { key: "testimonial", label: `🗣️ Testimonial (5)` },
+];
 
 const animeList = [
   {
@@ -50,7 +64,6 @@ const animeList = [
 
 const Page = () => {
   /* =============== SEARCH PANEL LOGIC ===================== */
-
   const [showSearchOpen, setShowSearchOpen] = useState<boolean>(false);
   const [os, setOS] = useState<string>("unknown");
   useEffect(() => {
@@ -124,16 +137,62 @@ const Page = () => {
 
   /* ======================================================= */
 
+  /* =============== MODALS LOGIC ===================== */
+  const [smallModal, setSmallModal] = useState<boolean>(false);
+  const [mediumModal, setMediumModal] = useState<boolean>(false);
+  const [largeModal, setLargeModal] = useState<boolean>(false);
+  const [xlargeModal, setXlargeModal] = useState<boolean>(false);
+
+  const closeModal = () => {
+    setSmallModal(false);
+    setMediumModal(false);
+    setLargeModal(false);
+    setXlargeModal(false);
+  };
+  /* ======================================================= */
+
   return (
     <CMSLayout>
       <div className="w-full px-6 ">
         <h5 className="text-3xl font-bold mb-7">Misc</h5>
+        <h5 className="text-2xl font-bold mb-4">Modals</h5>
+        <div className="flex flex-wrap gap-4">
+          <button
+            onClick={() => setSmallModal(true)}
+            className="px-6 py-3 rounded-xl hover:cursor-pointer bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+          >
+            Small Modal
+          </button>
+
+          <button
+            onClick={() => setMediumModal(true)}
+            className="px-6 py-3 rounded-xl hover:cursor-pointer bg-emerald-600 text-white font-semibold shadow-lg hover:bg-emerald-700 transition-all duration-300"
+          >
+            Medium Modal
+          </button>
+
+          <button
+            onClick={() => setLargeModal(true)}
+            className="px-6 py-3 rounded-xl hover:cursor-pointer bg-purple-600 text-white font-semibold shadow-lg hover:bg-purple-700 transition-all duration-300"
+          >
+            Large Modal
+          </button>
+
+          <button
+            onClick={() => setXlargeModal(true)}
+            className="px-6 py-3 rounded-xl hover:cursor-pointer bg-rose-600 text-white font-semibold shadow-lg hover:bg-rose-700 transition-all duration-300"
+          >
+            Extra Large Modal
+          </button>
+        </div>
 
         {/* Scroll Navigation */}
         <div className="py-4 rounded-lg">
-          <ScrollNavigation />
+          <h5 className="text-2xl font-bold mb-4 mt-2">Scroll Navigation</h5>
+          <ScrollNavigation data={dataMenus} />
 
           {/* Input Section */}
+          <h5 className="text-2xl font-bold mb-4 mt-2">Input</h5>
           <div className="grid grid-cols-1 gap-3">
             <div className="col-span-1">
               <h2 className="font-bold">
@@ -203,6 +262,14 @@ const Page = () => {
           onSelect={handleSelectMovie}
           onClose={() => setShowSearchOpen(false)}
         />
+      )}
+
+      {/*  MODAL */}
+      {smallModal && <SmallModal title="Small Modal" onClose={closeModal} />}
+      {mediumModal && <MediumModal title="Medium Modal" onClose={closeModal} />}
+      {largeModal && <LargeModal title="Large Modal" onClose={closeModal} />}
+      {xlargeModal && (
+        <XLargeModal title="Extra Large Modal" onClose={closeModal} />
       )}
     </CMSLayout>
   );
