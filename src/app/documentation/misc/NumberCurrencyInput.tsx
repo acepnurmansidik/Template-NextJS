@@ -41,19 +41,20 @@ export default function NumberCurrencyInput({
   };
 
   return (
-    <div>
-      <label className="text-sm font-semibold">Number Currency Input</label>
-
-      <input
-        type="text"
-        value={value}
-        onChange={handleChange}
-        onWheel={(e) => e.currentTarget.blur()}
-        placeholder={
-          currencySymbol ? `${currencySymbol} 0` : "Loading..." // aman SSR
-        }
-        className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm placeholder:italic"
-      />
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[13px] font-bold text-slate-700 ml-1">
+        Currency Input
+      </label>
+      <div className="relative group">
+        <input
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onWheel={(e) => e.currentTarget.blur()}
+          placeholder={currencySymbol ? `${currencySymbol} 0` : "Loading..."}
+          className="w-full bg-white px-4 py-2.5 border border-slate-200 outline-none rounded-xl text-sm font-medium text-slate-900 transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 placeholder:italic"
+        />
+      </div>
     </div>
   );
 }

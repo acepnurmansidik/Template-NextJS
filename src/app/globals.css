@@ -121,3 +121,13 @@ div:focus {
     opacity: 0;
   }
 }
+
+/* Tambahkan ini di globals.css atau tailwind.config.js */
+@keyframes expand {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}

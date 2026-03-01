@@ -18,3 +18,7 @@ const CMSLayout = ({ children }: any) => {
 };
 
 export default CMSLayout;
+
+{
+  /* =========================== TABLE WRAPPER ============================ */
+}

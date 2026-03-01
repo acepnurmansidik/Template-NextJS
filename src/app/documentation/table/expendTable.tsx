@@ -1,5 +1,13 @@
+"use client";
+
 import { Fragment, useState } from "react";
-import { FaTrash, FaEdit, FaEye } from "react-icons/fa";
+import {
+  FaTrash,
+  FaEdit,
+  FaEye,
+  FaEnvelope,
+  FaChevronDown,
+} from "react-icons/fa";
 import { get } from "lodash";
 
 interface DataProps {
@@ -21,7 +29,6 @@ export default function ExpendTable({
   columns,
   data,
   visibleColumns,
-  toggleRow,
   toggleSelectName,
   totalData,
   totalPage,
@@ -38,12 +45,6 @@ export default function ExpendTable({
     setExpandedRow(expandedRow === rowIndex ? null : rowIndex);
   };
 
-  const handleSelect = (name: string) => {
-    setSelectedNames((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    );
-  };
-
   const handleSelectAll = () => {
     if (selectedNames.length === data.length) {
       setSelectedNames([]);
@@ -54,34 +55,44 @@ export default function ExpendTable({
 
   return (
     <div className="grid grid-cols-1 items-center">
-      {/* =========================== TABLE WRAPPER ============================ */}
-      <div className="overflow-hidden">
-        <div className="overflow-y-auto max-h-100">
-          <table className="w-full border rounded-xl overflow-hidden">
-            <thead className="bg-white sticky top-0 z-10">
-              <tr className="text-sm">
-                {columns
-                  .filter((col) => visibleColumns.includes(col.value))
-                  .map((col, index) => (
-                    <th
-                      key={index}
-                      className="py-2 px-3 font-bold cursor-pointer select-none"
-                    >
-                      {col.value === "*" ? (
-                        <>
-                          {/* CUSTOM CHECKBOX CSS */}
-                          <style jsx>{`
-                            input[type="checkbox"].custom-checkbox:checked::after {
-                              content: "✓";
-                              position: absolute;
-                              color: white;
-                              font-size: 13px;
-                              font-weight: bold;
-                              top: -2px;
-                              left: 2px;
-                            }
-                          `}</style>
+      {/* CSS Injection untuk Animasi Expand */}
+      <style jsx global>{`
+        @keyframes expandRow {
+          from {
+            grid-template-rows: 0fr;
+            opacity: 0;
+          }
+          to {
+            grid-template-rows: 1fr;
+            opacity: 1;
+          }
+        }
+        .animate-expand {
+          display: grid;
+          animation: expandRow 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+      `}</style>
 
+      <div className="overflow-x-auto transition-all bg-white ">
+        <table className="w-full text-left border-separate border-spacing-0">
+          <thead>
+            <tr className="bg-slate-50/50">
+              {columns
+                .filter((col) => visibleColumns.includes(col.value))
+                .map((col, index) => (
+                  <th
+                    key={index}
+                    className={`py-4 px-6 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 whitespace-nowrap ${
+                      col.value === "action"
+                        ? "sticky right-0 z-20 bg-slate-50 shadow-[-4px_0_8px_rgba(0,0,0,0.02)]"
+                        : col.value === "*"
+                          ? "sticky left-0 z-20 bg-slate-50 shadow-[4px_0_8px_rgba(0,0,0,0.02)]"
+                          : "bg-slate-50"
+                    }`}
+                  >
+                    {col.value === "*" ? (
+                      <div className="flex items-center justify-center">
+                        <div className="relative flex items-center">
                           <input
                             type="checkbox"
                             checked={
@@ -89,292 +100,277 @@ export default function ExpendTable({
                               data.length > 0
                             }
                             onChange={handleSelectAll}
-                            className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 checked:bg-blue-600 checked:border-blue-600 relative transition-all hover:border-blue-500 hover:shadow-md"
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-200 bg-white transition-all checked:bg-indigo-600 checked:border-indigo-600 hover:border-indigo-300 focus:ring-1 focus:ring-indigo-500/10"
                           />
-                        </>
-                      ) : (
-                        col.title
-                      )}
-                    </th>
-                  ))}
-              </tr>
-            </thead>
+                          <svg
+                            className="absolute h-3.5 w-3.5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                      </div>
+                    ) : (
+                      col.title
+                    )}
+                  </th>
+                ))}
+            </tr>
+          </thead>
 
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <Fragment key={rowIndex}>
-                  <tr
-                    className={`transition text-sm hover:cursor-pointer ${
-                      rowIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    }`}
-                    onClick={() => toggleExpand(rowIndex)}
-                  >
-                    {columns
-                      .filter((col) => visibleColumns.includes(col.value))
-                      .map((col, indexCol) => (
-                        <td key={indexCol} className="py-3 px-3 text-gray-700">
-                          {/* ======================= CHECKBOX SELECT COLUMN ========================== */}
-                          {col.value === "*" ? (
-                            <>
-                              {/* CUSTOM CHECKBOX CSS */}
-                              <style jsx>{`
-                                input[type="checkbox"].custom-checkbox:checked::after {
-                                  content: "✓";
-                                  position: absolute;
-                                  color: white;
-                                  font-size: 13px;
-                                  font-weight: bold;
-                                  top: -2px;
-                                  left: 2px;
-                                }
-                              `}</style>
-
+          <tbody className="divide-y divide-slate-50">
+            {data.map((row, rowIndex) => (
+              <Fragment key={rowIndex}>
+                <tr
+                  className="group hover:bg-slate-50/30 transition-colors cursor-pointer"
+                  onClick={() => toggleExpand(rowIndex)}
+                >
+                  {columns
+                    .filter((col) => visibleColumns.includes(col.value))
+                    .map((col, indexCol) => (
+                      <td
+                        key={indexCol}
+                        className={`py-5 px-6 text-sm border-b border-slate-50 transition-colors ${
+                          col.value === "action"
+                            ? "sticky right-0 z-10 bg-white group-hover:bg-slate-50 shadow-[-10px_0_15px_rgba(0,0,0,0.011)]"
+                            : col.value === "*"
+                              ? "sticky left-0 z-10 bg-white group-hover:bg-slate-50 shadow-[10px_0_15px_rgba(0,0,0,0.011)]"
+                              : "bg-transparent"
+                        }`}
+                      >
+                        {col.value === "*" ? (
+                          <div className="flex items-center justify-center">
+                            <div
+                              className="relative flex items-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <input
                                 type="checkbox"
                                 checked={selectedNames.includes(row.name)}
                                 onChange={() => toggleSelectName(row.name)}
-                                className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 checked:bg-blue-600 checked:border-blue-600 relative transition-all hover:border-blue-500 hover:shadow-md"
+                                className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-200 bg-white transition-all checked:bg-indigo-600 checked:border-indigo-600 hover:border-indigo-300 focus:ring-1 focus:ring-indigo-500/10"
                               />
-                            </>
-                          ) : col.value === "action" ? (
-                            <div>
-                              <button className="cursor-pointer me-3">
-                                <FaEye size={18} />
-                              </button>
-                              <button className="cursor-pointer text-blue-700 me-3">
-                                <FaEdit size={18} />
-                              </button>
-                              <button className="text-red-500 cursor-pointer">
-                                <FaTrash size={16} />
-                              </button>
-                            </div>
-                          ) : col.value === "cards" ? (
-                            <div className="flex flex-col gap-1">
-                              {/* Expand cards */}
-                              <div
-                                className={`overflow-hidden transition-all duration-300 ${
-                                  expandedRow === rowIndex
-                                    ? "max-h-40"
-                                    : "max-h-12"
-                                }`}
+                              <svg
+                                className="absolute h-3.5 w-3.5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               >
-                                {(expandedRow === rowIndex
-                                  ? row.cards
-                                  : row.cards.slice(0, 2)
-                                ).map((card: string, i: number) => (
-                                  <div
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </div>
+                          </div>
+                        ) : col.value === "action" ? (
+                          <div
+                            className="flex items-center gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button className="p-2 cursor-pointer text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <FaEye size={15} />
+                            </button>
+                            <button className="p-2 cursor-pointer text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <FaEdit size={15} />
+                            </button>
+                            <button className="p-2 cursor-pointer text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <FaTrash size={13} />
+                            </button>
+                          </div>
+                        ) : col.value === "cards" ? (
+                          <div className="flex flex-col gap-1.5 min-w-40">
+                            <div className="flex flex-wrap gap-1 max-h-14 overflow-hidden">
+                              {row.cards
+                                .slice(0, 2)
+                                .map((card: string, i: number) => (
+                                  <span
                                     key={i}
-                                    className="text-xs bg-gray-100 px-2 py-1 rounded mb-1"
+                                    className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-1 rounded-md"
                                   >
                                     {card}
-                                  </div>
+                                  </span>
                                 ))}
-                              </div>
-
-                              {/* Show more / less */}
                               {row.cards.length > 2 && (
-                                <button
-                                  onClick={() => toggleRow(rowIndex)}
-                                  className="text-blue-600 text-xs cursor-pointer italic hover:underline mt-1 text-left"
-                                >
-                                  {expandedRow === rowIndex
-                                    ? "Show Less"
-                                    : `Show More (${row.cards.length - 2})`}
-                                </button>
+                                <span className="text-[9px] font-bold text-slate-400 self-center">
+                                  +{row.cards.length - 2} more
+                                </span>
                               )}
                             </div>
-                          ) : (
-                            get(row, col.value, "-")
-                          )}
-                        </td>
-                      ))}
-                  </tr>
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-slate-600 whitespace-nowrap">
+                            {get(row, col.value, "-")}
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                </tr>
 
-                  {expandedRow === rowIndex && (
-                    <tr
-                      className={rowIndex % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                {/* ANIMATED EXPANDED ROW */}
+                {expandedRow === rowIndex && (
+                  <tr>
+                    <td
+                      colSpan={
+                        columns.filter((col) =>
+                          visibleColumns.includes(col.value),
+                        ).length
+                      }
+                      className="p-0 bg-slate-50/50"
                     >
-                      <td
-                        colSpan={
-                          columns.filter((col) =>
-                            visibleColumns.includes(col.value),
-                          ).length
-                        }
-                        className="px-5 py-4"
-                      >
-                        <div
-                          className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm animate-expand"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          {/* HEADER */}
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <p className="text-gray-900 font-semibold text-sm">
-                                {row.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {row.email}
-                              </p>
-                            </div>
-
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs font-medium border border-blue-200">
-                              Detail Info
-                            </span>
-                          </div>
-
-                          <div className="border-t border-gray-200 my-4"></div>
-
-                          {/* GRID DETAIL */}
-                          <div className="grid grid-cols-2 gap-5">
-                            {/* ADDRESS */}
-                            <div>
-                              <p className="text-gray-500 text-xs font-medium mb-1">
-                                Address
-                              </p>
-                              <p className="text-gray-800">{row.address}</p>
-                            </div>
-
-                            {/* JOINED */}
-                            <div>
-                              <p className="text-gray-500 text-xs font-medium mb-1">
-                                Joined
-                              </p>
-                              <p className="text-gray-800">{row.joined}</p>
-                            </div>
-
-                            {/* COMPANY */}
-                            <div>
-                              <p className="text-gray-500 text-xs font-medium mb-1">
-                                Company
-                              </p>
-                              <p className="text-gray-800">{row.company}</p>
-                            </div>
-
-                            {/* PHONE */}
-                            <div>
-                              <p className="text-gray-500 text-xs font-medium mb-1">
-                                Phone
-                              </p>
-                              <p className="text-gray-800">{row.phone}</p>
-                            </div>
-                          </div>
-
-                          <div className="border-t border-gray-200 my-4"></div>
-
-                          {/* CARDS */}
-                          <div>
-                            <p className="text-gray-500 text-xs font-medium mb-2">
-                              Cards
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {row.cards.map((card: any, i: number) => (
-                                <span
-                                  key={i}
-                                  className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-200"
-                                >
-                                  {card}
+                      <div className="animate-expand overflow-hidden">
+                        <div className="min-h-0">
+                          <div className="px-8 py-8 flex flex-col gap-6">
+                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transform transition-all animate-in fade-in slide-in-from-top-4 duration-500">
+                              <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-100">
+                                    {row.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <h4 className="text-slate-900 font-bold text-lg leading-tight">
+                                      {row.name}
+                                    </h4>
+                                    <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mt-1">
+                                      <FaEnvelope size={10} />
+                                      {row.email}
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100 animate-pulse">
+                                  Active Profile
                                 </span>
-                              ))}
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+                                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                                    Address
+                                  </p>
+                                  <p className="text-slate-700 text-sm font-semibold leading-relaxed">
+                                    {row.address || "California, USA"}
+                                  </p>
+                                </div>
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both">
+                                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                                    Joined Date
+                                  </p>
+                                  <p className="text-slate-700 text-sm font-semibold">
+                                    {row.joined || "Oct 12, 2023"}
+                                  </p>
+                                </div>
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 fill-mode-both">
+                                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                                    Company
+                                  </p>
+                                  <p className="text-slate-700 text-sm font-semibold">
+                                    {row.company || "Tech Nova Inc."}
+                                  </p>
+                                </div>
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-1000 fill-mode-both">
+                                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                                    Phone
+                                  </p>
+                                  <p className="text-slate-700 text-sm font-semibold">
+                                    {row.phone || "+1 (555) 000-111"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col gap-4 animate-in fade-in duration-1000">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                                    Payment Methods
+                                  </p>
+                                  <span className="text-[10px] font-bold text-indigo-600 cursor-pointer hover:underline">
+                                    Manage Methods
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {row.cards.map((card: any, i: number) => (
+                                    <span
+                                      key={i}
+                                      className="px-4 py-2 bg-slate-50 text-slate-600 text-xs font-bold rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all cursor-default"
+                                    >
+                                      {card}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* =========================== PAGINATION ============================ */}
-      <div className="flex justify-between items-center mt-5 text-sm text-gray-600">
-        <div className="flex items-center gap-3">
-          <span>
+      {/* PAGINATION */}
+      <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
             Showing {page} - {limit} of {totalData}
           </span>
-
-          {/* LIMIT SELECTOR */}
           <select
-            className="border-[1.5px] border-gray-300 outline-none px-2 py-1 rounded bg-white"
+            className="border-2 border-slate-100 outline-none px-3 py-1.5 rounded-xl bg-white text-xs font-bold text-slate-600 focus:border-indigo-500 transition-all cursor-pointer shadow-sm hover:border-slate-200"
             value={limit}
             onChange={(e) => {
               setLimit(Number(e.target.value));
               setPage(1);
             }}
           >
-            {[10, 100, 200, 1000].map((n) => (
+            {[10, 50, 100].map((n) => (
               <option key={n} value={n}>
-                {n}
+                {n} rows
               </option>
             ))}
           </select>
         </div>
 
-        <div className="flex hover:cursor-pointer items-center gap-1">
-          {/* Previous */}
-          {page > 1 && (
-            <button
-              className="p-1 hover:cursor-pointer rounded hover:text-blue-600"
-              onClick={() => setPage(page - 1)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 22 22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-left-icon lucide-arrow-left"
-              >
-                <path d="m12 19-7-7 7-7" />
-                <path d="M19 12H5" />
-              </svg>
-            </button>
-          )}
+        <div className="flex items-center gap-1.5">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className="p-2.5 rounded-xl border-2 border-slate-50 text-slate-400 hover:border-indigo-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <FaChevronDown className="rotate-90 text-[10px]" />
+          </button>
 
-          {/* Dynamic Pages */}
-          {windowPages.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`hover:cursor-pointer px-3 duration-300 py-1 hover:bg-gray-200 border border-white text-gray-900 rounded ${
-                p === page
-                  ? "font-bold bg-blue-100 text-blue-500 rounded-md"
-                  : ""
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-
-          {/* Next */}
-          {page < totalPage && (
-            <button
-              className="p-1 hover:cursor-pointer rounded hover:text-blue-600"
-              onClick={() => setPage(page + 1)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 22 22"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-right-icon lucide-arrow-right"
+          <div className="flex gap-1">
+            {windowPages.map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-black transition-all ${
+                  p === page
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105"
+                    : "text-slate-400 hover:bg-slate-50 border-2 border-transparent hover:border-slate-100 cursor-pointer"
+                }`}
               >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </button>
-          )}
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <button
+            disabled={page === totalPage}
+            onClick={() => setPage(page + 1)}
+            className="p-2.5 rounded-xl border-2 border-slate-50 text-slate-400 hover:border-indigo-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <FaChevronDown className="-rotate-90 text-[10px]" />
+          </button>
         </div>
       </div>
     </div>

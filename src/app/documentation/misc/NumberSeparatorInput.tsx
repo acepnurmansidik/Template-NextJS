@@ -26,7 +26,7 @@ export default function NumberSeparatorInput() {
         onChange={handleChange}
         onWheel={(e) => e.currentTarget.blur()}
         placeholder="Input here..."
-        className="w-full bg-white mt-1 p-2 border border-slate-300 outline-none rounded-lg text-sm placeholder:italic"
+        className="w-full bg-white px-4 py-2.5 border border-slate-200 outline-none rounded-xl text-sm text-slate-900 placeholder:text-slate-400 placeholder:italic transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
       />
     </div>
   );
