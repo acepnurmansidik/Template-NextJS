@@ -179,13 +179,16 @@ const menuGroups: MenuGroup[] = [
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-rectangle-horizontal-icon lucide-rectangle-horizontal"
+            className="lucide lucide-form-icon lucide-form"
           >
-            <rect width="20" height="12" x="2" y="6" rx="2" />
+            <path d="M4 14h6" />
+            <path d="M4 2h10" />
+            <rect x="4" y="18" width="16" height="4" rx="1" />
+            <rect x="4" y="6" width="16" height="4" rx="1" />
           </svg>
         ),
-        name: "Modals",
-        path: "/documentation/modals",
+        name: "Forms",
+        path: "/documentation/forms",
         children: [],
       },
       {

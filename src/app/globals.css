@@ -131,3 +131,18 @@ div:focus {
     grid-template-rows: 1fr;
   }
 }
+
+@keyframes expandRow {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+.animate-expand {
+  display: grid;
+  animation: expandRow 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
