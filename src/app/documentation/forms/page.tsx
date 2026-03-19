@@ -11,6 +11,10 @@ import NumberInput from "./numberInput";
 import TextAreaInput from "./textAreaInput";
 import NumberSeparatorInput from "./NumberSeparatorInput";
 import NumberCurrencyInput from "./NumberCurrencyInput";
+import TextInputWithValidate from "./textInputWithValidate";
+import NumberInputWithValidate from "./numberInputWithValidate";
+import NumberCurrencyInputWithValidate from "./NumberCurrencyInputWithValidate";
+import TextAreaInputWithValidate from "./textAreaInputWithValidate";
 
 const animeList = [
   {
@@ -129,7 +133,7 @@ const Page = () => {
         {/* Scroll Navigation */}
         <div className="py-4 rounded-lg">
           {/* Input Section */}
-          <h5 className="text-2xl font-bold mb-4 mt-2">Input</h5>
+          <h5 className="text-2xl font-bold mb-4 mt-2">Normal Input</h5>
           <div className="grid grid-cols-1 gap-3">
             <div className="col-span-1">
               <h2 className="font-bold">
@@ -182,6 +186,23 @@ const Page = () => {
 
             {/* NUMBER INPUT WITH CURRENCY FORMAT */}
             <NumberCurrencyInput country={"en-US"} />
+          </div>
+        </div>
+        <div className="py-4 rounded-lg">
+          {/* Input Section */}
+          <h5 className="text-2xl font-bold mb-4 mt-2">Validate Input</h5>
+          <div className="grid grid-cols-1 gap-3">
+            {/* TEXT INPUT WITH VALIDATION */}
+            <TextInputWithValidate />
+
+            {/* NUMBER INPUT WITH VALIDATION */}
+            <NumberInputWithValidate />
+
+            {/* NUMBER INPUT WITH CURRENCY FORMAT WITH VALIDATION */}
+            <NumberCurrencyInputWithValidate country={"en-US"} />
+
+            {/* TEXT AREA WITH VALIDATION */}
+            <TextAreaInputWithValidate />
           </div>
         </div>
       </div>

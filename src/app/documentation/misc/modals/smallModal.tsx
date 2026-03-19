@@ -105,12 +105,6 @@ const SmallModal = ({ title, onClose }: DataProps) => {
         <div className="p-5 flex items-center justify-end gap-3 bg-slate-50/30 border-t border-slate-100 shrink-0">
           <button
             onClick={handleClose}
-            className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleClose}
             className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
           >
             Save Changes

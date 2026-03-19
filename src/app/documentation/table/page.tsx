@@ -245,9 +245,11 @@ const Page = () => {
 
   const toggleColumnVisibility = (column: string) => {
     setVisibleColumns((prev) =>
-      prev.includes(column)
-        ? prev.filter((col) => col !== column)
-        : [...prev, column],
+      column === "action"
+        ? [...prev]
+        : prev.includes(column)
+          ? prev.filter((col) => col !== column)
+          : [...prev, column],
     );
   };
 

@@ -126,7 +126,7 @@ const BasicTable = ({
               <div
                 className={`flex items-center justify-center w-5 h-5 rounded-lg text-[10px] font-black transition-transform ${isDropdownOpen ? "bg-indigo-600 text-white" : "bg-indigo-100 text-indigo-600"}`}
               >
-                {visibleColumns.length}
+                {visibleColumns.filter((item) => item !== "action").length}
               </div>
               <span className="tracking-wide">Columns</span>
               <FaChevronDown
@@ -143,36 +143,40 @@ const BasicTable = ({
                 </div>
 
                 <div className="max-h-75 overflow-y-auto px-2">
-                  {columns.map((col, index) => (
-                    <label
-                      key={index}
-                      className="flex items-center space-x-3 px-3 py-2 hover:bg-indigo-50/50 rounded-lg cursor-pointer group transition-colors"
-                    >
-                      <div className="relative flex items-center">
-                        <input
-                          type="checkbox"
-                          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 checked:bg-indigo-600 checked:border-indigo-600 transition-all focus:ring-2 focus:ring-indigo-500/20"
-                          checked={visibleColumns.includes(col.value)}
-                          onChange={() => toggleColumnVisibility(col.value)}
-                        />
-                        <svg
-                          className="absolute h-3.5 w-3.5 mt-0.5 ml-0.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                  {columns.map((col, index) => {
+                    if (col.value !== "action") {
+                      return (
+                        <label
+                          key={index}
+                          className="flex items-center space-x-3 px-3 py-2 hover:bg-indigo-50/50 rounded-lg cursor-pointer group transition-colors"
                         >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
-                      <span className="text-sm font-semibold text-slate-600 group-hover:text-indigo-700 transition-colors">
-                        {col.title}
-                      </span>
-                    </label>
-                  ))}
+                          <div className="relative flex items-center">
+                            <input
+                              type="checkbox"
+                              className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 checked:bg-indigo-600 checked:border-indigo-600 transition-all focus:ring-2 focus:ring-indigo-500/20"
+                              checked={visibleColumns.includes(col.value)}
+                              onChange={() => toggleColumnVisibility(col.value)}
+                            />
+                            <svg
+                              className="absolute h-3.5 w-3.5 mt-0.5 ml-0.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-600 group-hover:text-indigo-700 transition-colors">
+                            {col.title}
+                          </span>
+                        </label>
+                      );
+                    }
+                  })}
                 </div>
               </div>
             )}
@@ -189,7 +193,7 @@ const BasicTable = ({
                 <div className="flex items-center justify-center w-5 h-5 bg-red-500 text-white rounded-lg text-[10px] font-black group-hover:scale-110 transition-transform shadow-sm">
                   {selectedNames.length}
                 </div>
-                <span className="tracking-wide">Delete Selected</span>
+                <span className="tracking-wide">Delete</span>
                 <FaTrash
                   size={12}
                   className="ml-1 text-red-400 group-hover:text-red-600 transition-colors"
@@ -299,18 +303,21 @@ const BasicTable = ({
                               className="flex items-center gap-2"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <button className="p-2 cursor-pointer text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <button className="p-2 cursor-pointer text-indigo-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
                                 <FaEye size={15} />
                               </button>
-                              <button className="p-2 cursor-pointer text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <button className="p-2 cursor-pointer text-blue-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
                                 <FaEdit size={15} />
                               </button>
-                              <button className="p-2 cursor-pointer text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
+                              <button className="p-2 cursor-pointer text-red-500 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100 shadow-sm hover:shadow">
                                 <FaTrash size={13} />
                               </button>
                             </div>
                           ) : col.value === "cards" ? (
-                            <div className="flex flex-col gap-1.5 min-w-50">
+                            <div
+                              className="flex flex-col gap-1.5 min-w-50 hover:cursor-pointer"
+                              onClick={() => toggleRow(rowIndex)}
+                            >
                               <div
                                 className={`flex flex-wrap gap-1 overflow-hidden transition-all duration-300 ${expandedRow === rowIndex ? "max-h-40" : "max-h-14"}`}
                               >
@@ -327,10 +334,7 @@ const BasicTable = ({
                                 ))}
                               </div>
                               {row.cards.length > 2 && (
-                                <button
-                                  onClick={() => toggleRow(rowIndex)}
-                                  className="text-indigo-600 text-[10px] font-black hover:underline mt-1 text-left w-fit cursor-pointer uppercase tracking-tighter"
-                                >
+                                <button className="text-indigo-600 text-[10px] font-black hover:underline mt-1 text-left w-fit cursor-pointer uppercase tracking-tighter">
                                   {expandedRow === rowIndex
                                     ? "Less"
                                     : `+${row.cards.length - 2} more`}
