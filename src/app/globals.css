@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* KUNCI UNTUK DARK MODE TAILWIND V4 (Gunakan @custom-variant) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ======== REMOVE FOCUS OUTLINE FOR RECHARTS ======== */
 * {
   -webkit-tap-highlight-color: transparent;

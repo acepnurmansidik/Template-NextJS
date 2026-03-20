@@ -5,95 +5,110 @@ import Image from "next/image";
 
 export default function Hero() {
   return (
-    <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-20 py-20">
-      {/* LEFT TEXT */}
-      <div className="flex flex-col gap-5 max-w-xl">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-4xl md:text-7xl font-bold"
-        >
-          Hello. I am Acep, a Fullstack Developer.
-        </motion.h1>
+    <section className="relative w-full min-h-screen flex items-center pt-20 overflow-hidden bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      {/* Background Ornaments */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-100 dark:bg-blue-900/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 animate-blob"></div>
+      <div className="absolute top-40 right-10 w-72 h-72 bg-purple-100 dark:bg-purple-900/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
 
-        <motion.div className="flex gap-4">
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="bg-black text-white hover:cursor-pointer px-6 py-3 rounded-full w-fit hover:bg-gray-800 duration-300"
+      <div className="max-w-6xl mx-auto px-6 md:px-12 w-full flex flex-col-reverse md:flex-row items-center justify-between gap-12 z-10">
+        {/* LEFT TEXT */}
+        <div className="flex flex-col gap-6 max-w-2xl text-center md:text-left">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-gray-500 dark:text-gray-400 font-semibold tracking-wide uppercase text-sm"
           >
-            Explore My Work →
-          </motion.button>
-
-          {/* <motion.div
+            Welcome to my portfolio
+          </motion.p>
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-3 items-center justify-center"
+            transition={{ delay: 0.2 }}
+            className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white leading-tight"
           >
-            <span className="px-4 py-3 cursor-pointer flex gap-3 bg-white shadow rounded-full text-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-down-to-line-icon lucide-arrow-down-to-line"
-              >
-                <path d="M12 17V3" />
-                <path d="m6 11 6 6 6-6" />
-                <path d="M19 21H5" />
-              </svg>
-              Download Resume
+            Hi, I'm Acep. <br />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-gray-700 to-black dark:from-gray-300 dark:to-white">
+              Fullstack Developer.
             </span>
-          </motion.div> */}
-        </motion.div>
-      </div>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-600 dark:text-gray-300 text-lg md:text-xl leading-relaxed"
+          >
+            I build scalable, high-performance web applications and robust
+            backend systems to solve real-world problems.
+          </motion.p>
 
-      {/* RIGHT IMAGE */}
-      <div className="relative">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-10 md:mt-0"
-        >
-          <Image
-            src="/assets/logo/splash.png"
-            width={550}
-            height={550}
-            alt="hero"
-            className="rounded-2xl bg-gray-50 object-cover"
-          />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mt-10 md:mt-0"
-        >
-          <motion.img
-            src="/assets/icons/server_icon.png"
-            width={100}
-            height={100}
-            alt="hero"
-            className="absolute bottom-8 -left-2 md:-left-8 object-cover"
-            style={{ filter: "drop-shadow(2px 4px 16px rgba(255,255,255,1))" }}
-            animate={{
-              y: [0, -10, 0], // bergerak naik → turun → balik
-            }}
-            transition={{
-              duration: 3, // kecepatan animasi
-              repeat: Infinity, // putar terus
-              ease: "easeInOut",
-            }}
-          />
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4"
+          >
+            <a href="#projects">
+              <button className="bg-black dark:bg-white text-white dark:text-black px-8 py-3.5 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+                Explore My Work
+              </button>
+            </a>
+            <a href="#contact">
+              <button className="bg-white dark:bg-slate-900 text-black dark:text-white border border-gray-200 dark:border-gray-700 px-8 py-3.5 rounded-full font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-300 hover:shadow-sm">
+                Contact Me
+              </button>
+            </a>
+          </motion.div>
+        </div>
+
+        {/* RIGHT IMAGE */}
+        <div className="relative flex justify-center w-full md:w-1/2">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="relative w-72 h-72 md:w-96 md:h-96"
+          >
+            <div className="absolute inset-0 bg-linear-to-tr from-gray-200 to-white dark:from-slate-800 dark:to-slate-700 rounded-3xl transform rotate-3 scale-105 -z-10 shadow-xl"></div>
+            <Image
+              src="/assets/logo/splash.png"
+              fill
+              alt="Acep Nurman Sidik"
+              className="rounded-3xl object-cover shadow-2xl"
+              priority
+            />
+          </motion.div>
+
+          {/* Floating Element */}
+          <motion.div
+            className="absolute -bottom-6 -left-6 md:-left-12 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 flex items-center gap-4 transition-colors duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="bg-gray-50 dark:bg-slate-700 p-2 rounded-lg"
+            >
+              <Image
+                src="/assets/icons/server_icon.png"
+                width={30}
+                height={30}
+                alt="Server"
+                // className="dark:invert" // Akan mengubah icon hitam jadi putih di dark mode
+              />
+            </motion.div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                DevOps & Backend
+              </p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                Expertise
+              </p>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

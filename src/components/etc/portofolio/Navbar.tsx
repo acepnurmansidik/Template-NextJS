@@ -1,108 +1,145 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { FiMenu, FiX, FiSun, FiMoon } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // State untuk menyimpan status dark mode saat ini
+  const [isDark, setIsDark] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    // Saat komponen dimuat, cek apakah <html> memiliki class 'dark' (diset oleh script di layout.tsx)
+    setIsDark(document.documentElement.classList.contains("dark"));
+
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Fungsi Toggle manual murni tanpa package
+  const toggleTheme = () => {
+    const html = document.documentElement;
+    if (html.classList.contains("dark")) {
+      html.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      html.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
+    }
+  };
+
   return (
-    <div className="w-full fixed top-0 left-0 z-50 bg-white/70 backdrop-blur-md shadow-sm">
-      <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
+    <div
+      className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-sm border-b border-gray-100 dark:border-slate-800"
+          : "bg-transparent py-2"
+      }`}
+    >
+      <div className="max-w-6xl mx-auto flex items-center justify-between py-4 px-6 md:px-12">
         {/* LOGO */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-bold text-xl flex items-center gap-2"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="font-extrabold text-xl flex items-center gap-3 cursor-pointer"
+          onClick={() => router.push("/")}
         >
-          <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
+          <span className="w-9 h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md transition-colors">
             48
           </span>
-          Acep Nurman Sidik
+          <span className="tracking-tight text-gray-900 dark:text-white transition-colors">
+            Acep Nurman
+          </span>
         </motion.div>
 
         {/* MENU DESKTOP */}
-        <div className="hidden md:flex gap-8 text-gray-700 font-medium">
-          <Link href="/">Home</Link>
-          <Link href="#about">About Me</Link>
-          <Link href="#projects">Projects</Link>
+        <div className="hidden md:flex items-center gap-8 text-gray-600 dark:text-gray-300 font-medium text-sm">
+          <Link
+            href="/"
+            className="hover:text-black dark:hover:text-white transition-colors"
+          >
+            Home
+          </Link>
+          <Link
+            href="#skills"
+            className="hover:text-black dark:hover:text-white transition-colors"
+          >
+            Skills
+          </Link>
+          <Link
+            href="#experience"
+            className="hover:text-black dark:hover:text-white transition-colors"
+          >
+            Experience
+          </Link>
+          <Link
+            href="#projects"
+            className="hover:text-black dark:hover:text-white transition-colors"
+          >
+            Projects
+          </Link>
+
+          {/* THEME TOGGLE DESKTOP */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
+          </button>
         </div>
 
-        {/* BUTTON CONTACT */}
-        {/* <motion.button
-          whileHover={{ scale: 1.05 }}
-          className="hidden md:block hover:cursor-pointer bg-black text-white px-5 py-2 rounded-lg"
-          onClick={() => router.push("/auth/login")}
-        >
-          <div className="flex gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-key-square-icon lucide-key-square"
-            >
-              <path d="M12.4 2.7a2.5 2.5 0 0 1 3.4 0l5.5 5.5a2.5 2.5 0 0 1 0 3.4l-3.7 3.7a2.5 2.5 0 0 1-3.4 0L8.7 9.8a2.5 2.5 0 0 1 0-3.4z" />
-              <path d="m14 7 3 3" />
-              <path d="m9.4 10.6-6.814 6.814A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814" />
-            </svg>
-            <span>Login</span>
-          </div>
-        </motion.button> */}
-
-        {/* MOBILE BUTTON */}
-        <button className="md:hidden text-2xl" onClick={() => setOpen(!open)}>
-          {open ? <FiX /> : <FiMenu />}
-        </button>
+        {/* MOBILE BUTTONS */}
+        <div className="md:hidden flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 cursor-pointer"
+          >
+            {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
+          </button>
+          <button
+            className="text-2xl text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <FiX /> : <FiMenu />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE MENU */}
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="md:hidden flex flex-col gap-4 bg-white border-t p-6"
-        >
-          <Link href="/">Home</Link>
-          <Link href="#about">About Me</Link>
-          <Link href="#projects">Projects</Link>
-          <Link href="#faq">FAQ</Link>
-
-          <button
-            className="bg-black text-white px-5 py-2 rounded-lg w-max"
-            onClick={() => router.push("/auth/login")}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden overflow-hidden bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 shadow-xl absolute w-full"
           >
-            <div className="flex gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-key-square-icon lucide-key-square"
-              >
-                <path d="M12.4 2.7a2.5 2.5 0 0 1 3.4 0l5.5 5.5a2.5 2.5 0 0 1 0 3.4l-3.7 3.7a2.5 2.5 0 0 1-3.4 0L8.7 9.8a2.5 2.5 0 0 1 0-3.4z" />
-                <path d="m14 7 3 3" />
-                <path d="m9.4 10.6-6.814 6.814A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814" />
-              </svg>
-              <span>Login</span>
+            <div className="flex flex-col gap-4 p-6 text-gray-700 dark:text-gray-300 font-medium">
+              <Link href="/" onClick={() => setOpen(false)}>
+                Home
+              </Link>
+              <Link href="#skills" onClick={() => setOpen(false)}>
+                Skills
+              </Link>
+              <Link href="#experience" onClick={() => setOpen(false)}>
+                Experience
+              </Link>
+              <Link href="#projects" onClick={() => setOpen(false)}>
+                Projects
+              </Link>
             </div>
-          </button>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

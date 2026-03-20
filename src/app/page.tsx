@@ -14,7 +14,7 @@ export default function Home() {
       role: "DevOps Engineer",
       start_date: "Feb 2024",
       end_date: "Feb 2025",
-      company_name: "PT. Nashta Global Utama",
+      company_name: "PT. Maju Gemilang Indotech",
       type: "Remote Fulltime",
       description: "",
       list_task: [
@@ -23,7 +23,7 @@ export default function Home() {
         "Deploy frontend and backend applications to the production environment, ensuring that all components function properly and are well-integrated.",
         "Distribute mobile applications to the Play Store and App Store, following the guidelines set by each platform to ensure a smooth upload process.",
         "Manage servers on AWS, leveraging available services to ensure the scalability and security of applications.",
-        "Collaborate with the development team to address any issues that arise with the applications, ensuring timely resolutions and maintaining overall system stability.",
+        "Collaborate with the development team to address any issues that arise with the applications.",
       ],
     },
     {
@@ -41,21 +41,19 @@ export default function Home() {
         "Ensure seamless integration between the backend, frontend, and mobile applications.",
         "Involved in the development of a microservices-based backend architecture for Nashtanet, an internal ERP application.",
         "Migrate applications from NestJS to Go, ensuring a smooth transition and improved performance.",
-        "Implement fixes in the legacy code during the migration process to enhance functionality and maintain stability.",
       ],
     },
     {
       role: "BackEnd Developer",
       start_date: "Jun 2022",
       end_date: "Des 2022",
-      company_name: "MG Indotech",
+      company_name: "PT. Maju Gemilang Indotech",
       type: "Fulltime",
       description: "",
       list_task: [
-        "play a key role in the development of the application architecture for the BMS system, which operates in the property sector to manage apartments.",
+        "Play a key role in the development of the application architecture for the BMS system.",
         "Ensure seamless integration of the application from the back-end to the front-end and mobile platforms.",
         "Design and develop applications with a focus on simplifying maintenance and enhancing efficiency.",
-        "Address and resolve errors that could cause the application to crash or malfunction.",
         "Deploy the applications to the production stage, ensuring they are stable and ready for use.",
       ],
     },
@@ -69,21 +67,20 @@ export default function Home() {
       list_task: [
         "Solve internet connection problems to ensure users have reliable access to online resources.",
         "Troubleshoot devices' internet connections, identifying and resolving issues to restore connectivity.",
-        "Regularly check internet connections to proactively identify potential issues before they affect users..",
-        "Maintain telephone cable equipment to ensure optimal performance and reliability of communication systems.",
+        "Maintain telephone cable equipment to ensure optimal performance.",
       ],
     },
     {
       role: "IT Support",
       start_date: "Oct 2019",
       end_date: "Nov 2019",
-      company_name: "PT. Urgensi  Inovasi Dunia",
+      company_name: "PT. Urgensi Inovasi Dunia",
       type: "Internship",
       description: "",
       list_task: [
         "Build the Battery Healthy website to provide users with valuable information and resources.",
         "Create corporate documentaries to showcase the company's initiatives and achievements.",
-        "Edit videos and upload them to YouTube, ensuring high-quality content is available for our audience.",
+        "Edit videos and upload them to YouTube.",
       ],
     },
     {
@@ -95,9 +92,6 @@ export default function Home() {
       description: "",
       list_task: [
         "Solve internet connection problems to ensure users have reliable access to online services.",
-        "Troubleshoot devices' internet connections, diagnosing and resolving issues to restore connectivity.",
-        "Regularly check internet connections to proactively identify and address potential issues.",
-        "Maintain telephone cable equipment to ensure optimal performance and reliability of communication systems.",
         "Installation telephone lines to support effective communication within the organization.",
       ],
     },
@@ -119,15 +113,16 @@ export default function Home() {
       description: "",
     },
   ];
+
   return (
-    <main className="w-full min-h-screen bg-gray-50 scrollbar-hide">
+    <main className="w-full min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-x-hidden selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-300">
       <Navbar />
       <Hero />
       <Skills />
       <Experience initiateData={experiences} />
       <Education initiateData={educations} />
-      {/* <Projects /> */}
-      {/* <Testimonials /> */}
+      <Projects />
+      <Testimonials />
       <Footer />
     </main>
   );
