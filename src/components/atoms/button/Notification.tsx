@@ -21,34 +21,40 @@ const Notification = () => {
 
   return (
     <div className="relative" ref={notifRef}>
+      {/* Tombol Lonceng: Ditambahkan dark:bg-zinc-700 dark:hover:bg-zinc-600 */}
       <div
-        className="relative h-10 w-10 bg-white shadow-xs hover:bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer transition-all"
+        className="relative h-10 w-10 bg-white dark:bg-zinc-700 shadow-xs hover:bg-gray-100 dark:hover:bg-zinc-600 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300"
         onClick={() => {
           setOpenNotif(!openNotif);
         }}
       >
-        <IoNotificationsOutline fontSize={20} className="text-gray-700" />
+        <IoNotificationsOutline
+          fontSize={20}
+          className="text-gray-700 dark:text-zinc-200"
+        />
 
         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
           {initiateDataNotifications.length}
         </span>
       </div>
 
-      {/* Notif dropdown */}
+      {/* Notif dropdown: Menggunakan shadow-xl, tanpa border tambahan, background menyesuaikan dark mode */}
       {openNotif && (
-        <div className="absolute top-12 right-0 w-72 bg-white border border-gray-200 rounded-md shadow-lg p-3 z-50 animate-fadeIn">
+        <div className="absolute top-12 right-0 w-72 bg-white dark:bg-zinc-800 rounded-md shadow-xl p-3 z-50 animate-fadeIn transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold ">Notifications</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+              Notifications
+            </h2>
 
-            <button className="text-xs text-blue-600 hover:underline cursor-pointer">
+            <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
               Mark as read
             </button>
           </div>
 
           <div className="max-h-60 overflow-y-auto space-y-2">
             {initiateDataNotifications.length === 0 ? (
-              <div className="p-2 rounded-md cursor-pointer flex justify-center items-center gap-2 flex-col">
-                <p className="text-gray-700">
+              <div className="p-2 rounded-md flex justify-center items-center gap-2 flex-col">
+                <p className="text-gray-700 dark:text-zinc-400">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="40"
@@ -65,22 +71,23 @@ const Notification = () => {
                     <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
                   </svg>
                 </p>
-                <span className="text-xs text-gray-400">
-                  There's are not notification
+                <span className="text-xs text-gray-400 dark:text-zinc-500">
+                  There are no notifications
                 </span>
               </div>
             ) : (
               Array(5)
                 .fill(null)
                 .map((_, i) => (
+                  // Item List Notifikasi: Menggunakan bg alternatif tipis untuk dark mode tanpa border
                   <div
                     key={i}
-                    className="p-2 rounded-md border border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    className="p-2 rounded-md bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-colors duration-200"
                   >
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-zinc-300">
                       Pesan notifikasi ke-{i + 1}
                     </p>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500">
                       2 minutes ago
                     </span>
                   </div>

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* KUNCI UTAMA TAILWIND v4: Beritahu compiler untuk menggunakan class .dark */
+@variant dark (&:where(.dark, .dark *));
+
 /* Hide scrollbar but keep scroll functionality */
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
@@ -98,4 +101,38 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out;
+}
+
+/* Mengunci paksa agar posisi scroll tidak di-reset otomatis saat DOM berubah */
+.lock-scroll-position {
+  scroll-behavior: auto !important;
+  scroll-restoration: manual !important;
+}
+
+/* PRESET UNTUK RECHART */
+@layer utilities {
+  /* Menghilangkan outline focus pada kontainer utama Recharts */
+  .recharts-wrapper,
+  .recharts-surface,
+  .recharts-wrapper *,
+  .recharts-surface * {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Menghilangkan ring fokus biru pada elemen path/grup internal Recharts saat diklik */
+  .recharts-radial-bar-background-sector,
+  .recharts-radar-polygon,
+  .recharts-polygon,
+  g:focus,
+  path:focus {
+    outline: none !important;
+  }
+}
+
+/* Menghilangkan border biru saat grafik Recharts diklik */
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-surface * :focus {
+  outline: none !important;
 }

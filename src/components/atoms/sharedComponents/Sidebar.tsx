@@ -1,68 +1,66 @@
 "use client";
 
-import menuGroups from "@/utils/menuGroups";
+import { menuGroups, MenuGroup, MenuItem } from "@/utils/menuGroups";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
-interface MenuGroup {
-  title: string;
-  menu_items: MenuItem[];
-}
-
-interface MenuItem {
-  icon: React.ReactNode;
-  name: string;
-  path: string;
-  children: SubmenuItem[];
-}
-
-interface SubmenuItem {
-  icon: React.ReactNode;
-  name: string;
-  path: string;
-}
+// KUNCI UTAMA: Menyimpan state di memory global browser (di luar komponen)
+let globalOpenKey: string | null = null;
+let globalCollapsed: boolean = false;
 
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [openKey, setOpenKey] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState<boolean>(false);
 
-  // ⭐ Auto-open parent jika child aktif
+  const [openKey, setOpenKeyState] = useState<string | null>(globalOpenKey);
+  const [collapsed, setCollapsedState] = useState<boolean>(globalCollapsed);
+
+  const setOpenKey = (key: string | null) => {
+    globalOpenKey = key;
+    setOpenKeyState(key);
+  };
+
+  const setCollapsed = (val: boolean) => {
+    globalCollapsed = val;
+    setCollapsedState(val);
+  };
+
+  // Auto-open parent jika child aktif
   useEffect(() => {
+    let foundKey: string | null = null;
+
     menuGroups.forEach((group, gIndex) => {
       group.menu_items.forEach((item: MenuItem, iIndex: number) => {
         const key = `${gIndex}-${iIndex}`;
 
         if (item.path === pathname && item.children.length === 0) {
-          setOpenKey(null);
+          foundKey = null;
         }
 
         if (item.children?.some((child) => child.path === pathname)) {
-          setOpenKey(key);
+          foundKey = key;
         }
       });
     });
+
+    setOpenKey(foundKey);
   }, [pathname]);
 
   const toggleParent = (key: string, hasChild: boolean, item: MenuItem) => {
-    // Jika collapsed → expand dahulu
     if (collapsed) {
       setCollapsed(false);
       if (hasChild) setOpenKey(key);
-      else router.push(item.path);
+      else router.push(item.path, { scroll: false });
       return;
     }
 
-    // Jika tidak punya child → langsung push
     if (!hasChild) {
-      router.push(item.path);
+      router.push(item.path, { scroll: false });
       return;
     }
 
-    // Jika punya child → toggle
     setOpenKey(openKey === key ? null : key);
   };
 
@@ -80,30 +78,37 @@ const Sidebar = () => {
   };
 
   return (
+    // PERUBAHAN 1: Ditambahkan dark:bg-zinc-800, dark:border-zinc-700 untuk kontainer utama sidebar
     <div
-      className={`max-w-xs h-screen  bg-white flex flex-col gap-4 transition-all duration-300 
+      className={`max-w-xs h-screen bg-white dark:bg-zinc-800 flex flex-col gap-4 transition-all duration-300 border-r border-gray-100 dark:border-zinc-700
       ${collapsed ? "w-20" : "w-88"}`}
     >
       {/* === LOGO === */}
       <div
-        className="flex items-center px-2 py-4 hover:cursor-pointer gap-2"
+        className="flex items-center px-4 py-5 hover:cursor-pointer gap-2"
         onClick={toggleSidebarFromLogo}
       >
         <Image
           src="/assets/logo/default-logo.png"
           alt="Logo"
           width={collapsed ? 40 : 50}
-          height={collapsed ? 40 : 100}
+          height={40}
         />
-        {!collapsed && <h2 className="text-2xl font-bold mb-4">Journey</h2>}
+        {!collapsed && (
+          // PERUBAHAN 2: Ditambahkan dark:text-zinc-100 pada teks judul logo
+          <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-zinc-100">
+            Journey
+          </h2>
+        )}
       </div>
 
       {/* === MENU === */}
-      <div className="overflow-x-scroll">
-        {menuGroups.map((group: MenuGroup, groupIndex) => (
-          <div key={groupIndex} className="space-y-2 mb-4">
+      <div className="overflow-y-auto flex-1 px-2">
+        {menuGroups.map((group: MenuGroup, groupIndex: number) => (
+          <div key={groupIndex} className="space-y-1 mb-4">
             {!collapsed && (
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
+              // PERUBAHAN 3: Ditambahkan dark:text-zinc-500 pada judul kelompok menu (Overview, General, dll)
+              <h3 className="text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider px-3 mb-2">
                 {group.title}
               </h3>
             )}
@@ -111,36 +116,51 @@ const Sidebar = () => {
             {group.menu_items.map((item: MenuItem, itemIndex: number) => {
               const key = `${groupIndex}-${itemIndex}`;
               const isOpen = openKey === key;
-              const hasChild = item.children.length > 0;
+              const hasChild = item.children && item.children.length > 0;
 
               const isParentActive =
                 item.path === pathname && item.children.length === 0;
 
-              const isChildActive = item.children?.some(
+              const anyChildActive = item.children?.some(
                 (child) => child.path === pathname,
               );
 
               return (
-                <div key={key} className="flex flex-col px-2">
+                <div key={key} className="flex flex-col">
                   {/* === PARENT === */}
+                  {/* PERUBAHAN 4: Modifikasi warna active & hover parent menu (Menggunakan bg-zinc-700 & text-white untuk dark mode aktif) */}
                   <div
                     onClick={() => toggleParent(key, hasChild, item)}
-                    className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-100 cursor-pointer
+                    className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all duration-200
                       ${collapsed ? "justify-center" : ""}
-                      ${isParentActive ? "bg-gray-100 font-semibold" : ""}
+                      ${
+                        isParentActive || anyChildActive
+                          ? "bg-gray-100 text-gray-900 font-semibold dark:bg-zinc-700 dark:text-white"
+                          : "text-gray-700 hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
+                      }
                     `}
                   >
-                    <div className="flex items-center gap-2">
-                      {item.icon}
-                      {!collapsed && <span>{item.name}</span>}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={
+                          isParentActive || anyChildActive
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-500 dark:text-zinc-400"
+                        }
+                      >
+                        {item.icon}
+                      </div>
+                      {!collapsed && (
+                        <span className="text-sm">{item.name}</span>
+                      )}
                     </div>
 
                     {!collapsed && hasChild && (
-                      <span>
+                      <span className="text-gray-400 dark:text-zinc-500">
                         {isOpen ? (
-                          <FaChevronDown fontSize={14} />
+                          <FaChevronDown size={12} />
                         ) : (
-                          <FaChevronUp fontSize={14} />
+                          <FaChevronUp size={12} />
                         )}
                       </span>
                     )}
@@ -148,34 +168,71 @@ const Sidebar = () => {
 
                   {/* === CHILDREN === */}
                   {!collapsed && isOpen && hasChild && (
-                    <div className="relative ml-5 flex flex-col">
+                    <div className="relative ml-6 mt-0.5 flex flex-col">
                       {item.children.map((child, childIndex) => {
                         const isActiveChild = pathname === child.path;
                         const isLast = childIndex === item.children.length - 1;
 
+                        const activeChildIndex = item.children.findIndex(
+                          (c) => c.path === pathname,
+                        );
+
+                        const isVerticalTopActive =
+                          isActiveChild || activeChildIndex > childIndex;
+
+                        const isVerticalBottomActive =
+                          !isLast && activeChildIndex > childIndex;
+
                         return (
-                          <div key={childIndex} className="relative pl-4">
-                            {/* === GARIS VERTICAL ( | ) === */}
-                            <span
-                              className={`absolute left-0 top-0 w-px bg-[#3a3a3a] opacity-60 ${
-                                isLast ? "h-5" : "h-full"
+                          <div
+                            key={childIndex}
+                            className="relative flex items-center w-full h-10 pl-6"
+                          >
+                            {/* === GARIS VERTIKAL JALUR KONTINU === */}
+                            {/* PERUBAHAN 5: Menambahkan warna garis vertikal versi dark mode (dark:bg-zinc-500 & dark:bg-zinc-700) */}
+                            <div className="absolute left-0 w-0.5 h-full flex flex-col">
+                              <div
+                                className={`w-full h-1/2 transition-all duration-200 ${
+                                  isVerticalTopActive
+                                    ? "bg-gray-600 dark:bg-zinc-400"
+                                    : "bg-gray-200 dark:bg-zinc-700"
+                                }`}
+                              />
+                              <div
+                                className={`w-full h-1/2 transition-all duration-200 ${
+                                  isLast
+                                    ? "bg-transparent"
+                                    : isVerticalBottomActive
+                                      ? "bg-gray-600 dark:bg-zinc-400"
+                                      : "bg-gray-200 dark:bg-zinc-700"
+                                }`}
+                              />
+                              <div className="h-0.5"></div>
+                            </div>
+
+                            {/* === GARIS HORIZONTAL SIKU === */}
+                            {/* PERUBAHAN 6: Menambahkan warna siku horizontal versi dark mode */}
+                            <div
+                              className={`absolute w-4 h-0.5 top-1/2 -translate-y-1/2 transition-all duration-200 ${
+                                isActiveChild
+                                  ? "bg-gray-600 dark:bg-zinc-400 left-0"
+                                  : "bg-gray-200 dark:bg-zinc-700 left-0.5"
                               }`}
-                            ></span>
+                            />
 
-                            {/* === GARIS HORIZONTAL ( ─ ) === */}
-                            <span className="absolute left-0 top-4 w-4 h-px bg-[#3a3a3a] opacity-60"></span>
-
-                            {/* === ITEM CHILD === */}
+                            {/* === ITEM LINK CHILD === */}
+                            {/* PERUBAHAN 7: Menambahkan warna background aktif & hover teks child item versi dark mode */}
                             <div
                               onClick={() => {
                                 expandIfCollapsed();
-                                router.push(child.path);
+                                router.push(child.path, { scroll: false });
                               }}
-                              className={`flex items-center gap-2 p-2 text-sm rounded-md hover:bg-gray-100 cursor-pointer${
-                                isActiveChild ? "bg-gray-100 font-semibold" : ""
+                              className={`flex items-center w-full px-3 py-2.5 text-xs rounded-md cursor-pointer transition-all duration-200 ${
+                                isActiveChild
+                                  ? "bg-gray-200/70 text-gray-900 font-bold dark:bg-zinc-700 dark:text-white"
+                                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-700/30"
                               }`}
                             >
-                              {child.icon}
                               <span>{child.name}</span>
                             </div>
                           </div>
@@ -193,7 +250,8 @@ const Sidebar = () => {
       {/* === FOOTER === */}
       {!collapsed && (
         <div className="mt-auto">
-          <div className="w-full p-4 bg-gray-800 text-white shadow-lg flex flex-col items-center justify-center transition-all duration-300">
+          {/* PERUBAHAN 8: Menambahkan border atas dark mode (dark:border-zinc-700) jika diperlukan, background footer tetap konstan gelap */}
+          <div className="w-full p-4 bg-gray-800 text-white shadow-lg flex flex-col items-center justify-center transition-all duration-300 border-t dark:border-zinc-700/50">
             <div className="text-sm font-semibold tracking-wide">
               © {new Date().getFullYear()}{" "}
               <a

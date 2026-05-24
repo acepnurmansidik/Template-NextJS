@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { FaChevronRight } from "react-icons/fa";
 import { LuSun, LuMoon } from "react-icons/lu";
 import Notification from "../button/Notification";
@@ -9,46 +9,51 @@ import LogOut from "../button/LogOut";
 
 const Navbar = () => {
   const pathname = usePathname();
-
   const [darkMode, setDarkMode] = useState(false);
-
-  // animasi matahari/bulan
   const [anim, setAnim] = useState<
     "sunrise" | "sunset" | "moonrise" | "moonset" | null
   >(null);
 
-  /* Load theme */
+  /* Inisialisasi Tema */
   useEffect(() => {
-    const saved = localStorage.getItem("theme") || "light";
-    const isDark = saved === "dark";
-    setDarkMode(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
+    const saved = localStorage.getItem("theme");
+    const isDark =
+      saved === "dark" ||
+      (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    // animasi awal
-    setAnim(isDark ? "moonrise" : "sunrise");
+    setDarkMode(isDark);
+
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      setAnim("moonrise");
+    } else {
+      document.documentElement.classList.remove("dark");
+      setAnim("sunrise");
+    }
   }, []);
 
-  /* Toggle theme with animation */
+  /* Aksi klik Toggle Tema */
   const toggleTheme = () => {
     const newTheme = !darkMode;
     setDarkMode(newTheme);
 
-    // Update class di html
-    document.documentElement.classList.toggle("dark", newTheme);
+    const root = window.document.documentElement;
 
-    // Simpan ke localStorage
-    localStorage.setItem("theme", newTheme ? "dark" : "light");
-
-    // Animasi icon
     if (newTheme) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
       setAnim("moonrise");
     } else {
+      root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
       setAnim("sunrise");
     }
   };
 
   return (
-    <div className="w-full py-3 px-5 flex gap-4 justify-between items-center relative transition-all duration-300">
+    // PERUBAHAN 1: Ditambahkan bg-white & border bawah yang dinamis (dark:bg-zinc-800 dark:border-zinc-700)
+    <div className="w-full py-3 px-5 flex gap-4 justify-between items-center relative  transition-all duration-300">
+      {/* === BREADCRUMB SECTION === */}
       <div className="flex items-center gap-2 text-sm">
         {pathname
           .trim()
@@ -59,25 +64,26 @@ const Navbar = () => {
 
               return (
                 <div key={itemPath} className="flex items-center gap-2">
-                  {/* Separator "/" kecuali item pertama */}
+                  {/* Separator "/" */}
                   {index !== 0 && (
-                    <span className="text-gray-400 dark:text-gray-500">
+                    <span className="text-gray-400 dark:text-zinc-500">
                       <FaChevronRight size={10} />
                     </span>
                   )}
 
                   {/* Label breadcrumb */}
+                  {/* PERUBAHAN 2: Penyesuaian warna teks aktif & pasif untuk dark mode */}
                   <span
                     className={`
-                capitalize transition-all duration-200
-                ${
-                  isLast
-                    ? "text-gray-900 font-semibold"
-                    : "text-gray-500 cursor-pointer"
-                }
-              `}
+                      capitalize transition-all duration-200
+                      ${
+                        isLast
+                          ? "text-gray-900 dark:text-zinc-100 font-semibold"
+                          : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 cursor-pointer"
+                      }
+                    `}
                   >
-                    {itemPath || "/"}
+                    {itemPath.replaceAll("-", " ") || "/"}
                   </span>
                 </div>
               );
@@ -85,40 +91,13 @@ const Navbar = () => {
           })}
       </div>
 
-      {/* ========================== ICON ANIMASI TERBIT/TERBENAM =========================== */}
-      {/* <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-        {anim === "sunrise" && (
-          <LuSun
-            size={32}
-            className="text-yellow-400 animate-[sunRise_0.7s_ease-out]"
-          />
-        )}
-        {anim === "sunset" && (
-          <LuSun
-            size={32}
-            className="text-yellow-400 animate-[sunSet_0.6s_ease-in]"
-          />
-        )}
-
-        {anim === "moonrise" && (
-          <LuMoon
-            size={32}
-            className="text-blue-300 animate-[moonRise_0.7s_ease-out]"
-          />
-        )}
-        {anim === "moonset" && (
-          <LuMoon
-            size={32}
-            className="text-blue-300 animate-[moonSet_0.6s_ease-in]"
-          />
-        )}
-      </div> */}
-
+      {/* === ACTION BUTTONS SECTION === */}
       <div className="flex gap-3 items-center">
         {/* ========================== TOGGLE THEME =========================== */}
+        {/* PERUBAHAN 3: Tombol diubah warna dasarnya saat dark (dark:bg-zinc-700 dark:hover:bg-zinc-600) */}
         <button
           onClick={toggleTheme}
-          className="h-10 w-10 rounded-lg bg-white shadow-xs hover:bg-gray-200 cursor-pointer flex items-center justify-center transition-all duration-300"
+          className="h-10 w-10 rounded-lg bg-white dark:bg-zinc-700 shadow-xs dark:border-zinc-600 hover:bg-gray-100 dark:hover:bg-zinc-600 cursor-pointer flex items-center justify-center transition-all duration-300"
         >
           <div
             className={`transition-transform duration-500 ${
@@ -126,9 +105,11 @@ const Navbar = () => {
             }`}
           >
             {darkMode ? (
-              <LuMoon size={22} className="text-blue-300" />
+              // Ikon Bulan diubah warnanya menjadi kuning neon lembut agar kontras dan terbaca di dark mode
+              <LuMoon size={22} className="text-yellow-300" />
             ) : (
-              <LuSun size={22} className="text-yellow-400" />
+              // Ikon Matahari tetap oranye hangat untuk light mode
+              <LuSun size={22} className="text-orange-500" />
             )}
           </div>
         </button>

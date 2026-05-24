@@ -18,22 +18,27 @@ const LogOut = () => {
 
   return (
     <div
-      className="relative flex items-center gap-2 cursor-pointer"
+      className="relative flex items-center gap-2 cursor-pointer select-none"
       ref={logoutRef}
       onClick={() => {
         setOpenLogout(!openLogout);
       }}
     >
-      <div className="h-10 w-10 rounded-lg text-center flex items-center justify-center bg-white shadow-xs font-semibold">
+      {/* Avatar Box: Ditambahkan dark:bg-zinc-700 dark:text-zinc-100 */}
+      <div className="h-10 w-10 rounded-lg text-center flex items-center justify-center bg-white dark:bg-zinc-700 shadow-xs text-gray-900 dark:text-zinc-100 font-semibold transition-colors duration-300">
         AN
       </div>
 
-      <h1 className="text-lg font-semibold ">Hola, acep</h1>
+      {/* Nama User: Ditambahkan dark:text-zinc-200 */}
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-zinc-200 hidden sm:block">
+        Hola, acep
+      </h1>
 
+      {/* Logout Dropdown: Menggunakan shadow-xl tanpa border, background menyesuaikan tema */}
       {openLogout && (
-        <div className="absolute top-12 shadow-xs right-0 bg-white rounded-md p-2 w-40 animate-fadeIn z-50">
-          <button className="w-full flex gap-2 items-center p-2 rounded-md text-sm hover:bg-gray-100 ">
-            <ImExit fontSize={18} />
+        <div className="absolute top-12 shadow-xl right-0 bg-white dark:bg-zinc-800 rounded-md p-1.5 w-40 animate-fadeIn z-50 transition-all duration-300">
+          <button className="w-full flex gap-2 items-center p-2 rounded-md text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200 cursor-pointer">
+            <ImExit fontSize={16} />
             <span>Logout</span>
           </button>
         </div>
