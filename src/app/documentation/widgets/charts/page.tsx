@@ -10,81 +10,6 @@ import StandartChartLine from "./standartChartLine";
 import ChartBar from "./chartBar";
 import ChartLineArea from "./chartLineArea";
 
-const data: any[] = [
-  {
-    name: "Daniel Moore",
-    tag: "Prospect",
-    tagColor: "bg-gray-200 text-gray-700 dark:bg-zinc-700 dark:text-zinc-300",
-    company: "Globex",
-    email: "DanielMore887@yahoo.com",
-    phone: "+(234) 708724513",
-    time: "2 days ago",
-    cards: [
-      "Visa Debit",
-      "Mastercard Credit",
-      "American Express Credit",
-      "JCB Debit",
-    ],
-  },
-  {
-    name: "Anna Daniels",
-    tag: "Customer",
-    tagColor:
-      "bg-green-100 text-green-700 dark:bg-emerald-950/40 dark:text-emerald-400",
-    company: "Indigo",
-    email: "Anna-Dan@hotmail.com",
-    phone: "+1(563) 708 724 513",
-    time: "1 days ago",
-    cards: ["Mastercard Debit", "Visa Credit", "Discover Credit"],
-  },
-  {
-    name: "Susan Bella",
-    tag: "Lead",
-    tagColor:
-      "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
-    company: "Xepta",
-    email: "Sus7667@yahoo.com",
-    phone: "+ 19 (67) 288 3825",
-    time: "2days ago",
-    cards: [
-      "Visa Debit",
-      "Mastercard Credit",
-      "Diners Club Credit",
-      "UnionPay Debit",
-      "American Express Credit",
-    ],
-  },
-  {
-    name: "Susan Bella",
-    tag: "Lead",
-    tagColor:
-      "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
-    company: "Xepta",
-    email: "Sus7667@yahoo.com",
-    phone: "+ 19 (67) 288 3825",
-    time: "2days ago",
-    cards: ["Visa Credit", "Mastercard Debit", "UnionPay Credit"],
-  },
-  {
-    name: "Susan Bella",
-    tag: "Lead",
-    tagColor:
-      "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
-    company: "Xepta",
-    email: "Sus7667@yahoo.com",
-    phone: "+ 19 (67) 288 3825",
-    time: "2days ago",
-    cards: [
-      "Visa Debit",
-      "Mastercard Credit",
-      "JCB Credit",
-      "Discover Credit",
-      "American Express Credit",
-      "UnionPay Debit",
-    ],
-  },
-];
-
 const Page = () => {
   return (
     <CMSLayout>
@@ -150,7 +75,7 @@ const Page = () => {
               <div className="flex flex-col items-center justify-center my-1">
                 <div className="relative w-24 h-12 overflow-hidden flex items-end justify-center">
                   <div className="absolute inset-0 border-8 border-gray-100 dark:border-zinc-700 rounded-full"></div>
-                  <div className="absolute inset-0 border-8 border-green-500 rounded-full border-b-transparent border-r-transparent rotate-[45deg]"></div>
+                  <div className="absolute inset-0 border-8 border-green-500 rounded-full border-b-transparent border-r-transparent rotate-45"></div>
                   <span className="text-lg font-bold text-gray-900 dark:text-zinc-100 z-10">
                     68%
                   </span>

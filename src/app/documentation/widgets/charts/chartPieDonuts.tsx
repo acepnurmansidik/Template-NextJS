@@ -1,7 +1,32 @@
 import { formatCurrencyPure } from "@/utils/formatter";
-
-// Import komponen lengkap dari recharts
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700/80 p-3 rounded-xl shadow-lg transition-colors duration-200">
+        <p className="text-[11px] font-bold text-gray-600 dark:text-zinc-400 mb-1.5">
+          {data.name}
+        </p>
+        <div className="flex items-center gap-2">
+          {/* Menggunakan item.fill untuk warna PieChart */}
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: data.payload.fill }}
+          />
+          <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
+            Value:
+          </span>
+          <span className="text-xs font-bold text-blue-500 dark:text-blue-400">
+            {formatCurrencyPure(Number(data.value || 0))}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 const ChartPieDonuts = () => {
   const COLORS = ["#3b82f6", "#10b981", "#f97316"];
@@ -20,9 +45,8 @@ const ChartPieDonuts = () => {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip
-              formatter={(value: any) => [
-                formatCurrencyPure(Number(value || 0)),
-              ]}
+              content={<CustomTooltip />}
+              cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }}
             />
             {/* Inner Pie (Pie biasa) */}
             <Pie

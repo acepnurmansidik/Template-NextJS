@@ -1,5 +1,7 @@
+"use client";
+
 import { formatCurrencyPure } from "@/utils/formatter";
-// Import komponen lengkap dari recharts
+import { CHART_COLORS } from "@/utils/utils";
 import {
   Tooltip,
   ResponsiveContainer,
@@ -11,72 +13,84 @@ import {
   Radar,
 } from "recharts";
 
-const ChartRadar = () => {
-  const performanceData = [
-    { title: "Sales", A: 120, B: 110, fullMark: 150 },
-    { title: "Marketing", A: 98, B: 130, fullMark: 150 },
-    { title: "Support", A: 86, B: 130, fullMark: 150 },
-    { title: "Tech", A: 99, B: 100, fullMark: 150 },
-    { title: "Operations", A: 85, B: 90, fullMark: 150 },
-    { title: "Product", A: 65, B: 85, fullMark: 150 },
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700/80 p-3 rounded-xl shadow-lg transition-colors duration-200">
+        <p className="text-[11px] font-bold text-gray-600 dark:text-zinc-400 mb-1.5">
+          {label}
+        </p>
+        {payload.map((item: any, index: number) => (
+          <div key={index} className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: item.stroke }}
+            />
+            <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
+              {item.name}:
+            </span>
+            <span className="text-xs font-bold text-blue-500 dark:text-blue-400">
+              {formatCurrencyPure(Number(item.value || 0))}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+interface DataProps {
+  initiateData?: any[];
+}
+
+const ChartRadar = ({ initiateData = [] }: DataProps) => {
+  const defaultData = [
+    { name: "Sales", A: 120, B: 110 },
+    { name: "Marketing", A: 98, B: 130 },
+    { name: "Support", A: 86, B: 130 },
+    { name: "Tech", A: 99, B: 100 },
+    { name: "Operations", A: 85, B: 90 },
+    { name: "Product", A: 65, B: 85 },
   ];
+
+  const chartData = initiateData.length > 0 ? initiateData : defaultData;
+
+  const dataKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
+
   return (
-    <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs">
+    <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs transition-colors duration-200">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-4">
         Team Performance (Radar Chart)
       </span>
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart
-            cx="50%"
-            cy="50%"
-            outerRadius="70%"
-            data={performanceData}
-          >
-            {/* Komponen pembentuk grid & axis - Cukup ditulis satu kali */}
+          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
             <PolarGrid stroke="#e5e7eb" className="dark:stroke-zinc-700" />
             <PolarAngleAxis
-              dataKey="title"
+              dataKey="name"
               tick={{ fontSize: 9, fill: "#9ca3af" }}
             />
             <PolarRadiusAxis
               angle={30}
               domain={[0, 150]}
-              tick={{ fontSize: 8 }}
+              tick={{ fontSize: 8, fill: "#9ca3af" }}
             />
 
-            {/* Dataset A (Biru) */}
-            <Radar
-              name="A"
-              dataKey="A"
-              stroke="#3b82f6"
-              fill="#3b82f6"
-              fillOpacity={0.3}
-            />
+            {/* Render Radar secara dinamis berdasarkan key yang ditemukan */}
+            {dataKeys.map((key, index) => (
+              <Radar
+                key={key}
+                name={key}
+                dataKey={key}
+                stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                fillOpacity={0.3}
+              />
+            ))}
 
-            {/* Dataset B (Hijau) */}
-            <Radar
-              name="B"
-              dataKey="B"
-              stroke="#82ca9d"
-              fill="#82ca9d"
-              fillOpacity={0.3}
-            />
-
-            {/* Tooltip & Legend - Cukup satu kali */}
-            <Tooltip
-              formatter={(value: any, name: any) => [
-                formatCurrencyPure(Number(value || 0)),
-                String(name || ""), // Memastikan nilainya selalu bertipe string aman
-              ]}
-              contentStyle={{
-                fontSize: "11px",
-                borderRadius: "6px",
-                backgroundColor: "rgba(255,255,255,0.95)",
-                border: "1px solid #e5e7eb",
-              }}
-            />
-            <Legend wrapperStyle={{ fontSize: "10px" }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: "10px", paddingTop: "10px" }} />
           </RadarChart>
         </ResponsiveContainer>
       </div>

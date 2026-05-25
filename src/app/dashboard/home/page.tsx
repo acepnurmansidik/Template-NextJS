@@ -475,7 +475,7 @@ const Page = () => {
               <div className="flex flex-col items-center justify-center my-1">
                 <div className="relative w-24 h-12 overflow-hidden flex items-end justify-center">
                   <div className="absolute inset-0 border-8 border-gray-100 dark:border-zinc-700 rounded-full"></div>
-                  <div className="absolute inset-0 border-8 border-green-500 rounded-full border-b-transparent border-r-transparent rotate-[45deg]"></div>
+                  <div className="absolute inset-0 border-8 border-green-500 rounded-full border-b-transparent border-r-transparent rotate-45"></div>
                   <span className="text-lg font-bold text-gray-900 dark:text-zinc-100 z-10">
                     68%
                   </span>

@@ -136,3 +136,19 @@
 .recharts-surface * :focus {
   outline: none !important;
 }
+
+/* Mengubah icon kotak item di dalam Tooltip Recharts menjadi bulat */
+.recharts-tooltip-item-marker {
+  border-radius: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* Sembunyikan scrollbar tapi tetap bisa di-scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

@@ -323,16 +323,16 @@ export const menuGroups: MenuGroup[] = [
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-asterisk"
+            className="lucide lucide-layout-panel-left-icon lucide-layout-panel-left"
           >
-            <path d="M12 6v12" />
-            <path d="M17.196 9 6.804 15" />
-            <path d="m6.804 9 10.392 6" />
+            <rect width="7" height="18" x="3" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="14" rx="1" />
           </svg>
         ),
-        name: "Misc",
-        path: "/documentation/misc",
-        children: [],
+        name: "Widgets",
+        path: "/documentation/widgets",
+        children: [{ name: "Charts", path: "/documentation/widgets/charts" }],
       },
       {
         icon: (
@@ -346,16 +346,16 @@ export const menuGroups: MenuGroup[] = [
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-layout-panel-left-icon lucide-layout-panel-left"
+            className="lucide lucide-asterisk"
           >
-            <rect width="7" height="18" x="3" y="3" rx="1" />
-            <rect width="7" height="7" x="14" y="3" rx="1" />
-            <rect width="7" height="7" x="14" y="14" rx="1" />
+            <path d="M12 6v12" />
+            <path d="M17.196 9 6.804 15" />
+            <path d="m6.804 9 10.392 6" />
           </svg>
         ),
-        name: "Widgets",
-        path: "/documentation/widgets",
-        children: [{ name: "Charts", path: "/documentation/widgets/chars" }],
+        name: "Misc",
+        path: "/documentation/misc",
+        children: [],
       },
     ],
   },
