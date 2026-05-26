@@ -7,6 +7,7 @@ import Projects from "@/components/etc/portofolio/Project";
 import Skills from "@/components/etc/portofolio/Skills";
 import Testimonials from "@/components/etc/portofolio/Testimonial";
 import { EducationsDaum, ExperiencesDaum } from "@/types/profile";
+import "react-select/dist/react-select.css";
 
 export default function Home() {
   const experiences: ExperiencesDaum[] = [

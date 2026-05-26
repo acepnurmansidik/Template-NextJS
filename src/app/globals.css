@@ -152,3 +152,197 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+/* DATE RANGE */
+/* Tambahkan ini di globals.css agar kalender menyesuaikan dark mode */
+.dark .rdrCalendarWrapper {
+  background-color: #18181b !important;
+  color: #e4e4e7 !important;
+}
+.dark .rdrMonth {
+  background-color: #18181b !important;
+}
+.dark .rdrDayNumber span {
+  color: #e4e4e7 !important;
+}
+.dark .rdrDayDisabled {
+  background-color: #27272a !important;
+}
+
+@layer components {
+  /* Default (Light Mode) */
+  .rdrCalendarWrapper {
+    background-color: #ffffff !important;
+    color: #18181b !important;
+  }
+  .rdrMonth {
+    background-color: #ffffff !important;
+  }
+  .rdrDayNumber span {
+    color: #18181b !important;
+  }
+  /* .rdrPprevButton,
+  .rdrNextButton {
+    background-color: #f4f4f5 !important;
+  } */
+  /* .rdrPprevButton i {
+    border-color: #18181b !important;
+  } */
+  /* .rdrNextButton i { border-color: #18181b !important; } */
+
+  /* Dark Mode */
+  .dark .rdrCalendarWrapper,
+  .dark .rdrDateDisplayWrapper,
+  .dark .rdrMonth {
+    background-color: #18181b !important;
+    color: #e4e4e7 !important;
+  }
+
+  .dark .rdrDayNumber span {
+    color: #e4e4e7 !important;
+  }
+  .dark .rdrPprevButton,
+  .dark .rdrNextButton {
+    background-color: #27272a !important;
+  }
+
+  /* MEMPERBAIKI PANAH: Jangan hapus border, cukup ganti warnanya */
+  /* .dark .rdrPprevButton i {
+    border-color: #e4e4e7 !important;
+  }
+  .dark .rdrNextButton i {
+    border-color: #e4e4e7 !important;
+  } */
+
+  /* Pastikan input header di Dark Mode */
+  .dark .rdrDateInput {
+    background-color: #27272a !important;
+    border: 1px solid #3f3f46 !important;
+  }
+  .dark .rdrDateInput input {
+    color: #e4e4e7 !important;
+  }
+}
+
+/* REACT SELECT */
+@layer components {
+  /* Setup variabel untuk dropdown */
+  :root {
+    --bg-menu: #ffffff;
+    --bg-hover: #f4f4f5;
+    --border-color: #e4e4e7;
+  }
+
+  .dark {
+    --bg-menu: #18181b; /* zinc-900 */
+    --bg-hover: #27272a; /* zinc-800 */
+    --border-color: #3f3f46; /* zinc-700 */
+  }
+
+  /* Mengatur warna teks pada tag Multi-Select */
+  .react-select__multi-value {
+    background-color: #e4e4e7 !important;
+    border-radius: 4px !important;
+  }
+  .dark .react-select__multi-value {
+    background-color: #3f3f46 !important;
+    color: #e4e4e7 !important;
+  }
+  .dark .react-select__multi-value__label {
+    color: #e4e4e7 !important;
+  }
+
+  .rs__control {
+    background-color: #ffffff !important;
+    border-color: #e4e4e7 !important;
+    border-radius: 8px !important;
+    min-height: 42px !important;
+  }
+  .dark .rs__control {
+    background-color: #18181b !important; /* Zinc-900 */
+    border-color: #3f3f46 !important; /* Zinc-700 */
+  }
+
+  /* Menu (Dropdown) */
+  .rs__menu {
+    background-color: #ffffff !important;
+    border: 1px solid #e4e4e7 !important;
+  }
+  .dark .rs__menu {
+    background-color: #18181b !important;
+    border: 1px solid #3f3f46 !important;
+  }
+
+  /* Opsi saat di-hover */
+  .rs__option--is-focused {
+    background-color: #f4f4f5 !important;
+    color: #18181b !important;
+  }
+  .dark .rs__option--is-focused {
+    background-color: #27272a !important;
+    color: #ffffff !important;
+  }
+
+  /* Input teks */
+  .rs__input {
+    color: #18181b !important;
+  }
+  .dark .rs__input {
+    color: #ffffff !important;
+  }
+
+  /* Multi-value tags */
+  .rs__multi-value {
+    background-color: #e4e4e7 !important;
+  }
+  .dark .rs__multi-value {
+    background-color: #3f3f46 !important;
+  }
+  .rs__multi-value__label {
+    color: #18181b !important;
+  }
+  .dark .rs__multi-value__label {
+    color: #ffffff !important;
+  }
+
+  .rs__control--is-focused {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 1px #3b82f6 !important;
+  }
+
+  /* Menghilangkan border aneh pada menu portal */
+  .rs__menu-portal {
+    z-index: 9999 !important;
+  }
+
+  .rs__group-heading {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #71717a !important; /* Zinc-500 */
+    padding: 8px 12px !important;
+  }
+
+  .dark .rs__group-heading {
+    color: #a1a1aa !important; /* Zinc-400 */
+  }
+
+  /* Tambahkan ini untuk mengatasi teks hitam saat data terpilih */
+  .dark .rs__single-value {
+    color: #e4e4e7 !important; /* Zinc-200 */
+  }
+
+  /* Jika menggunakan Multi-select, tambahkan juga ini */
+  .dark .rs__multi-value__label {
+    color: #e4e4e7 !important;
+  }
+
+  /* Memastikan placeholder tetap terlihat saat dark mode */
+  .dark .rs__placeholder {
+    color: #71717a !important; /* Zinc-500 */
+  }
+
+  .dark .rs__control * {
+    color: #e4e4e7 !important;
+  }
+}

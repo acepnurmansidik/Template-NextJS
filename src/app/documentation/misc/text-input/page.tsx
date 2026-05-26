@@ -5,12 +5,15 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import SearchPanelInput from "./SearchPanelInput";
-import TextInput from "./textInput";
-import NumberInput from "./numberInput";
-import TextAreaInput from "./textAreaInput";
 import NumberSeparatorInput from "./NumberSeparatorInput";
 import NumberCurrencyInput from "./NumberCurrencyInput";
 import SearchInputCustom from "./SearchInputCustom";
+import TextInput from "./textInput";
+import NumberInput from "./numberInput";
+import TextAreaInput from "./textAreaInput";
+import MultiSelect from "./MultiSelect";
+import SearchableSelect from "./SearchableSelect";
+import AsyncGroupedSelect from "./AsyncGroupedSelect";
 
 const animeList = [
   {
@@ -140,42 +143,50 @@ const Page = () => {
 
         {/* Scroll Navigation */}
         <div className="py-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            {/* MULTIPLE SELECT */}
+            <MultiSelect />
+
+            {/* MULTIPLE SELECT */}
+            <SearchableSelect />
+
+            <AsyncGroupedSelect />
+          </div>
           {/* Input Section */}
-          <div className="grid grid-cols-1 gap-3">
-            <div className="col-span-1">
-              <h2 className="font-bold">
-                <label className="text-sm font-semibold">
-                  Search Panel Input
-                </label>
-              </h2>
+          <div className="grid grid-cols-1 gap-3 mb-3">
+            <div className="group">
+              {/* Label/Tag yang Konsisten dengan Komponen Lain */}
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1.5 ml-0.5 transition-colors group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400">
+                Search Panel
+              </label>
+
               <div
-                className="relative mt-1"
+                className="relative flex items-center w-full cursor-pointer transition-all duration-200 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-full hover:border-blue-500 dark:hover:border-blue-500 shadow-sm hover:shadow-md"
                 onClick={() => setShowSearchOpen(true)}
               >
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 text-sm">
-                  <FaSearch />
+                {/* Icon Search */}
+                <span className="absolute left-4 text-zinc-400 dark:text-zinc-600">
+                  <FaSearch size={14} />
                 </span>
+
+                {/* Input Dummy */}
                 <input
                   type="text"
                   readOnly
-                  className="w-full bg-white pl-10 pr-20 py-3 border border-slate-300 outline-none rounded-full text-sm placeholder:italic"
-                  placeholder="Search here..."
+                  className="w-full bg-transparent pl-12 pr-20 py-3 text-sm outline-none cursor-pointer placeholder:italic placeholder:text-zinc-400 dark:text-zinc-100"
+                  placeholder="Search anything..."
                 />
 
-                <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 text-xs gap-2 select-none">
-                  {os === "mac" ? (
-                    <span className="hidden md:inline bg-gray-100 px-2 py-0.5 rounded">
-                      ⌘ + K
-                    </span>
-                  ) : (
-                    <span className="hidden md:inline bg-gray-100 px-2 py-0.5 rounded">
-                      Ctrl / Win + K
-                    </span>
-                  )}
+                {/* Shortcut Label */}
+                <span className="absolute right-3 flex items-center gap-2 select-none">
+                  <span className="hidden md:inline bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[10px] px-2 py-0.5 rounded-md font-mono font-bold">
+                    {os === "mac" ? "⌘ + K" : "Ctrl + K"}
+                  </span>
                 </span>
               </div>
             </div>
-
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* CUSTOM SEARCH INPUT WITH DROPDOWN */}
             <SearchInputCustom />
 
@@ -185,14 +196,14 @@ const Page = () => {
             {/* NUMBER INPUT */}
             <NumberInput />
 
-            {/* TEXT AREA */}
-            <TextAreaInput />
-
             {/* NUMBER INPUT WITH THOUSAND SEPARATOR */}
             <NumberSeparatorInput />
 
             {/* NUMBER INPUT WITH CURRENCY FORMAT */}
             <NumberCurrencyInput country={"en-US"} />
+
+            {/* TEXT AREA */}
+            <TextAreaInput />
           </div>
         </div>
       </div>

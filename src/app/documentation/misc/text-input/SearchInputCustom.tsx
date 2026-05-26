@@ -30,21 +30,15 @@ export default function SearchInputCustom() {
 
     debounceRef.current = setTimeout(() => {
       setIsTyping(false);
-
-      if (!val.trim()) {
-        setResults(dummyData);
-        return;
-      }
-
-      const filtered = dummyData.filter((item) =>
-        item.toLowerCase().includes(val.toLowerCase()),
-      );
-
+      const filtered = val.trim()
+        ? dummyData.filter((item) =>
+            item.toLowerCase().includes(val.toLowerCase()),
+          )
+        : dummyData;
       setResults(filtered.length ? filtered : ["__NOT_FOUND__"]);
-    }, 500); // 0.5s debounce
+    }, 500);
   };
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -54,52 +48,40 @@ export default function SearchInputCustom() {
         setShowDropdown(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="relative w-full" ref={wrapperRef}>
-      <label className="text-sm font-semibold">Search Custom</label>
+    <div className="relative w-full group" ref={wrapperRef}>
+      <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1.5 ml-0.5 transition-colors group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400">
+        Search Custom
+      </label>
 
       <input
         type="text"
         value={query}
         onChange={handleChange}
         onFocus={() => setShowDropdown(true)}
-        className="w-full bg-white mt-1 p-2 border border-slate-300 rounded-lg text-sm outline-none placeholder:italic"
-        placeholder="Search here..."
+        className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+        placeholder="Search anime..."
       />
 
-      {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute z-20 duration-300 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-auto">
+        <div className="absolute z-20 w-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl max-h-40 overflow-auto">
           {isTyping ? (
-            <div className="p-3 text-sm text-slate-400 italic">Seaching...</div>
+            <div className="p-3 text-sm text-zinc-400 animate-pulse">
+              Searching...
+            </div>
           ) : results[0] === "__NOT_FOUND__" ? (
-            <div className="p-4 flex flex-col items-center text-center text-slate-500">
-              {/* SVG Icon Not Found */}
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="mb-2 opacity-60"
-              >
-                <path
-                  d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"
-                  fill="#9CA3AF"
-                />
-              </svg>
-              <p className="text-sm font-medium">No results found</p>
-              <p className="text-xs text-slate-400">Try a different keyword</p>
+            <div className="p-6 text-center text-zinc-400 text-xs">
+              No results found
             </div>
           ) : (
             results.map((item, i) => (
               <div
                 key={i}
-                className="px-3 py-2 hover:bg-slate-100 cursor-pointer text-sm"
+                className="px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-sm text-zinc-700 dark:text-zinc-300 transition-colors"
                 onClick={() => {
                   setQuery(item);
                   setShowDropdown(false);

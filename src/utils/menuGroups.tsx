@@ -360,6 +360,7 @@ export const menuGroups: MenuGroup[] = [
         path: "/documentation/misc",
         children: [
           { name: "Text Input", path: "/documentation/misc/text-input" },
+          { name: "Filter", path: "/documentation/misc/filter" },
           { name: "Etc", path: "/documentation/misc/etc" },
         ],
       },
