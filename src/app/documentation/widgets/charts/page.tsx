@@ -3,12 +3,18 @@
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { FaEllipsisH } from "react-icons/fa";
 
-import ChartRadar from "./chartRadar";
-import ChartPieDonuts from "./chartPieDonuts";
+import ChartRadar from "./RadarChart";
+import ChartPieDonuts from "./PieDonutsChart";
 import ChartTreeMap from "./treeMap";
 import StandartChartLine from "./standartChartLine";
-import ChartBar from "./chartBar";
-import ChartLineArea from "./chartLineArea";
+import ChartBar from "./BarChart";
+import ChartLineArea from "./LineAreaChart";
+import ChartStackedBar from "./StackBarChart";
+import ChartLinearRegression from "./LinearRegressionChart";
+import ChartBubble from "./BubbleChart";
+import ChartStreamgraph from "./StreamgraphChart";
+import ChartVector from "./VectorChart";
+import GanttTimeline from "./GanttChartCalendar";
 
 const Page = () => {
   return (
@@ -110,6 +116,30 @@ const Page = () => {
 
           {/* Treemap */}
           <ChartTreeMap />
+        </div>
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          {/* Pie & Donut Chart Box */}
+          <GanttTimeline
+            initiateData={[]}
+            statusFilter={["Done", "OnProgress"]}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2  gap-4 mb-4">
+          {/* CHART BAR STACK */}
+          <ChartStackedBar />
+
+          {/* CHART LINEAR REGRESSION */}
+          <ChartLinearRegression />
+
+          {/* CHART BUBBLE */}
+          <ChartBubble />
+
+          {/* CHART STREAMGRAPH */}
+          <ChartStreamgraph />
+
+          {/* CHART Bubble */}
+          <ChartVector />
         </div>
       </div>
     </CMSLayout>

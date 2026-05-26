@@ -4,7 +4,6 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 
 import { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
-import ScrollNavigation from "./scrollNavigation";
 import SearchPanelInput from "./SearchPanelInput";
 import TextInput from "./textInput";
 import NumberInput from "./numberInput";
@@ -50,7 +49,6 @@ const animeList = [
 
 const Page = () => {
   /* =============== SEARCH PANEL LOGIC ===================== */
-
   const [showSearchOpen, setShowSearchOpen] = useState<boolean>(false);
   const [os, setOS] = useState<string>("unknown");
   useEffect(() => {
@@ -127,12 +125,21 @@ const Page = () => {
   return (
     <CMSLayout>
       <div className="w-full px-6 ">
-        <h5 className="text-3xl font-bold mb-7">Misc</h5>
+        {/* =========================== DASHBOARD HEADER ============================ */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">
+              Text Input
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+              A comprehensive suite of form controls designed for consistent and
+              efficient data entry across the platform.
+            </p>
+          </div>
+        </div>
 
         {/* Scroll Navigation */}
         <div className="py-4 rounded-lg">
-          <ScrollNavigation />
-
           {/* Input Section */}
           <div className="grid grid-cols-1 gap-3">
             <div className="col-span-1">

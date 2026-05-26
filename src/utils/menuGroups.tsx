@@ -332,7 +332,10 @@ export const menuGroups: MenuGroup[] = [
         ),
         name: "Widgets",
         path: "/documentation/widgets",
-        children: [{ name: "Charts", path: "/documentation/widgets/charts" }],
+        children: [
+          { name: "Charts", path: "/documentation/widgets/charts" },
+          { name: "Measurement", path: "/documentation/widgets/measurement" },
+        ],
       },
       {
         icon: (
@@ -355,7 +358,10 @@ export const menuGroups: MenuGroup[] = [
         ),
         name: "Misc",
         path: "/documentation/misc",
-        children: [],
+        children: [
+          { name: "Text Input", path: "/documentation/misc/text-input" },
+          { name: "Etc", path: "/documentation/misc/etc" },
+        ],
       },
     ],
   },

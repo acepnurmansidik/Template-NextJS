@@ -34,7 +34,9 @@ const Notification = () => {
         />
 
         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
-          {initiateDataNotifications.length}
+          {initiateDataNotifications.length > 99
+            ? "99+"
+            : initiateDataNotifications.length}
         </span>
       </div>
 

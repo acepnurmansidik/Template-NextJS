@@ -2,21 +2,17 @@
 
 import { useRef } from "react";
 import { formatCurrencyPure } from "@/utils/formatter";
-import { CHART_COLORS } from "@/utils/utils"; // Pastikan path ini benar
+import { CHART_COLORS } from "@/utils/utils";
 import {
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   CartesianGrid,
+  BarChart,
+  Bar,
   Legend,
 } from "recharts";
-
-interface DataProps {
-  initiateData?: any[];
-}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -29,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div key={index} className="flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.stroke }}
+              style={{ backgroundColor: item.fill }}
             />
             <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
               {item.name}:
@@ -45,7 +41,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const StandartChartLine = ({ initiateData = [] }: DataProps) => {
+interface DataProps {
+  initiateData?: any[];
+}
+
+const ChartBar = ({ initiateData = [] }: DataProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   // Logic Drag-to-Scroll
   const onMouseDown = (e: React.MouseEvent) => {
@@ -80,27 +80,20 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
           { name: "15 Jan", profit: 11000, revenue: 15000 },
           { name: "19 Jan", profit: 11200, revenue: 15500 },
           { name: "22 Jan", profit: 9500, revenue: 13000 },
-          { name: "23 Jan", profit: 13000, revenue: 17500 },
-          { name: "24 Jan", profit: 13000, revenue: 17500 },
-          { name: "25 Jan", profit: 13000, revenue: 17500 },
           { name: "26 Jan", profit: 13000, revenue: 17500 },
-          { name: "27 Jan", profit: 13000, revenue: 17500 },
-          { name: "28 Jan", profit: 13000, revenue: 17500 },
-          { name: "29 Jan", profit: 13000, revenue: 17500 },
-          { name: "30 Jan", profit: 13000, revenue: 17500 },
         ];
 
-  // Mendeteksi key untuk line chart (kecuali 'name')
-  const lineKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
+  // Mendeteksi semua key kecuali 'name' untuk dijadikan Bar dinamis
+  const barKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
   const minWidth = chartData.length * 70;
 
   return (
     <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs transition-colors duration-200">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-4">
-        Financial Trend (Line Chart)
+        Financial Trend (Bar Chart)
       </span>
 
-      {/* 1. AREA CHART (Scrollable) */}
+      {/* 1. AREA CHART (Hanya chart yang bisa di-scroll) */}
       <div
         ref={scrollRef}
         onMouseDown={onMouseDown}
@@ -108,7 +101,7 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
       >
         <div style={{ width: Math.max(minWidth, 400), height: "100%" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ left: -10, right: 10 }}>
+            <BarChart data={chartData} barGap={2}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#f3f4f6"
@@ -128,32 +121,29 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }}
+                cursor={{ fill: "transparent" }}
               />
 
-              {lineKeys.map((key, index) => (
-                <Line
+              {/* LEGEND DIHAPUS DARI SINI */}
+              {barKeys.map((key, index) => (
+                <Bar
                   key={key}
-                  type="monotone"
                   dataKey={key}
-                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                  strokeWidth={2}
-                  strokeDasharray={key === "profit" ? "5 5" : "0"}
-                  activeDot={{ r: 6 }}
-                  animationDuration={2000}
+                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  radius={[0, 0, 0, 0]}
                 />
               ))}
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* 2. LEGEND STATIS (Di luar area scroll) */}
+      {/* 2. LEGEND DIPINDAHKAN KE LUAR (Posisi tetap/statis) */}
       <div className="flex justify-center gap-4 mt-4">
-        {lineKeys.map((key, index) => (
+        {barKeys.map((key, index) => (
           <div
             key={key}
-            className="flex items-center gap-1.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400"
+            className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-zinc-400"
           >
             <div
               className="w-2 h-2 rounded-full"
@@ -169,4 +159,4 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
   );
 };
 
-export default StandartChartLine;
+export default ChartBar;

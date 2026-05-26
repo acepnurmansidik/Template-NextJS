@@ -28,14 +28,21 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const ChartPieDonuts = () => {
+interface DataProps {
+  initiateData?: any[];
+}
+
+const ChartPieDonuts = ({ initiateData = [] }: DataProps) => {
   const COLORS = ["#3b82f6", "#10b981", "#f97316"];
 
-  const categoryData = [
-    { name: "Retailers", value: 2884 },
-    { name: "Distributors", value: 1432 },
-    { name: "Wholesalers", value: 562 },
-  ];
+  const categoryData =
+    initiateData.length > 0
+      ? initiateData
+      : [
+          { name: "Retailers", value: 2884 },
+          { name: "Distributors", value: 1432 },
+          { name: "Wholesalers", value: 562 },
+        ];
   return (
     <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs flex flex-col justify-between">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-2">

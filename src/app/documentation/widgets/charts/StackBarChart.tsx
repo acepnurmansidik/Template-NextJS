@@ -4,16 +4,20 @@ import { useRef } from "react";
 import { formatCurrencyPure } from "@/utils/formatter";
 import { CHART_COLORS } from "@/utils/utils";
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Legend,
 } from "recharts";
 
-// CustomTooltip disesuaikan agar bisa membaca 'fill' atau 'stroke'
+interface DataProps {
+  initiateData?: any[];
+}
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -25,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div key={index} className="flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.stroke || item.fill }}
+              style={{ backgroundColor: item.fill }}
             />
             <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
               {item.name}:
@@ -41,10 +45,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
+const ChartStackedBar = ({ initiateData = [] }: DataProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Logic Drag-to-Scroll
   const onMouseDown = (e: React.MouseEvent) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -61,40 +64,27 @@ const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  const defaultData = [
-    { name: "1 Jan", profit: 7000, revenue: 9500 },
-    { name: "4 Jan", profit: 6500, revenue: 8800 },
-    { name: "8 Jan", profit: 10500, revenue: 14000 },
-    { name: "12 Jan", profit: 8000, revenue: 11000 },
-    { name: "15 Jan", profit: 11000, revenue: 15000 },
-    { name: "19 Jan", profit: 11200, revenue: 15500 },
-    { name: "22 Jan", profit: 9500, revenue: 13000 },
-    { name: "23 Jan", profit: 13000, revenue: 17500 },
-    { name: "24 Jan", profit: 13000, revenue: 17500 },
-    { name: "25 Jan", profit: 13000, revenue: 17500 },
-    { name: "26 Jan", profit: 13000, revenue: 17500 },
-    { name: "27 Jan", profit: 13000, revenue: 17500 },
-    { name: "28 Jan", profit: 13000, revenue: 17500 },
-    { name: "29 Jan", profit: 13000, revenue: 17500 },
-    { name: "30 Jan", profit: 13000, revenue: 17500 },
-  ];
-
-  const chartData = initiateData.length > 0 ? initiateData : defaultData;
-  const areaKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
+  const chartData =
+    initiateData.length > 0
+      ? initiateData
+      : [
+          { name: "Jan", profit: 4000, revenue: 2400, eps: 34 },
+          { name: "Feb", profit: 3000, revenue: 1398, eps: 20 },
+          { name: "Mar", profit: 2000, revenue: 9800, eps: 15 },
+        ];
+  const barKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
   const minWidth = chartData.length * 70;
 
   return (
     <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs transition-colors duration-200">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-4">
-        Revenue Trend (Area Chart)
+        Stacked Financial Trend
       </span>
 
-      {/* Wrapper Scrollable */}
       <div
         ref={scrollRef}
         onMouseDown={onMouseDown}
@@ -102,33 +92,7 @@ const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
       >
         <div style={{ width: Math.max(minWidth, 400), height: "100%" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={chartData}
-              margin={{ top: 5, right: 5, left: -10, bottom: 0 }}
-            >
-              <defs>
-                {areaKeys.map((key, index) => (
-                  <linearGradient
-                    key={key}
-                    id={`grad-${key}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor={CHART_COLORS[index % CHART_COLORS.length]}
-                      stopOpacity={0.2}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={CHART_COLORS[index % CHART_COLORS.length]}
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                ))}
-              </defs>
+            <BarChart data={chartData} margin={{ left: -10, right: 10 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#f3f4f6"
@@ -139,7 +103,6 @@ const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
                 tick={{ fontSize: 9, fill: "#9ca3af" }}
                 axisLine={false}
                 tickLine={false}
-                dy={10}
               />
               <YAxis
                 tick={{ fontSize: 9, fill: "#9ca3af" }}
@@ -149,29 +112,31 @@ const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }}
+                cursor={{ fill: "transparent" }}
               />
 
-              {areaKeys.map((key, index) => (
-                <Area
+              {/* KUNCI UTAMA: stackId="a" membuat bar bertumpuk */}
+              {barKeys.map((key, index) => (
+                <Bar
                   key={key}
-                  type="monotone"
                   dataKey={key}
-                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                  strokeWidth={2}
-                  fill={`url(#grad-${key})`}
-                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  stackId="a"
+                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  radius={
+                    index === barKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]
+                  }
                   animationDuration={1500}
+                  name={key.charAt(0).toUpperCase() + key.slice(1)}
                 />
               ))}
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Legend Statis */}
       <div className="flex justify-center gap-4 mt-4">
-        {areaKeys.map((key, index) => (
+        {barKeys.map((key, index) => (
           <div
             key={key}
             className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-zinc-400"
@@ -190,4 +155,4 @@ const ChartLineArea = ({ initiateData = [] }: { initiateData?: any[] }) => {
   );
 };
 
-export default ChartLineArea;
+export default ChartStackedBar;

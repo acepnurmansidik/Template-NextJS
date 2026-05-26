@@ -2,22 +2,22 @@
 
 import { useRef } from "react";
 import { formatCurrencyPure } from "@/utils/formatter";
-import { CHART_COLORS } from "@/utils/utils"; // Pastikan path ini benar
+import { CHART_COLORS } from "@/utils/utils";
 import {
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   CartesianGrid,
-  Legend,
 } from "recharts";
 
 interface DataProps {
   initiateData?: any[];
 }
 
+// CustomTooltip disesuaikan agar bisa membaca 'fill' atau 'stroke'
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -29,12 +29,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div key={index} className="flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.stroke }}
+              style={{ backgroundColor: item.stroke || item.fill }}
             />
             <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
               {item.name}:
             </span>
-            <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400">
+            <span className="text-xs font-bold text-blue-500 dark:text-blue-400">
               {formatCurrencyPure(Number(item.value || 0))}
             </span>
           </div>
@@ -45,8 +45,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const StandartChartLine = ({ initiateData = [] }: DataProps) => {
+const ChartLineArea = ({ initiateData = [] }: DataProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+
   // Logic Drag-to-Scroll
   const onMouseDown = (e: React.MouseEvent) => {
     const el = scrollRef.current;
@@ -56,7 +57,7 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const x = moveEvent.pageX - el.offsetLeft;
-      const walk = (x - startX) * 2; // Kecepatan scroll
+      const walk = (x - startX) * 2;
       el.scrollLeft = scrollLeft - walk;
     };
 
@@ -89,18 +90,16 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
           { name: "29 Jan", profit: 13000, revenue: 17500 },
           { name: "30 Jan", profit: 13000, revenue: 17500 },
         ];
-
-  // Mendeteksi key untuk line chart (kecuali 'name')
-  const lineKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
+  const areaKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
   const minWidth = chartData.length * 70;
 
   return (
     <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs transition-colors duration-200">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-4">
-        Financial Trend (Line Chart)
+        Revenue Trend (Area Chart)
       </span>
 
-      {/* 1. AREA CHART (Scrollable) */}
+      {/* Wrapper Scrollable */}
       <div
         ref={scrollRef}
         onMouseDown={onMouseDown}
@@ -108,7 +107,33 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
       >
         <div style={{ width: Math.max(minWidth, 400), height: "100%" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ left: -10, right: 10 }}>
+            <AreaChart
+              data={chartData}
+              margin={{ top: 5, right: 5, left: -10, bottom: 0 }}
+            >
+              <defs>
+                {areaKeys.map((key, index) => (
+                  <linearGradient
+                    key={key}
+                    id={`grad-${key}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={CHART_COLORS[index % CHART_COLORS.length]}
+                      stopOpacity={0.2}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={CHART_COLORS[index % CHART_COLORS.length]}
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                ))}
+              </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#f3f4f6"
@@ -119,6 +144,7 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
                 tick={{ fontSize: 9, fill: "#9ca3af" }}
                 axisLine={false}
                 tickLine={false}
+                dy={10}
               />
               <YAxis
                 tick={{ fontSize: 9, fill: "#9ca3af" }}
@@ -131,29 +157,29 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
                 cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }}
               />
 
-              {lineKeys.map((key, index) => (
-                <Line
+              {areaKeys.map((key, index) => (
+                <Area
                   key={key}
                   type="monotone"
                   dataKey={key}
                   stroke={CHART_COLORS[index % CHART_COLORS.length]}
                   strokeWidth={2}
-                  strokeDasharray={key === "profit" ? "5 5" : "0"}
-                  activeDot={{ r: 6 }}
-                  animationDuration={2000}
+                  fill={`url(#grad-${key})`}
+                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  animationDuration={1500}
                 />
               ))}
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* 2. LEGEND STATIS (Di luar area scroll) */}
+      {/* Legend Statis */}
       <div className="flex justify-center gap-4 mt-4">
-        {lineKeys.map((key, index) => (
+        {areaKeys.map((key, index) => (
           <div
             key={key}
-            className="flex items-center gap-1.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400"
+            className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-zinc-400"
           >
             <div
               className="w-2 h-2 rounded-full"
@@ -169,4 +195,4 @@ const StandartChartLine = ({ initiateData = [] }: DataProps) => {
   );
 };
 
-export default StandartChartLine;
+export default ChartLineArea;

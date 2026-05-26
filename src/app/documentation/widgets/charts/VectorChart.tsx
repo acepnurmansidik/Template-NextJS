@@ -1,18 +1,20 @@
 "use client";
 
 import { useRef } from "react";
-import { formatCurrencyPure } from "@/utils/formatter";
 import { CHART_COLORS } from "@/utils/utils";
 import {
+  LineChart,
+  Line,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
-  BarChart,
-  Bar,
-  Legend,
 } from "recharts";
+
+interface DataProps {
+  initiateData?: any[];
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -25,13 +27,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div key={index} className="flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.fill }}
+              style={{ backgroundColor: item.stroke }}
             />
             <span className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
               {item.name}:
             </span>
-            <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400">
-              {formatCurrencyPure(Number(item.value || 0))}
+            <span className="text-xs font-bold text-blue-500 dark:text-blue-400">
+              {item.value.toLocaleString()}
             </span>
           </div>
         ))}
@@ -41,115 +43,109 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-interface DataProps {
-  initiateData?: any[];
-}
-
-const ChartBar = ({ initiateData = [] }: DataProps) => {
+const ChartVector = ({ initiateData = [] }: DataProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  // Logic Drag-to-Scroll
+  const categories = ["Revenue", "Profit", "Cost"];
+
   const onMouseDown = (e: React.MouseEvent) => {
     const el = scrollRef.current;
     if (!el) return;
     let startX = e.pageX - el.offsetLeft;
     let scrollLeft = el.scrollLeft;
-
     const onMouseMove = (moveEvent: MouseEvent) => {
       const x = moveEvent.pageX - el.offsetLeft;
-      const walk = (x - startX) * 2; // Kecepatan scroll
-      el.scrollLeft = scrollLeft - walk;
+      el.scrollLeft = scrollLeft - (x - startX) * 2;
     };
-
     const onMouseUp = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
   };
-  const defaultData = [
-    { name: "1 Jan", profit: 7000, revenue: 9500 },
-    { name: "4 Jan", profit: 6500, revenue: 8800 },
-    { name: "8 Jan", profit: 10500, revenue: 14000 },
-    { name: "12 Jan", profit: 8000, revenue: 11000 },
-    { name: "15 Jan", profit: 11000, revenue: 15000 },
-    { name: "19 Jan", profit: 11200, revenue: 15500 },
-    { name: "22 Jan", profit: 9500, revenue: 13000 },
-    { name: "26 Jan", profit: 13000, revenue: 17500 },
-  ];
 
-  const chartData = initiateData.length > 0 ? initiateData : defaultData;
-
-  // Mendeteksi semua key kecuali 'name' untuk dijadikan Bar dinamis
-  const barKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
-  const minWidth = chartData.length * 70;
+  // Data default untuk representasi vector (garis tegas)
+  const chartData =
+    initiateData && initiateData.length > 0
+      ? initiateData
+      : Array.from({ length: 20 }, (_, i) => ({
+          name: `Q${i + 1}`,
+          Revenue: Math.floor(Math.random() * 500) + 500,
+          Profit: Math.floor(Math.random() * 300) + 200,
+          Cost: Math.floor(Math.random() * 200) + 100,
+        }));
 
   return (
     <div className="p-5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xs transition-colors duration-200">
       <span className="text-xs font-semibold text-gray-400 dark:text-zinc-400 block mb-4">
-        Financial Trend (Bar Chart)
+        Performance Vector Analysis
       </span>
 
-      {/* 1. AREA CHART (Hanya chart yang bisa di-scroll) */}
       <div
         ref={scrollRef}
         onMouseDown={onMouseDown}
-        className="h-56 w-full overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+        className="h-56 w-full overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing select-none"
       >
-        <div style={{ width: Math.max(minWidth, 400), height: "100%" }}>
+        <div style={{ width: 800, height: "100%", pointerEvents: "none" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} barGap={2}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+              style={{ pointerEvents: "auto" }}
+            >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#f3f4f6"
-                className="dark:stroke-zinc-700/50"
+                stroke="#e5e7eb"
+                className="dark:stroke-zinc-700"
+                vertical={false}
               />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 9, fill: "#9ca3af" }}
+                tick={{ fontSize: 9 }}
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis
-                tick={{ fontSize: 9, fill: "#9ca3af" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => formatCurrencyPure(v)}
-              />
+              <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ fill: "transparent" }}
+                cursor={{
+                  stroke: "#9ca3af",
+                  strokeWidth: 1,
+                  strokeDasharray: "4 4",
+                }}
               />
 
-              {/* LEGEND DIHAPUS DARI SINI */}
-              {barKeys.map((key, index) => (
-                <Bar
+              {categories.map((key, index) => (
+                <Line
                   key={key}
+                  type="linear" // Linear membuat garis vektor tegas
                   dataKey={key}
-                  fill={CHART_COLORS[index % CHART_COLORS.length]}
-                  radius={[0, 0, 0, 0]}
+                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                  strokeWidth={2}
+                  dot={false} // Dot false membuat tampilan vektor murni
+                  activeDot={{ r: 4 }}
+                  name={key}
                 />
               ))}
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* 2. LEGEND DIPINDAHKAN KE LUAR (Posisi tetap/statis) */}
-      <div className="flex justify-center gap-4 mt-4">
-        {barKeys.map((key, index) => (
+      {/* Legend Statis */}
+      <div className="flex justify-center gap-6 mt-4">
+        {categories.map((cat, index) => (
           <div
-            key={key}
-            className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-zinc-400"
+            key={cat}
+            className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-zinc-400"
           >
             <div
-              className="w-2 h-2 rounded-full"
+              className="w-5 h-0.5"
               style={{
                 backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
               }}
             />
-            <span>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+            <span className="font-medium">{cat}</span>
           </div>
         ))}
       </div>
@@ -157,4 +153,4 @@ const ChartBar = ({ initiateData = [] }: DataProps) => {
   );
 };
 
-export default ChartBar;
+export default ChartVector;

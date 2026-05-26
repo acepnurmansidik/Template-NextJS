@@ -13,6 +13,10 @@ import {
   Radar,
 } from "recharts";
 
+interface DataProps {
+  initiateData?: any[];
+}
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -40,21 +44,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-interface DataProps {
-  initiateData?: any[];
-}
-
 const ChartRadar = ({ initiateData = [] }: DataProps) => {
-  const defaultData = [
-    { name: "Sales", A: 120, B: 110 },
-    { name: "Marketing", A: 98, B: 130 },
-    { name: "Support", A: 86, B: 130 },
-    { name: "Tech", A: 99, B: 100 },
-    { name: "Operations", A: 85, B: 90 },
-    { name: "Product", A: 65, B: 85 },
-  ];
-
-  const chartData = initiateData.length > 0 ? initiateData : defaultData;
+  const chartData =
+    initiateData.length > 0
+      ? initiateData
+      : [
+          { name: "Sales", A: 120, B: 110 },
+          { name: "Marketing", A: 98, B: 130 },
+          { name: "Support", A: 86, B: 130 },
+          { name: "Tech", A: 99, B: 100 },
+          { name: "Operations", A: 85, B: 90 },
+          { name: "Product", A: 65, B: 85 },
+        ];
 
   const dataKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
 

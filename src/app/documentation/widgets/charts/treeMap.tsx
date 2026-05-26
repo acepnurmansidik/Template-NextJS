@@ -4,6 +4,10 @@ import { formatCurrencyPure } from "@/utils/formatter";
 import { CHART_COLORS } from "@/utils/utils";
 import { Tooltip, ResponsiveContainer, Treemap } from "recharts";
 
+interface DataProps {
+  initiateData?: any[];
+}
+
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -64,13 +68,16 @@ const CustomizedContent = (props: any) => {
   );
 };
 
-const ChartTreeMap = ({ initiateData }: { initiateData?: any[] }) => {
-  const defaultData = [
-    { name: "Enterprise", size: 4500 },
-    { name: "SME", size: 3500 },
-    { name: "Xepta", size: 3277 },
-    { name: "Global", size: 1200 },
-  ];
+const ChartTreeMap = ({ initiateData = [] }: DataProps) => {
+  const defaultData =
+    initiateData?.length > 0
+      ? initiateData
+      : [
+          { name: "Enterprise", size: 4500 },
+          { name: "SME", size: 3500 },
+          { name: "Xepta", size: 3277 },
+          { name: "Global", size: 1200 },
+        ];
 
   const treemapData =
     initiateData && initiateData.length > 0 ? initiateData : defaultData;
