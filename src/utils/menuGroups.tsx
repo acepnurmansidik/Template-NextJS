@@ -279,8 +279,111 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    title: "IAM",
+    menu_items: [
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-key-icon lucide-key"
+          >
+            <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+            <path d="m21 2-9.6 9.6" />
+            <circle cx="7.5" cy="15.5" r="5.5" />
+          </svg>
+        ),
+        name: "Role",
+        path: "/role",
+        children: [],
+      },
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-component-icon lucide-component"
+          >
+            <path d="M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z" />
+            <path d="M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z" />
+            <path d="M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z" />
+            <path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z" />
+          </svg>
+        ),
+        name: "Module",
+        path: "/module",
+        children: [],
+      },
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-user-key-icon lucide-user-key"
+          >
+            <path d="M20 11v6" />
+            <path d="M20 13h2" />
+            <path d="M3 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 2.072.578" />
+            <circle cx="10" cy="7" r="4" />
+            <circle cx="20" cy="19" r="2" />
+          </svg>
+        ),
+        name: "Access",
+        path: "/access",
+        children: [],
+      },
+    ],
+  },
+  {
     title: "Documentation",
     menu_items: [
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-form-icon lucide-form"
+          >
+            <path d="M4 14h6" />
+            <path d="M4 2h10" />
+            <rect x="4" y="18" width="16" height="4" rx="1" />
+            <rect x="4" y="6" width="16" height="4" rx="1" />
+          </svg>
+        ),
+        name: "Form",
+        path: "/documentation/table",
+        children: [
+          { name: "Multi Step", path: "/documentation/form/multi-step" },
+        ],
+      },
       {
         icon: (
           <svg
@@ -330,7 +433,7 @@ export const menuGroups: MenuGroup[] = [
             <rect width="7" height="7" x="14" y="14" rx="1" />
           </svg>
         ),
-        name: "Widgets",
+        name: "Widget",
         path: "/documentation/widgets",
         children: [
           { name: "Charts", path: "/documentation/widgets/charts" },

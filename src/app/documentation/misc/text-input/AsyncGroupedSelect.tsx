@@ -55,7 +55,7 @@ export default function AsyncGroupedSelect() {
   return (
     <div className="w-full max-w-sm">
       <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1.5 ml-0.5">
-        Pilih Wilayah (Async)
+        Group Searchable Select
       </label>
 
       <AsyncSelect

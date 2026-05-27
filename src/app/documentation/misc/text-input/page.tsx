@@ -14,6 +14,7 @@ import TextAreaInput from "./textAreaInput";
 import MultiSelect from "./MultiSelect";
 import SearchableSelect from "./SearchableSelect";
 import AsyncGroupedSelect from "./AsyncGroupedSelect";
+import MultiSelectWithDrag from "./MultiSelectWithDrag";
 
 const animeList = [
   {
@@ -151,6 +152,7 @@ const Page = () => {
             <SearchableSelect />
 
             <AsyncGroupedSelect />
+            <MultiSelectWithDrag />
           </div>
           {/* Input Section */}
           <div className="grid grid-cols-1 gap-3 mb-3">

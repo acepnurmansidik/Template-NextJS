@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 
 type Option = { value: string; label: string };
@@ -9,6 +9,10 @@ const dummyData = [
   { value: "jakarta", label: "Jakarta" },
   { value: "bandung", label: "Bandung" },
   { value: "surabaya", label: "Surabaya" },
+  { value: "garut", label: "Garut" },
+  { value: "tasikmalaya", label: "Tasikmalaya" },
+  { value: "semarang", label: "Semarang" },
+  { value: "malang", label: "Malang" },
 ];
 
 export default function MultiSelect() {
@@ -44,10 +48,7 @@ export default function MultiSelect() {
         instanceId="my-multi-select"
         classNamePrefix="rs"
         placeholder="Cari atau pilih kota..."
-        options={[
-          { value: "jakarta", label: "Jakarta" },
-          { value: "bandung", label: "Bandung" },
-        ]}
+        options={dummyData}
       />
     </div>
   );
