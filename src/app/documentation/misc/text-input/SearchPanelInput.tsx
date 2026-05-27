@@ -71,7 +71,7 @@ export default function SearchPanelInput({
   const handleEnterSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim() !== "") {
       onSelect(searchQuery);
-      setSearchHistory((prev) => {
+      setSearchHistory((prev: string[]) => {
         const cleaned = searchQuery.trim();
         if (prev.includes(cleaned)) return prev;
         return [...prev, cleaned];
@@ -143,7 +143,7 @@ export default function SearchPanelInput({
               </div>
               <div className="flex flex-col gap-1">
                 {history
-                  .slice(-6)
+                  .slice(-4)
                   .reverse()
                   .map((item, i) => (
                     <div

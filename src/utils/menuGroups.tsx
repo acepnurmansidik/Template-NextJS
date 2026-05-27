@@ -436,8 +436,9 @@ export const menuGroups: MenuGroup[] = [
         name: "Widget",
         path: "/documentation/widgets",
         children: [
-          { name: "Charts", path: "/documentation/widgets/charts" },
-          { name: "Measurement", path: "/documentation/widgets/measurement" },
+          { name: "Charts", path: "/documentation/widget/charts" },
+          { name: "Map", path: "/documentation/widget/map" },
+          { name: "Measurement", path: "/documentation/widget/measurement" },
         ],
       },
       {
