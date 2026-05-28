@@ -279,7 +279,7 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: "IAM",
+    title: "Security",
     menu_items: [
       {
         icon: (
@@ -349,8 +349,8 @@ export const menuGroups: MenuGroup[] = [
             <circle cx="20" cy="19" r="2" />
           </svg>
         ),
-        name: "Access",
-        path: "/access",
+        name: "IAM",
+        path: "/iam",
         children: [],
       },
     ],
