@@ -1,8 +1,11 @@
-"use client";
-
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import WaveformAnalysis from "./WaveformAnalysis";
 import DutyCycleAnalysis from "./DutyCycleAnalysis";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Measurement",
+};
 
 const Page = () => {
   return (

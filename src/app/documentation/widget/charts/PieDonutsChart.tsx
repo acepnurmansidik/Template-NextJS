@@ -1,3 +1,5 @@
+"use client";
+
 import { formatCurrencyPure } from "@/utils/formatter";
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 

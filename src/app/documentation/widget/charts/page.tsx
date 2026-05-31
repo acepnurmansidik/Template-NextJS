@@ -1,8 +1,5 @@
-"use client";
-
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { FaEllipsisH } from "react-icons/fa";
-
 import ChartRadar from "./RadarChart";
 import ChartPieDonuts from "./PieDonutsChart";
 import ChartTreeMap from "./treeMap";
@@ -15,6 +12,11 @@ import ChartBubble from "./BubbleChart";
 import ChartStreamgraph from "./StreamgraphChart";
 import ChartVector from "./VectorChart";
 import GanttTimeline from "./GanttChartCalendar";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Charts",
+};
 
 const Page = () => {
   return (

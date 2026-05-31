@@ -1,9 +1,12 @@
-"use client";
-
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import DateRangeFilter from "./DateRangeFilter";
 import SingleDateFilter from "./SingleDateFilter";
 import DateRangePickerWithPresetsFilter from "./DateRangePickerWithPresetsFilter";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Filter",
+};
 
 const Page = () => {
   return (

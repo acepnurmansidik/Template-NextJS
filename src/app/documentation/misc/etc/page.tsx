@@ -1,8 +1,10 @@
-"use client";
-
+import type { Metadata } from "next";
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-
 import ScrollNavigation from "./scrollNavigation";
+
+export const metadata: Metadata = {
+  title: "Etc",
+};
 
 const Page = () => {
   return (

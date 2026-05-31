@@ -73,7 +73,7 @@ export const USER_IAM: MODULES[] = [
               <path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z" />
             </svg>`,
         menu_name: "Module",
-        path: "/module",
+        path: "/security/module",
         actions: [
           {
             name: "view",
@@ -104,7 +104,7 @@ export const USER_IAM: MODULES[] = [
               <circle cx="7.5" cy="15.5" r="5.5" />
             </svg>`,
         menu_name: "Role",
-        path: "/role",
+        path: "/security/role",
         actions: [
           {
             name: "view",
@@ -145,7 +145,7 @@ export const USER_IAM: MODULES[] = [
               <circle cx="20" cy="19" r="2" />
             </svg>`,
         menu_name: "IAM",
-        path: "/iam",
+        path: "/security/iam",
         actions: [
           {
             name: "view",
