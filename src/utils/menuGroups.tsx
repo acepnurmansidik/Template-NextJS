@@ -279,7 +279,7 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: "Security",
+    title: "Privacy & Security",
     menu_items: [
       {
         icon: (

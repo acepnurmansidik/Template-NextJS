@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/etc/auth/page";
 import { AuthFormValues } from "@/types/auth";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const defaultValues = {
   email: "",
@@ -11,10 +11,18 @@ const defaultValues = {
 };
 
 export default function RegisterPage() {
+  const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState<AuthFormValues>(defaultValues);
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // useEffect hanya berjalan di client, sehingga aman dari hydration error
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

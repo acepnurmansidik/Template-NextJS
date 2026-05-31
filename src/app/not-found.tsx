@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { FaArrowLeft as IconLeft, FaHome as IconHome } from "react-icons/fa";
 
 export default function NotFound() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // useEffect hanya berjalan di client, sehingga aman dari hydration error
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 transition-colors duration-300 relative overflow-hidden">

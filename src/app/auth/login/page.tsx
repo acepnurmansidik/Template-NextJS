@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/etc/auth/page";
 import { AuthFormValues } from "@/types/auth";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const defaultValues = {
   email: "",
@@ -11,6 +11,7 @@ const defaultValues = {
 };
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState<AuthFormValues>(defaultValues);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +34,12 @@ export default function LoginPage() {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <AuthLayout
