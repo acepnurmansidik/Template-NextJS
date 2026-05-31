@@ -37,8 +37,8 @@ export const menuGroups: MenuGroup[] = [
             <path d="M3.34 19a10 10 0 1 1 17.32 0" />
           </svg>
         ),
-        name: "Home",
-        path: "/dashboard/home",
+        name: "Dashboard",
+        path: "/dashboard",
         children: [],
       },
     ],
