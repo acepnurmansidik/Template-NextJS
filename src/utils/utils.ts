@@ -20,3 +20,10 @@ export const CHART_COLORS = [
   "#6B7280", // Gray-500
   "#7C3AED", // Violet-600
 ];
+
+export const actionDefaultOptions = [
+  { value: "view", label: "view" },
+  { value: "create", label: "create" },
+  { value: "update", label: "update" },
+  { value: "delete", label: "delete" },
+];

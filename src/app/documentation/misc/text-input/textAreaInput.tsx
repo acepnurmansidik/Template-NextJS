@@ -1,11 +1,10 @@
 "use client";
 
+export const autoResize = (el: HTMLTextAreaElement) => {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+};
 export default function TextAreaInput() {
-  const autoResize = (el: HTMLTextAreaElement) => {
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  };
-
   return (
     <div className="group">
       <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1.5 ml-0.5 transition-colors group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400">

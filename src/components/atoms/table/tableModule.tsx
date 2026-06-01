@@ -1,3 +1,5 @@
+"use client";
+
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 
@@ -19,7 +21,7 @@ interface DataProps {
   setPage: (page: number) => void;
 }
 
-const BasicTable = ({
+export const TableModule = ({
   columns,
   data,
   visibleColumns,
@@ -321,5 +323,3 @@ const BasicTable = ({
     </div>
   );
 };
-
-export default BasicTable;

@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import CMSLayout from "@/components/atoms/layouts/CMSLayout";
+import { ModulePage } from "./ModulePage";
 
 export const metadata: Metadata = {
   title: "Module",
 };
 
 const Page = () => {
-  return (
-    <CMSLayout>
-      <div>MODULE</div>
-    </CMSLayout>
-  );
+  return <ModulePage />;
 };
 
 export default Page;
