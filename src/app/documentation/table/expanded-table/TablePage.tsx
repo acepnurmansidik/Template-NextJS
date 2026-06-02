@@ -4,6 +4,7 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { useEffect, useRef, useState } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import ExpendTable from "./expendTable";
+import { CiExport, CiImport } from "react-icons/ci";
 
 const columns = [
   { title: "Mark All", value: "*" },
@@ -293,13 +294,37 @@ const TablePage = () => {
           </div>
 
           {/* SISI KANAN: Tombol Asli (Tidak Diubah) */}
-          <button
-            onClick={() => console.log("Create clicked")}
-            className="h-8.5 text-xs font-medium border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer rounded-xs px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-xs"
-          >
-            <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
-            <span>Create New</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {}}
+              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+            >
+              <CiImport
+                size={15}
+                strokeWidth={1.5}
+                className="text-gray-500 dark:text-zinc-400"
+              />
+              <span>Import</span>
+            </button>
+            <button
+              onClick={() => {}}
+              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+            >
+              <CiExport
+                size={15}
+                strokeWidth={1.5}
+                className="text-gray-500 dark:text-zinc-400"
+              />
+              <span>Export</span>
+            </button>
+            <button
+              onClick={() => {}}
+              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+            >
+              <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
+              <span>Create New</span>
+            </button>
+          </div>
         </div>
 
         {/* Card wrapper panel */}
@@ -340,7 +365,7 @@ const TablePage = () => {
               <div className="relative inline-block" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="h-7.5 text-xs font-medium border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer rounded-xs px-4 pr-10 outline-none text-gray-700 dark:text-zinc-200 relative transition-all shadow-xs"
+                  className="h-7.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 pr-10 outline-none text-gray-700 dark:text-zinc-200 relative transition-all shadow-sm"
                 >
                   <span>Select Columns</span>
                   <svg
@@ -365,7 +390,7 @@ const TablePage = () => {
 
                 {/* DROPDOWN MENU PANEL */}
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-52 z-50 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-sm shadow-xl animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="absolute right-0 mt-2 w-52 z-50 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="p-1.5 max-h-64 overflow-y-auto custom-scrollbar">
                       <div className="px-2.5 py-1.5 mb-1 border-b border-gray-100 dark:border-zinc-700 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                         Toggle Visibility

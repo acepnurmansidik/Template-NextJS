@@ -142,7 +142,7 @@ const TextInputPage = () => {
 
         {/* Scroll Navigation */}
         <div className="py-4 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-3">
             {/* MULTIPLE SELECT */}
             <MultiSelect />
 
@@ -150,7 +150,9 @@ const TextInputPage = () => {
             <SearchableSelect />
 
             <AsyncGroupedSelect />
+
             <MultiSelectWithDrag />
+
             <CreateTableSelect />
           </div>
           {/* Input Section */}

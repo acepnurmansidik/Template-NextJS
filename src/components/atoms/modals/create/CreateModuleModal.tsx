@@ -81,7 +81,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
                 type="text"
-                className="w-full bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
               />
             </div>
             <div className="group">
@@ -93,7 +93,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
                 type="text"
-                className="w-full bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
               />
             </div>
           </div>
@@ -130,21 +130,21 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                       <td className="p-2">
                         <input
                           type="text"
-                          className="w-full bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+                          className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                         />
                       </td>
                       <td className="p-2">
                         <input
                           onChange={(e) => handleChangeRow(e, indexRow)}
                           type="text"
-                          className="w-full bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+                          className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                         />
                       </td>
                       <td className="p-2">
                         <input
                           onChange={(e) => handleChangeRow(e, indexRow)}
                           type="text"
-                          className="w-full bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+                          className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                         />
                       </td>
                       <td className="p-2 min-w-62.5">
