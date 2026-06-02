@@ -1,26 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
-import { MenuDetail, ModuleFormData, PermissionDataItem } from "@/types/module";
+import {
+  MenuDetail,
+  ModuleFormData,
+  ModuleResponseAPI,
+  PermissionDataItem,
+  PermissionResponseAPI,
+} from "@/types/module";
 import { IoClose } from "react-icons/io5";
 import React from "react";
 
 interface DataProps {
+  initialData: ModuleResponseAPI;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const defaultValue: ModuleFormData = {
-  name: "",
-  title: "",
-  permission: [],
-};
+export default function ViewModuleModal({
+  isOpen,
+  onClose,
+  initialData,
+}: DataProps) {
+  const [formData, setFormData] = useState<ModuleFormData | any>(null);
 
-export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
-  const [formData, setFormData] = useState<ModuleFormData>(defaultValue);
+  useEffect(() => {
+    if (isOpen && initialData) {
+      const formattedPermissions = initialData.permission.map(
+        (item: PermissionResponseAPI) => ({
+          ...item,
+          // Mengubah array of string menjadi array of object
+          actions: item.actions.map((actionString) => ({
+            label: actionString,
+            value: actionString,
+          })),
+          // Lakukan hal yang sama untuk children jika ada
+          children: item.children.map((child) => ({
+            ...child,
+            actions: child.actions.map((actionString) => ({
+              label: actionString,
+              value: actionString,
+            })),
+          })),
+        }),
+      );
+
+      setFormData({
+        name: initialData.name,
+        title: initialData.title,
+        permission: formattedPermissions,
+      });
+    }
+  }, [isOpen, initialData]);
 
   const handleChangeRow = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -120,7 +154,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Module
+          View Module
         </h2>
         <button
           onClick={onClose}
@@ -138,8 +172,12 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                 Name
               </label>
               <input
+                disabled
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  setFormData((prev: ModuleFormData) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
                 }
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -150,8 +188,12 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                 Title
               </label>
               <input
+                disabled
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  setFormData((prev: ModuleFormData) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
                 }
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -207,6 +249,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 Icon
                               </label>
                               <input
+                                disabled
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "icon")
                                 }
@@ -220,6 +263,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 Menu Name
                               </label>
                               <input
+                                disabled
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "menu_name")
                                 }
@@ -233,6 +277,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 Path
                               </label>
                               <input
+                                disabled
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "path")
                                 }
@@ -251,6 +296,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                   <div className="min-w-[200px]">
                                     {/* Gunakan wrapper class agar tidak melebar sembarangan */}
                                     <CreatableSelect
+                                      isDisabled
                                       isMulti
                                       instanceId={`select-${indexRow}`}
                                       classNamePrefix="rs"
@@ -274,7 +320,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                       }
                                       options={actionDefaultOptions}
                                       onChange={(vals) => {
-                                        setFormData((prev) => {
+                                        setFormData((prev: ModuleFormData) => {
                                           const newData = [...prev.permission];
                                           // Pastikan vals didefinisikan sebagai array untuk menghindari error null
                                           const selectedValues = vals || [];
@@ -304,6 +350,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
 
                             <td className="p-3 w-[10%] text-center align-bottom pb-4">
                               <button
+                                disabled
                                 type="button"
                                 onClick={() => handleRemoveRow(indexRow)}
                                 className="text-red-400 hover:text-red-600 hover:scale-110 hover:cursor-pointer duration-300"
@@ -344,6 +391,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                     {" "}
                                     {/* Tambahkan pl-6 untuk indentasi visual sub-menu */}
                                     <input
+                                      disabled
                                       placeholder="Child Name"
                                       value={child.name}
                                       onChange={(e) =>
@@ -360,6 +408,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 </td>
                                 <td className="p-2 w-[35%]">
                                   <input
+                                    disabled
                                     placeholder="Child Path"
                                     value={child.path}
                                     onChange={(e) =>
@@ -375,6 +424,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 </td>
                                 <td className="p-2 w-[32%]">
                                   <CreatableSelect
+                                    isDisabled
                                     isMulti
                                     instanceId={`select-child-${indexRow}-${cIndex}`}
                                     classNamePrefix="rs"
@@ -396,7 +446,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                     }
                                     options={actionDefaultOptions}
                                     onChange={(vals) => {
-                                      setFormData((prev) => {
+                                      setFormData((prev: ModuleFormData) => {
                                         const newData = [...prev.permission];
 
                                         // PERBAIKAN 3: Sinkronisasi total (bukan push manual)
@@ -415,6 +465,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                 </td>
                                 <td className="p-2 text-center w-[10%]">
                                   <button
+                                    disabled
                                     onClick={(e) =>
                                       handleRemoveChild(e, indexRow, cIndex)
                                     }

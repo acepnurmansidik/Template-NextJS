@@ -1,26 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
-import { MenuDetail, ModuleFormData, PermissionDataItem } from "@/types/module";
+import {
+  MenuDetail,
+  ModuleFormData,
+  ModuleResponseAPI,
+  PermissionDataItem,
+  PermissionResponseAPI,
+} from "@/types/module";
 import { IoClose } from "react-icons/io5";
 import React from "react";
 
 interface DataProps {
+  initialData: ModuleResponseAPI;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const defaultValue: ModuleFormData = {
-  name: "",
-  title: "",
-  permission: [],
-};
+export default function UpdateModuleModal({
+  isOpen,
+  onClose,
+  initialData,
+}: DataProps) {
+  const [formData, setFormData] = useState<ModuleFormData | any>(null);
 
-export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
-  const [formData, setFormData] = useState<ModuleFormData>(defaultValue);
+  useEffect(() => {
+    if (isOpen && initialData) {
+      const formattedPermissions = initialData.permission.map(
+        (item: PermissionResponseAPI) => ({
+          ...item,
+          // Mengubah array of string menjadi array of object
+          actions: item.actions.map((actionString) => ({
+            label: actionString,
+            value: actionString,
+          })),
+          // Lakukan hal yang sama untuk children jika ada
+          children: item.children.map((child) => ({
+            ...child,
+            actions: child.actions.map((actionString) => ({
+              label: actionString,
+              value: actionString,
+            })),
+          })),
+        }),
+      );
+
+      setFormData({
+        name: initialData.name,
+        title: initialData.title,
+        permission: formattedPermissions,
+      });
+    }
+  }, [isOpen, initialData]);
 
   const handleChangeRow = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -120,7 +154,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Module
+          Update Module
         </h2>
         <button
           onClick={onClose}
@@ -139,7 +173,10 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
               </label>
               <input
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  setFormData((prev: ModuleFormData) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
                 }
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -151,7 +188,10 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
               </label>
               <input
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  setFormData((prev: ModuleFormData) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
                 }
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -274,7 +314,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                       }
                                       options={actionDefaultOptions}
                                       onChange={(vals) => {
-                                        setFormData((prev) => {
+                                        setFormData((prev: ModuleFormData) => {
                                           const newData = [...prev.permission];
                                           // Pastikan vals didefinisikan sebagai array untuk menghindari error null
                                           const selectedValues = vals || [];
@@ -396,7 +436,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                     }
                                     options={actionDefaultOptions}
                                     onChange={(vals) => {
-                                      setFormData((prev) => {
+                                      setFormData((prev: ModuleFormData) => {
                                         const newData = [...prev.permission];
 
                                         // PERBAIKAN 3: Sinkronisasi total (bukan push manual)

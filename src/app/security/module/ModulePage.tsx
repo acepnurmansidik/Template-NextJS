@@ -167,7 +167,7 @@ export const ModulePage = () => {
               {selectedNames.length > 0 && (
                 <button
                   onClick={handleDeleteAll}
-                  className="h-7.5 duration-200 font-semibold hover:cursor-pointer text-xs flex gap-2 justify-center text-white items-center bg-red-500 hover:bg-red-600 px-3.5 rounded-xs shadow-xs active:scale-95 transition-all"
+                  className="h-7.5 duration-200 rounded-lg font-semibold hover:cursor-pointer text-xs flex gap-2 justify-center text-white items-center bg-red-500 hover:bg-red-600 px-4 shadow-xs active:scale-95 transition-all"
                 >
                   <FaTrash size={13} />
                   <span>Delete All</span>
@@ -232,7 +232,7 @@ export const ModulePage = () => {
           {/* =========================== TABLE ============================ */}
           <TableModule
             columns={columns}
-            data={USER_IAM}
+            data={[]}
             visibleColumns={visibleColumns}
             selectedNames={selectedNames}
             handleSelectAll={handleSelectAll}

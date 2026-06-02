@@ -1,5 +1,5 @@
-import Navbar from "../sharedComponents/Navbar";
-import Sidebar from "../sharedComponents/Sidebar";
+import Navbar from "../shared/Navbar";
+import Sidebar from "../shared/Sidebar";
 
 const CMSLayout = ({ children }: any) => {
   return (

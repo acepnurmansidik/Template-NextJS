@@ -53,6 +53,7 @@ export interface ActionDefaultOption {
   value: string;
   label: string;
 }
+
 export const actionDefaultOptions: ActionDefaultOption[] = [
   { value: "view", label: "view" },
   { value: "create", label: "create" },
@@ -60,4 +61,11 @@ export const actionDefaultOptions: ActionDefaultOption[] = [
   { value: "delete", label: "delete" },
   { value: "export", label: "export" },
   { value: "import", label: "import" },
+];
+
+export const subActionDefaultOptions: ActionDefaultOption[] = [
+  { value: "view", label: "view" },
+  { value: "create", label: "create" },
+  { value: "update", label: "update" },
+  { value: "delete", label: "delete" },
 ];

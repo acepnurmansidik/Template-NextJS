@@ -2,10 +2,14 @@
 
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
+import { useState } from "react";
+import UpdateModuleModal from "../modals/update/UpdateModuleModal";
+import { ModuleResponseAPI } from "@/types/module";
+import ViewModuleModal from "../modals/view/ViewModuleModal";
 
 interface DataProps {
   columns: { title: string; value: string }[];
-  data: any[];
+  data: ModuleResponseAPI[];
   visibleColumns: string[];
   selectedNames: string[];
   handleSelectAll: () => void;
@@ -38,6 +42,20 @@ export const TableModule = ({
   setLimit,
   windowPages,
 }: DataProps) => {
+  const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
+  const [showModalView, setShowModalView] = useState<boolean>(false);
+  const [selectedData, setSelectedData] = useState<ModuleResponseAPI[] | any>(
+    null,
+  );
+
+  const handleModalView = (newData: ModuleResponseAPI) => {
+    setShowModalView(true);
+    setSelectedData(newData);
+  };
+  const handleModalUpdate = (newData: ModuleResponseAPI) => {
+    setShowModalUpdate(true);
+    setSelectedData(newData);
+  };
   return (
     <div className="grid grid-cols-1 items-center">
       {/* =========================== TABLE WRAPPER ============================ */}
@@ -172,48 +190,21 @@ export const TableModule = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              <button className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors">
+                              <button
+                                onClick={() => handleModalView(row)}
+                                className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                              >
                                 <FaEye size={18} />
                               </button>
-                              <button className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+                              <button
+                                onClick={() => handleModalUpdate(row)}
+                                className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                              >
                                 <FaEdit size={18} />
                               </button>
                               <button className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
                                 <FaTrash size={16} />
                               </button>
-                            </div>
-                          ) : col.value === "cards" ? (
-                            <div className="flex flex-col gap-1">
-                              <div
-                                className={`overflow-hidden transition-all duration-300 ${
-                                  expandedRow === rowIndex
-                                    ? "max-h-40"
-                                    : "max-h-12"
-                                }`}
-                              >
-                                {(expandedRow === rowIndex
-                                  ? row.cards
-                                  : row.cards.slice(0, 2)
-                                ).map((card: string, i: number) => (
-                                  <div
-                                    key={i}
-                                    className="text-xs bg-gray-100 dark:bg-zinc-700 text-gray-800 dark:text-zinc-200 px-2 py-1 rounded mb-1 border border-transparent dark:border-zinc-600/30"
-                                  >
-                                    {card}
-                                  </div>
-                                ))}
-                              </div>
-
-                              {row.cards.length > 2 && (
-                                <button
-                                  onClick={() => toggleRow(rowIndex)}
-                                  className="text-blue-600 dark:text-blue-400 text-xs cursor-pointer italic hover:underline mt-1 text-left"
-                                >
-                                  {expandedRow === rowIndex
-                                    ? "Show Less"
-                                    : `Show More (${row.cards.length - 2})`}
-                                </button>
-                              )}
                             </div>
                           ) : (
                             get(row, col.value, "-")
@@ -320,6 +311,23 @@ export const TableModule = ({
           )}
         </div>
       </div>
+
+      {showModalUpdate && (
+        <UpdateModuleModal
+          key={selectedData?._id}
+          isOpen={showModalUpdate}
+          onClose={() => setShowModalUpdate(!showModalUpdate)}
+          initialData={selectedData}
+        />
+      )}
+      {showModalView && (
+        <ViewModuleModal
+          key={selectedData?._id}
+          isOpen={showModalUpdate}
+          onClose={() => setShowModalView(!showModalView)}
+          initialData={selectedData}
+        />
+      )}
     </div>
   );
 };
