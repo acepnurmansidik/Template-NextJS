@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
@@ -21,7 +21,26 @@ const defaultValue: ModuleFormData = {
 
 export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
   const [formData, setFormData] = useState<ModuleFormData>(defaultValue);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // ======================== U S E * E F F E C T ==========================
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // ============================ H A N D L E R ============================
+  const handleSubmit = () => {
+    setIsLoading(true);
+    try {
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
   const handleChangeRow = (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
@@ -198,7 +217,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                       (row: PermissionDataItem, indexRow: number) => (
                         <React.Fragment key={indexRow}>
                           {/* --- BARIS UTAMA (PARENT) --- */}
-                          <tr className="group hover:bg-zinc-300/40 bg-zinc-200/40 dark:hover:bg-zinc-900/50 transition-colors">
+                          <tr className="group hover:bg-zinc-300/40 bg-zinc-100/5 dark:hover:bg-zinc-900/50 transition-colors">
                             {/* Kolom Induk memiliki lebar seimbang */}
                             <td
                               className={`p-3 ${formData.permission[indexRow].children.length > 0 ? "w-[29%]" : "w-[23%]"}`}
@@ -354,7 +373,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                           "name",
                                         )
                                       }
-                                      className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
+                                      className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                                     />
                                   </div>
                                 </td>
@@ -370,7 +389,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                                         "path",
                                       )
                                     }
-                                    className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
+                                    className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                                   />
                                 </td>
                                 <td className="p-2 w-[32%]">
@@ -444,8 +463,12 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
         >
           Cancel
         </button>
-        <button className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg">
-          Submit
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className={`px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg ${isLoading ?? "italic"}`}
+        >
+          {isLoading ? "Creating..." : "Submit"}
         </button>
       </div>
     </div>

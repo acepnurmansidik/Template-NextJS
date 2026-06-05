@@ -51,7 +51,15 @@ export const USER_IAM: MODULES[] = [
           },
           {
             name: "create",
-            status: false,
+            status: true,
+          },
+          {
+            name: "update",
+            status: true,
+          },
+          {
+            name: "delete",
+            status: true,
           },
         ],
         children: [],

@@ -26,7 +26,18 @@ export default function UpdateModuleModal({
   initialData,
 }: DataProps) {
   const [formData, setFormData] = useState<ModuleFormData | any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // ======================== U S E * E F F E C T ==========================
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // INITAITE STATE FIRST TIME OPEN ========================================
   useEffect(() => {
     if (isOpen && initialData) {
       const formattedPermissions = initialData.permission.map(
@@ -55,6 +66,16 @@ export default function UpdateModuleModal({
       });
     }
   }, [isOpen, initialData]);
+
+  // ============================ H A N D L E R ============================
+  const handleSubmit = () => {
+    setIsLoading(true);
+    try {
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
 
   const handleChangeRow = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -394,7 +415,7 @@ export default function UpdateModuleModal({
                                           "name",
                                         )
                                       }
-                                      className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
+                                      className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                                     />
                                   </div>
                                 </td>
@@ -410,7 +431,7 @@ export default function UpdateModuleModal({
                                         "path",
                                       )
                                     }
-                                    className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
+                                    className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                                   />
                                 </td>
                                 <td className="p-2 w-[32%]">
@@ -484,8 +505,12 @@ export default function UpdateModuleModal({
         >
           Cancel
         </button>
-        <button className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg">
-          Submit
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className={`px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg ${isLoading ?? "italic"}`}
+        >
+          {isLoading ? "Updating..." : "Submit"}
         </button>
       </div>
     </div>

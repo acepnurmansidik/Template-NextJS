@@ -1,3 +1,5 @@
+import { ActionOption } from "./global_types";
+
 // FORM DATA
 export interface ModuleFormData {
   name: string;
@@ -19,12 +21,12 @@ export interface PermissionDataItem {
   children: MenuDetail[];
 }
 
-interface ActionOption {
-  label: string;
-  value: string;
-}
-
 // API RESPONSE ====================================
+export interface BodyRoleResponseAPI {
+  success: string;
+  message: string;
+  data: ModuleResponseAPI[];
+}
 export interface ModuleResponseAPI {
   name: string;
   title: string;
@@ -39,7 +41,7 @@ export interface PermissionResponseAPI {
   children: MenuDetailResponseAPI[];
 }
 
-interface MenuDetailResponseAPI {
+export interface MenuDetailResponseAPI {
   name: string;
   path: string;
   actions: string[];

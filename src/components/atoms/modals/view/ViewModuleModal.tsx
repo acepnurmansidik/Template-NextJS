@@ -27,6 +27,16 @@ export default function ViewModuleModal({
 }: DataProps) {
   const [formData, setFormData] = useState<ModuleFormData | any>(null);
 
+  // ======================== U S E * E F F E C T ==========================
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // INITAITE STATE FIRST TIME OPEN ========================================
   useEffect(() => {
     if (isOpen && initialData) {
       const formattedPermissions = initialData.permission.map(
@@ -56,97 +66,7 @@ export default function ViewModuleModal({
     }
   }, [isOpen, initialData]);
 
-  const handleChangeRow = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number,
-    field: string,
-  ) => {
-    setFormData((prev: ModuleFormData) => {
-      const newValue = [...prev.permission];
-      newValue[index] = {
-        ...newValue[index],
-        [field]: e.target.value,
-      };
-      return { ...prev, permission: newValue };
-    });
-  };
-
-  const handleAddRow = () => {
-    setFormData((prev: ModuleFormData) => {
-      const newValue = [
-        ...prev.permission,
-        { icon: "", menu_name: "", path: "", actions: [], children: [] },
-      ];
-      return { ...prev, permission: newValue };
-    });
-  };
-
-  const handleRemoveRow = (index: number) => {
-    setFormData((prev: ModuleFormData) => {
-      const newValue = prev.permission.filter((_, i) => i !== index);
-      return { ...prev, permission: newValue };
-    });
-  };
-
-  const handleRemoveChild = (
-    e: React.MouseEvent,
-    pIndex: number,
-    cIndex: number,
-  ) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setFormData((prev: ModuleFormData) => {
-      const newPermissions = [...prev.permission];
-
-      // Pastikan kita tidak menambah data jika kondisi tidak terpenuhi
-      newPermissions[pIndex] = {
-        ...newPermissions[pIndex],
-        children: newPermissions[pIndex].children.filter(
-          (_, i) => i !== cIndex,
-        ),
-      };
-
-      return { ...prev, permission: newPermissions };
-    });
-  };
-
-  // Fungsi khusus untuk menambah child di baris tertentu
-  const handleAddChild = (e: React.MouseEvent, parentIndex: number) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setFormData((prev: ModuleFormData) => {
-      const newPermissions = [...prev.permission];
-
-      // Pastikan kita tidak menambah data jika kondisi tidak terpenuhi
-      newPermissions[parentIndex] = {
-        ...newPermissions[parentIndex],
-        children: [
-          ...newPermissions[parentIndex].children,
-          { name: "", path: "", actions: [] },
-        ],
-        actions: [],
-      };
-
-      return { ...prev, permission: newPermissions };
-    });
-  };
-
-  // Update handler untuk children
-  const handleChangeChild = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    pIndex: number,
-    cIndex: number,
-    field: string,
-  ) => {
-    setFormData((prev: ModuleFormData) => {
-      const newPermissions = [...prev.permission];
-      newPermissions[pIndex].children[cIndex] = {
-        ...newPermissions[pIndex].children[cIndex],
-        [field]: e.target.value,
-      };
-      return { ...prev, permission: newPermissions };
-    });
-  };
+  // ============================ H A N D L E R ============================
 
   if (!isOpen) return null;
 
@@ -208,7 +128,6 @@ export default function ViewModuleModal({
               </h3>
               <button
                 type="button"
-                onClick={handleAddRow}
                 className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline hover:cursor-pointer"
               >
                 <FaPlus size={10} /> Add Row
@@ -227,7 +146,6 @@ export default function ViewModuleModal({
                           </p>
                           <button
                             type="button"
-                            onClick={handleAddRow}
                             className="mt-2 text-blue-600 text-xs font-bold hover:underline"
                           >
                             Click here to add at least one permission
@@ -250,9 +168,6 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
-                                onChange={(e) =>
-                                  handleChangeRow(e, indexRow, "icon")
-                                }
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -264,9 +179,6 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
-                                onChange={(e) =>
-                                  handleChangeRow(e, indexRow, "menu_name")
-                                }
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -278,9 +190,6 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
-                                onChange={(e) =>
-                                  handleChangeRow(e, indexRow, "path")
-                                }
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -352,7 +261,6 @@ export default function ViewModuleModal({
                               <button
                                 disabled
                                 type="button"
-                                onClick={() => handleRemoveRow(indexRow)}
                                 className="text-red-400 hover:text-red-600 hover:scale-110 hover:cursor-pointer duration-300"
                               >
                                 <FaTrash size={14} />
@@ -370,7 +278,6 @@ export default function ViewModuleModal({
                                 </h3>
                                 <button
                                   type="button"
-                                  onClick={(e) => handleAddChild(e, indexRow)}
                                   className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
                                 >
                                   <FaPlus size={8} /> Add Sub Menu
@@ -394,14 +301,6 @@ export default function ViewModuleModal({
                                       disabled
                                       placeholder="Child Name"
                                       value={child.name}
-                                      onChange={(e) =>
-                                        handleChangeChild(
-                                          e,
-                                          indexRow,
-                                          cIndex,
-                                          "name",
-                                        )
-                                      }
                                       className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
                                     />
                                   </div>
@@ -411,14 +310,6 @@ export default function ViewModuleModal({
                                     disabled
                                     placeholder="Child Path"
                                     value={child.path}
-                                    onChange={(e) =>
-                                      handleChangeChild(
-                                        e,
-                                        indexRow,
-                                        cIndex,
-                                        "path",
-                                      )
-                                    }
                                     className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
                                   />
                                 </td>
@@ -466,9 +357,6 @@ export default function ViewModuleModal({
                                 <td className="p-2 text-center w-[10%]">
                                   <button
                                     disabled
-                                    onClick={(e) =>
-                                      handleRemoveChild(e, indexRow, cIndex)
-                                    }
                                     className="text-red-400 hover:text-red-600 hover:scale-110 hover:cursor-pointer duration-300"
                                   >
                                     <FaTrash size={12} />
@@ -494,9 +382,6 @@ export default function ViewModuleModal({
           className="px-6 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-200 rounded-lg"
         >
           Cancel
-        </button>
-        <button className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg">
-          Submit
         </button>
       </div>
     </div>
