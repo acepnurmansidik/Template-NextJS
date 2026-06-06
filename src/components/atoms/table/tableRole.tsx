@@ -3,16 +3,14 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 import { useState } from "react";
-import UpdateModuleModal from "../modals/update/UpdateModuleModal";
-import { ModuleResponseAPI } from "@/types/module";
-import ViewModuleModal from "../modals/view/ViewModuleModal";
+import { RoleApiDaum } from "@/types/role";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
   columns: { title: string; value: string }[];
-  data: ModuleResponseAPI[];
+  data: RoleApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
   handleSelectAll: () => void;
@@ -28,7 +26,7 @@ interface DataProps {
   setPage: (page: number) => void;
 }
 
-export const TableModule = ({
+export const TableRole = ({
   hasAccess,
   columns,
   data,
@@ -48,15 +46,13 @@ export const TableModule = ({
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
   const [showModalView, setShowModalView] = useState<boolean>(false);
-  const [selectedData, setSelectedData] = useState<ModuleResponseAPI[] | any>(
-    null,
-  );
+  const [selectedData, setSelectedData] = useState<RoleApiDaum[] | any>(null);
 
-  const handleModalView = (newData: ModuleResponseAPI) => {
+  const handleModalView = (newData: RoleApiDaum) => {
     setShowModalView(true);
     setSelectedData(newData);
   };
-  const handleModalUpdate = (newData: ModuleResponseAPI) => {
+  const handleModalUpdate = (newData: RoleApiDaum) => {
     setShowModalUpdate(true);
     setSelectedData(newData);
   };
@@ -74,7 +70,7 @@ export const TableModule = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className="py-2 px-3 font-bold cursor-pointer select-none"
+                      className={`py-2 px-3 font-bold cursor-pointer select-none ${col.value === "name" ? "w-[20%]" : col.value === "has_access_module" ? "w-[50%]" : "w-[10%]"}`}
                     >
                       {col.value === "*" ? (
                         <>
@@ -194,45 +190,67 @@ export const TableModule = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                                {hasAccess.whatsapp && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
+                              {hasAccess.whatsapp && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
+                                >
+                                  <IoLogoWhatsapp size={18} />
+                                </button>
+                              )}
+                              {hasAccess.pdf && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
+                                >
+                                  <FaFilePdf size={18} />
+                                </button>
+                              )}
+                              {hasAccess.view && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                                >
+                                  <FaEye size={18} />
+                                </button>
+                              )}
+                              {hasAccess.update && (
+                                <button
+                                  onClick={() => handleModalUpdate(row)}
+                                  className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                                >
+                                  <FaEdit size={18} />
+                                </button>
+                              )}
+                              {hasAccess.delete && (
+                                <button className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                  <FaTrash size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ) : col.value === "has_access_module" ? (
+                            <div className="flex flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
+                              {row.has_access_module.length > 0 ? (
+                                row.has_access_module.map((item, indexItem) => (
+                                  <span
+                                    key={indexItem}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50 whitespace-nowrap"
                                   >
-                                    <IoLogoWhatsapp size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.pdf && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
-                                  >
-                                    <FaFilePdf size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.view && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-                                  >
-                                    <FaEye size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.update && (
-                                  <button
-                                    onClick={() => handleModalUpdate(row)}
-                                    className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                                  >
-                                    <FaEdit size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.delete && (
-                                  <button className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
-                                    <FaTrash size={16} />
-                                  </button>
-                                )}
-                              </div>
+                                    {item.title}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] text-zinc-400 italic">
+                                  No modules
+                                </span>
+                              )}
+
+                              {/* Indikator titik jika data banyak (opsional: ini hanya muncul jika ada overflow) */}
+                              {row.has_access_module.length > 6 && (
+                                <span className="text-[10px] text-zinc-500 font-bold self-center">
+                                  ...
+                                </span>
+                              )}
                             </div>
                           ) : (
                             get(row, col.value, "-")
@@ -340,7 +358,7 @@ export const TableModule = ({
         </div>
       </div>
 
-      {showModalUpdate && (
+      {/* {showModalUpdate && (
         <UpdateModuleModal
           key={selectedData?._id}
           isOpen={showModalUpdate}
@@ -355,7 +373,7 @@ export const TableModule = ({
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />
-      )}
+      )} */}
     </div>
   );
 };

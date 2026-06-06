@@ -138,7 +138,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   // ==================== C A C H E * F E T C H * D A T A ====================
   const [cacheDataModule, setCacheDataModule] = useState<Option[]>([]);
 
-  // ================================= E T C =================================
+  // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -309,7 +309,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
         </h2>
         <button
           onClick={onClose}
-          className="text-zinc-400 hover:text-zinc-900 h-9 w-9 flex items-center justify-center"
+          className="text-zinc-400 hover:text-zinc-900 flex items-center duration-300 justify-center dark:hover:text-zinc-100 text-sm font-medium hover:bg-zinc-300/20 rounded-md hover:cursor-pointer h-9 w-9"
         >
           <IoClose className="text-red-500 text-xl" />
         </button>

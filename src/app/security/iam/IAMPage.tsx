@@ -1,19 +1,18 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import CreateModuleModal from "@/components/atoms/modals/create/CreateModuleModal";
-import { TableModule } from "@/components/atoms/table/tableModule";
 import { USER_IAM } from "@/utils/permission";
 import { useEffect, useRef, useState } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
+import { TableIAM } from "@/components/atoms/table/tableIAM";
 
 const columns = [
   { title: "Mark All", value: "*" },
-  { title: "Code", value: "name" },
-  { title: "Title", value: "title" },
+  { title: "Name", value: "name" },
+  { title: "Role Name", value: "title" },
   { title: "Action", value: "action" },
 ];
 
@@ -21,7 +20,7 @@ interface DataProps {
   title: string;
   subtitle: string;
 }
-export const ModulePage = ({ title, subtitle }: DataProps) => {
+export const IAMPage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
   /* ============================= MODALS ============================= */
@@ -49,9 +48,9 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
       view: true,
       create: true,
       delete: true,
-      update: false,
+      update: true,
       import: true,
-      export: false,
+      export: true,
     });
   }, []);
 
@@ -260,7 +259,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
           </div>
 
           {/* =========================== TABLE ============================ */}
-          <TableModule
+          <TableIAM
             hasAccess={hasAccess}
             columns={columns}
             data={[]}
@@ -281,12 +280,9 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
         </div>
       </div>
 
-      {isModalCreateOpen && (
-        <CreateModuleModal
-          isOpen={isModalCreateOpen}
-          onClose={() => setIsModalCreateOpen(false)}
-        />
-      )}
+      {/* {isModalCreateOpen && (
+      
+      )} */}
 
       {/* =========================== MODAL CREATE ============================ */}
     </CMSLayout>

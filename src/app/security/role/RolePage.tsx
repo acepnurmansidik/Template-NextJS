@@ -1,19 +1,19 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import CreateModuleModal from "@/components/atoms/modals/create/CreateModuleModal";
-import { TableModule } from "@/components/atoms/table/tableModule";
 import { USER_IAM } from "@/utils/permission";
 import { useEffect, useRef, useState } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
+import { TableRole } from "@/components/atoms/table/tableRole";
+import CreateRoleModal from "@/components/atoms/modals/create/CreateRoleModal";
 import { usePathname } from "next/navigation";
 
 const columns = [
   { title: "Mark All", value: "*" },
-  { title: "Code", value: "name" },
-  { title: "Title", value: "title" },
+  { title: "Name", value: "name" },
+  { title: "Access", value: "has_access_module" },
   { title: "Action", value: "action" },
 ];
 
@@ -21,9 +21,11 @@ interface DataProps {
   title: string;
   subtitle: string;
 }
-export const ModulePage = ({ title, subtitle }: DataProps) => {
+
+export const RolePage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
   /* ============================= MODALS ============================= */
   const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
   /* ============================= PAGINATION STATE ============================= */
@@ -52,6 +54,8 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
       update: false,
       import: true,
       export: false,
+      pdf: true,
+      whatsapp: true,
     });
   }, []);
 
@@ -95,7 +99,6 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
     );
   };
 
-  const [selectedNames, setSelectedNames] = useState<string[]>([]);
   const handleSelectAll = () => {
     const allNames = USER_IAM.map((item: any) => item.name);
     const isAllSelected = selectedNames.length === allNames.length;
@@ -260,10 +263,35 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
           </div>
 
           {/* =========================== TABLE ============================ */}
-          <TableModule
+          <TableRole
             hasAccess={hasAccess}
             columns={columns}
-            data={[]}
+            data={[
+              {
+                name: "Ultraman",
+                slug: "ultraman",
+                has_access_module: [
+                  {
+                    name: "MOD_DOC",
+                    title: "Documntation",
+                    permission: [
+                      {
+                        icon: "",
+                        menu_name: "Form",
+                        path: "documntation/form",
+                        actions: {
+                          view: true,
+                          create: true,
+                          update: true,
+                          delete: true,
+                        },
+                        children: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ]}
             visibleColumns={visibleColumns}
             selectedNames={selectedNames}
             handleSelectAll={handleSelectAll}
@@ -282,7 +310,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
       </div>
 
       {isModalCreateOpen && (
-        <CreateModuleModal
+        <CreateRoleModal
           isOpen={isModalCreateOpen}
           onClose={() => setIsModalCreateOpen(false)}
         />

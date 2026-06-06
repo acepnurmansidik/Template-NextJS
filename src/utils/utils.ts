@@ -55,17 +55,23 @@ export interface ActionDefaultOption {
 }
 
 export const actionDefaultOptions: ActionDefaultOption[] = [
+  { value: "pdf", label: "pdf" },
   { value: "view", label: "view" },
   { value: "create", label: "create" },
   { value: "update", label: "update" },
   { value: "delete", label: "delete" },
   { value: "export", label: "export" },
   { value: "import", label: "import" },
+  { value: "whatsapp", label: "whatsapp" },
 ];
 
 export const subActionDefaultOptions: ActionDefaultOption[] = [
+  { value: "pdf", label: "pdf" },
   { value: "view", label: "view" },
   { value: "create", label: "create" },
   { value: "update", label: "update" },
   { value: "delete", label: "delete" },
+  { value: "export", label: "export" },
+  { value: "import", label: "import" },
+  { value: "whatsapp", label: "whatsapp" },
 ];

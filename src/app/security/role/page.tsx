@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CMSLayout from "@/components/atoms/layouts/CMSLayout";
+import { RolePage } from "./RolePage";
 
 export const metadata: Metadata = {
   title: "Role",
@@ -7,9 +7,10 @@ export const metadata: Metadata = {
 
 const Page = () => {
   return (
-    <CMSLayout>
-      <div>ROLE</div>
-    </CMSLayout>
+    <RolePage
+      title="Role"
+      subtitle="Secure your contact data by assigning specific roles and authority levels."
+    />
   );
 };
 

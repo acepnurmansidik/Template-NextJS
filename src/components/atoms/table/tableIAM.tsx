@@ -3,16 +3,14 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 import { useState } from "react";
-import UpdateModuleModal from "../modals/update/UpdateModuleModal";
-import { ModuleResponseAPI } from "@/types/module";
-import ViewModuleModal from "../modals/view/ViewModuleModal";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io";
+import { IAMApiDaum } from "@/types/IAM";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
   columns: { title: string; value: string }[];
-  data: ModuleResponseAPI[];
+  data: IAMApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
   handleSelectAll: () => void;
@@ -28,7 +26,7 @@ interface DataProps {
   setPage: (page: number) => void;
 }
 
-export const TableModule = ({
+export const TableIAM = ({
   hasAccess,
   columns,
   data,
@@ -48,15 +46,13 @@ export const TableModule = ({
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
   const [showModalView, setShowModalView] = useState<boolean>(false);
-  const [selectedData, setSelectedData] = useState<ModuleResponseAPI[] | any>(
-    null,
-  );
+  const [selectedData, setSelectedData] = useState<IAMApiDaum[] | any>(null);
 
-  const handleModalView = (newData: ModuleResponseAPI) => {
+  const handleModalView = (newData: IAMApiDaum) => {
     setShowModalView(true);
     setSelectedData(newData);
   };
-  const handleModalUpdate = (newData: ModuleResponseAPI) => {
+  const handleModalUpdate = (newData: IAMApiDaum) => {
     setShowModalUpdate(true);
     setSelectedData(newData);
   };
@@ -74,7 +70,7 @@ export const TableModule = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className="py-2 px-3 font-bold cursor-pointer select-none"
+                      className={`py-2 px-3 font-bold cursor-pointer select-none ${col.value === "name" ? "w-[20%]" : col.value === "has_access_module" ? "w-[50%]" : "w-[10%]"}`}
                     >
                       {col.value === "*" ? (
                         <>
@@ -187,52 +183,58 @@ export const TableModule = ({
                               `}</style>
                               <input
                                 type="checkbox"
-                                checked={selectedNames.includes(row.name)}
-                                onChange={() => toggleSelectName(row.name)}
+                                checked={selectedNames.includes(
+                                  row.user_id._id,
+                                )}
+                                onChange={() =>
+                                  toggleSelectName(row.user_id._id)
+                                }
                                 className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
                               />
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                                {hasAccess.whatsapp && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
-                                  >
-                                    <IoLogoWhatsapp size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.pdf && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
-                                  >
-                                    <FaFilePdf size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.view && (
-                                  <button
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-                                  >
-                                    <FaEye size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.update && (
-                                  <button
-                                    onClick={() => handleModalUpdate(row)}
-                                    className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                                  >
-                                    <FaEdit size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.delete && (
-                                  <button className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
-                                    <FaTrash size={16} />
-                                  </button>
-                                )}
-                              </div>
+                              {hasAccess.whatsapp && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
+                                >
+                                  <IoLogoWhatsapp size={18} />
+                                </button>
+                              )}
+                              {hasAccess.pdf && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
+                                >
+                                  <FaFilePdf size={18} />
+                                </button>
+                              )}
+                              {hasAccess.view && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                                >
+                                  <FaEye size={18} />
+                                </button>
+                              )}
+                              {hasAccess.update && (
+                                <button
+                                  onClick={() => handleModalUpdate(row)}
+                                  className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                                >
+                                  <FaEdit size={18} />
+                                </button>
+                              )}
+                              {hasAccess.delete && (
+                                <button className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                  <FaTrash size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ) : col.value === "role" ? (
+                            <div className="flex flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
+                              {"role_id.name"}
                             </div>
                           ) : (
                             get(row, col.value, "-")
@@ -340,7 +342,7 @@ export const TableModule = ({
         </div>
       </div>
 
-      {showModalUpdate && (
+      {/* {showModalUpdate && (
         <UpdateModuleModal
           key={selectedData?._id}
           isOpen={showModalUpdate}
@@ -355,7 +357,7 @@ export const TableModule = ({
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />
-      )}
+      )} */}
     </div>
   );
 };

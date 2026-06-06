@@ -6,7 +6,12 @@ export const metadata: Metadata = {
 };
 
 const Page = () => {
-  return <ModulePage />;
+  return (
+    <ModulePage
+      title="Module"
+      subtitle="Manage module visibility and define specific actions for your application pages."
+    />
+  );
 };
 
 export default Page;

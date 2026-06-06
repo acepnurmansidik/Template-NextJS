@@ -25,6 +25,7 @@ export default function UpdateModuleModal({
   onClose,
   initialData,
 }: DataProps) {
+  // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<ModuleFormData | any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -67,7 +68,7 @@ export default function UpdateModuleModal({
     }
   }, [isOpen, initialData]);
 
-  // ============================ H A N D L E R ============================
+  // ====================== H A N D L E R * S U B M I T ======================
   const handleSubmit = () => {
     setIsLoading(true);
     try {
@@ -77,6 +78,7 @@ export default function UpdateModuleModal({
     }
   };
 
+  // ====================== H A N D L E R * A C T I O N ======================
   const handleChangeRow = (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,

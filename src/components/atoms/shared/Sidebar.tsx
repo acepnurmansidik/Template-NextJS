@@ -4,7 +4,7 @@ import Image from "next/image";
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { MENUS, MODULES, USER_IAM } from "@/utils/permission";
 
 // KUNCI UTAMA: Menyimpan state di memory global browser
@@ -145,7 +145,7 @@ const Sidebar = () => {
                         {isOpen ? (
                           <FaChevronDown size={12} />
                         ) : (
-                          <FaChevronUp size={12} />
+                          <FaChevronRight size={12} />
                         )}
                       </span>
                     )}
@@ -158,22 +158,56 @@ const Sidebar = () => {
                         const isActiveChild = pathname === child.path;
                         const isLast = childIndex === item.children.length - 1;
 
+                        // Mencari apakah ada child aktif di bawah item ini
+                        const activeChildIndex = item.children.findIndex(
+                          (c) => c.path === pathname,
+                        );
+
+                        // Logika Warna:
+                        // 1. Jika index saat ini < activeChildIndex, maka ini bagian "jalur aktif" -> Gelap
+                        // 2. Jika index saat ini === activeChildIndex, maka bagian atasnya "jalur aktif" -> Gelap
+                        // 3. Sisanya -> Abu-abu default
+
+                        const isAboveActive = childIndex < activeChildIndex;
+                        const isCurrentActive = isActiveChild;
+
                         return (
                           <div
                             key={childIndex}
                             className="relative flex items-center w-full h-10 pl-6"
                           >
                             <div className="absolute left-0 w-0.5 h-full flex flex-col">
+                              {/* Bagian Atas: Gunakan kondisi khusus untuk item pertama agar menyambung ke parent */}
                               <div
-                                className={`w-full h-1/2 transition-all duration-200 ${isActiveChild ? "bg-gray-600 dark:bg-zinc-400" : "bg-gray-200 dark:bg-zinc-700"}`}
+                                className={`w-full h-1/2 ${
+                                  childIndex === 0 && isCurrentActive
+                                    ? "bg-gray-800 dark:bg-zinc-700" // Garis sambung ke parent
+                                    : isAboveActive || isCurrentActive
+                                      ? "bg-gray-800 dark:bg-zinc-200"
+                                      : "bg-gray-200 dark:bg-zinc-700"
+                                }`}
                               />
+                              {/* Bagian Bawah */}
                               <div
-                                className={`w-full h-1/2 ${isLast ? "bg-transparent" : "bg-gray-200 dark:bg-zinc-700"}`}
+                                className={`w-full h-1/2 ${
+                                  isLast
+                                    ? "bg-transparent"
+                                    : isAboveActive
+                                      ? "bg-gray-800 dark:bg-zinc-200"
+                                      : "bg-gray-200 dark:bg-zinc-700"
+                                }`}
                               />
                             </div>
+
+                            {/* Garis Horizontal */}
                             <div
-                              className={`absolute w-4 h-0.5 top-1/2 -translate-y-1/2 ${isActiveChild ? "bg-gray-600 dark:bg-zinc-400 left-0" : "bg-gray-200 dark:bg-zinc-700 left-0.5"}`}
+                              className={`absolute left-0 w-4 h-0.5 top-1/2 -translate-y-1/2 ${
+                                isActiveChild
+                                  ? "bg-gray-800 dark:bg-zinc-200"
+                                  : "bg-gray-200 dark:bg-zinc-700"
+                              }`}
                             />
+
                             <div
                               onClick={() => {
                                 expandIfCollapsed();
