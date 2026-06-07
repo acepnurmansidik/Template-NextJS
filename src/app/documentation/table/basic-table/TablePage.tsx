@@ -204,6 +204,9 @@ const data: any[] = [
 ];
 
 const TablePage = () => {
+  const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  /* ============================= MODALS ============================= */
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
   /* ============================= PAGINATION STATE ============================= */
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -211,6 +214,22 @@ const TablePage = () => {
   // UBAH BAGIAN INI AGAR DINAMIS
   const totalData = data.length;
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
+
+  useEffect(() => {
+    // ambil data role halaman di cookies yang sudah di hash
+    // cari datanya dai dalam array of object dengan yang di url
+    // masukan ke state
+    setHasAccess({
+      view: true,
+      create: true,
+      delete: true,
+      update: true,
+      import: true,
+      export: true,
+      pdf: true,
+      whatsapp: true,
+    });
+  }, []);
 
   // Pastikan jika page saat ini lebih besar dari totalPage akibat filter, reset ke halaman 1
   useEffect(() => {
@@ -293,35 +312,44 @@ const TablePage = () => {
 
           {/* SISI KANAN: Tombol Asli (Tidak Diubah) */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {}}
-              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
-            >
-              <CiImport
-                size={15}
-                strokeWidth={1.5}
-                className="text-gray-500 dark:text-zinc-400"
-              />
-              <span>Import</span>
-            </button>
-            <button
-              onClick={() => {}}
-              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
-            >
-              <CiExport
-                size={15}
-                strokeWidth={1.5}
-                className="text-gray-500 dark:text-zinc-400"
-              />
-              <span>Export</span>
-            </button>
-            <button
-              onClick={() => {}}
-              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
-            >
-              <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
-              <span>Create New</span>
-            </button>
+            {hasAccess.import && (
+              <button
+                onClick={() => setIsModalCreateOpen(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiImport
+                  size={15}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Import</span>
+              </button>
+            )}
+            {hasAccess.export && (
+              <button
+                onClick={() => setIsModalCreateOpen(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiExport
+                  size={15}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Export</span>
+              </button>
+            )}
+            {hasAccess.create && (
+              <button
+                onClick={() => setIsModalCreateOpen(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <FaPlus
+                  size={10}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Create New</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -416,6 +444,7 @@ const TablePage = () => {
 
           {/* =========================== TABLE ============================ */}
           <BasicTable
+            hasAccess={hasAccess}
             columns={columns}
             data={data}
             visibleColumns={visibleColumns}

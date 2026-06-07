@@ -1,7 +1,11 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
+import { FaFilePdf } from "react-icons/fa6";
+import { IoLogoWhatsapp } from "react-icons/io";
+import { useState } from "react";
 
 interface DataProps {
+  hasAccess: Record<string, boolean>;
   columns: { title: string; value: string }[];
   data: any[];
   visibleColumns: string[];
@@ -20,6 +24,7 @@ interface DataProps {
 }
 
 const BasicTable = ({
+  hasAccess,
   columns,
   data,
   visibleColumns,
@@ -36,6 +41,18 @@ const BasicTable = ({
   setLimit,
   windowPages,
 }: DataProps) => {
+  const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
+  const [showModalView, setShowModalView] = useState<boolean>(false);
+  const [selectedData, setSelectedData] = useState<any[] | any>(null);
+
+  const handleModalView = (newData: any) => {
+    setShowModalView(true);
+    setSelectedData(newData);
+  };
+  const handleModalUpdate = (newData: any) => {
+    setShowModalUpdate(true);
+    setSelectedData(newData);
+  };
   return (
     <div className="grid grid-cols-1 items-center">
       {/* =========================== TABLE WRAPPER ============================ */}
@@ -170,15 +187,43 @@ const BasicTable = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              <button className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors">
-                                <FaEye size={18} />
-                              </button>
-                              <button className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-                                <FaEdit size={18} />
-                              </button>
-                              <button className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
-                                <FaTrash size={16} />
-                              </button>
+                              {hasAccess.whatsapp && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
+                                >
+                                  <IoLogoWhatsapp size={18} />
+                                </button>
+                              )}
+                              {hasAccess.pdf && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
+                                >
+                                  <FaFilePdf size={18} />
+                                </button>
+                              )}
+                              {hasAccess.view && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                                >
+                                  <FaEye size={18} />
+                                </button>
+                              )}
+                              {hasAccess.update && (
+                                <button
+                                  onClick={() => handleModalUpdate(row)}
+                                  className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                                >
+                                  <FaEdit size={18} />
+                                </button>
+                              )}
+                              {hasAccess.delete && (
+                                <button className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                  <FaTrash size={16} />
+                                </button>
+                              )}
                             </div>
                           ) : col.value === "cards" ? (
                             <div className="flex flex-col gap-1">
