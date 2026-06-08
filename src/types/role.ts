@@ -1,5 +1,3 @@
-import { ActionOption } from "./global_types";
-
 // FORM DATA
 export interface RoleFormData {
   name: string;
@@ -33,10 +31,16 @@ export interface BodyRoleResponseAPIDaum {
   data: RoleApiDaum[];
 }
 
+export interface PathAccessDaum {
+  path: string;
+  actions: Record<string, boolean>;
+}
+
 export interface RoleApiDaum {
   name: string;
   slug: string;
   has_access_module: RoleModuleApiDaum[];
+  path_access: PathAccessDaum[];
 }
 
 export interface RoleModuleApiDaum {

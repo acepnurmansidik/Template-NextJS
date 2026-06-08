@@ -173,12 +173,29 @@ const data: any[] = [
 ];
 
 const DashboardPage = () => {
+  const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
   /* ============================= PAGINATION STATE ============================= */
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
   const totalData = data.length;
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
+
+  useEffect(() => {
+    // ambil data role halaman di cookies yang sudah di hash
+    // cari datanya dai dalam array of object dengan yang di url
+    // masukan ke state
+    setHasAccess({
+      view: true,
+      create: true,
+      delete: true,
+      update: true,
+      import: true,
+      export: true,
+      pdf: true,
+      whatsapp: true,
+    });
+  }, []);
 
   useEffect(() => {
     if (page > totalPage) {
@@ -832,6 +849,7 @@ const DashboardPage = () => {
 
           {/* =========================== TABLE ============================ */}
           <BasicTable
+            hasAccess={hasAccess}
             columns={columns}
             data={data}
             visibleColumns={visibleColumns}
