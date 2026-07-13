@@ -22,10 +22,16 @@ export interface PermissionDataItem {
 }
 
 // API RESPONSE ====================================
+export interface ModuleApiDaum {
+  _id: string;
+  name: string;
+  title: string;
+  permission: PermissionResponseAPI[];
+}
 export interface BodyRoleResponseAPI {
   success: string;
   message: string;
-  data: ModuleResponseAPI[];
+  data: ModuleApiDaum[];
 }
 export interface ModuleResponseAPI {
   name: string;

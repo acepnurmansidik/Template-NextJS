@@ -183,12 +183,8 @@ export const TableIAM = ({
                               `}</style>
                               <input
                                 type="checkbox"
-                                checked={selectedNames.includes(
-                                  row.user_id._id,
-                                )}
-                                onChange={() =>
-                                  toggleSelectName(row.user_id._id)
-                                }
+                                checked={selectedNames.includes(row._id)}
+                                onChange={() => toggleSelectName(row._id)}
                                 className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
                               />
                             </>
