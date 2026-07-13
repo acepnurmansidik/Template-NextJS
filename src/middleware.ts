@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { API_BASE_URL } from "./utils/api";
 import type { BodyIAMResponseApiDaum } from "./types/IAM";
+import { BodyRoleResponseAPI } from "./types/module";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -56,10 +57,10 @@ export async function middleware(request: NextRequest) {
   // Ambil path_access dari sumber yang sama dengan iamSlice (GET /users/iam).
   // Fokus hanya pada `path_access.path`.
   const allowedPaths = new Set<string>();
+  const allPaths = new Set<string>();
   try {
-    const res = await axios.get<BodyIAMResponseApiDaum>(
-      `${API_BASE_URL}/users/iam`,
-      {
+    const [resultIAM, resultModules] = await Promise.all([
+      axios.get<BodyIAMResponseApiDaum>(`${API_BASE_URL}/users/iam`, {
         headers: {
           "Content-Type": "application/json",
           // Teruskan cookie request agar backend tahu current user.
@@ -67,16 +68,37 @@ export async function middleware(request: NextRequest) {
         },
         // Middleware jalan di Edge runtime -> paksa adapter fetch.
         adapter: "fetch",
-      },
+      }),
+      axios.get<BodyRoleResponseAPI>(`${API_BASE_URL}/module?limit=100000`, {
+        headers: {
+          "Content-Type": "application/json",
+          // Teruskan cookie request agar backend tahu current user.
+          cookie: request.headers.get("cookie") ?? "",
+        },
+        // Middleware jalan di Edge runtime -> paksa adapter fetch.
+        adapter: "fetch",
+      }),
+    ]);
+
+    const modulePaths = resultModules.data.data.flatMap((item) =>
+      item.permission.flatMap((path) => path.path),
     );
+    modulePaths.forEach((path) => allPaths.add(path));
 
     const paths =
-      res.data?.data?.role_id?.path_access?.map((access) => access.path) ?? [];
+      resultIAM.data?.data?.role_id?.path_access?.map(
+        (access) => access.path,
+      ) ?? [];
     paths.forEach((path) => allowedPaths.add(path));
   } catch {
     // Bila API gagal (termasuk status non-2xx yang dilempar axios),
     // allowedPaths tetap kosong (fail-closed) sehingga user diarahkan ke
     // access-denied daripada lolos tanpa pengecekan.
+  }
+
+  // validate for page not found
+  if (!defaultAllowPath.has(pathname) && !allPaths.has(pathname)) {
+    return NextResponse.rewrite(new URL("/404", request.url));
   }
 
   // Jika path tidak termasuk default-allow dan tidak ada dalam path_access user
