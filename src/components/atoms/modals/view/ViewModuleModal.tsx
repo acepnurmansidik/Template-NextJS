@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
-import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
 import {
   MenuDetail,
@@ -68,7 +67,7 @@ export default function ViewModuleModal({
 
   // ============================ H A N D L E R ============================
 
-  if (!isOpen) return null;
+  if (!isOpen || !formData) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -93,12 +92,7 @@ export default function ViewModuleModal({
               </label>
               <input
                 disabled
-                onChange={(e) =>
-                  setFormData((prev: ModuleFormData) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
+                value={formData.name}
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
@@ -109,12 +103,7 @@ export default function ViewModuleModal({
               </label>
               <input
                 disabled
-                onChange={(e) =>
-                  setFormData((prev: ModuleFormData) => ({
-                    ...prev,
-                    title: e.target.value,
-                  }))
-                }
+                value={formData.title}
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
@@ -126,12 +115,6 @@ export default function ViewModuleModal({
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                 Permissions
               </h3>
-              <button
-                type="button"
-                className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline hover:cursor-pointer"
-              >
-                <FaPlus size={10} /> Add Row
-              </button>
             </div>
 
             <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
@@ -168,6 +151,7 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
+                                value={row.icon}
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -179,6 +163,7 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
+                                value={row.menu_name}
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -190,6 +175,7 @@ export default function ViewModuleModal({
                               </label>
                               <input
                                 disabled
+                                value={row.path}
                                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                               />
                             </td>
@@ -256,16 +242,6 @@ export default function ViewModuleModal({
                                 </div>
                               )}
                             </td>
-
-                            <td className="p-3 w-[10%] text-center align-bottom pb-4">
-                              <button
-                                disabled
-                                type="button"
-                                className="text-red-400 hover:text-red-600 hover:scale-110 hover:cursor-pointer duration-300"
-                              >
-                                <FaTrash size={14} />
-                              </button>
-                            </td>
                           </tr>
 
                           {/* --- BARIS SUB-MENU (CHILDREN) --- */}
@@ -276,12 +252,6 @@ export default function ViewModuleModal({
                                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                                   Sub-Menu Items
                                 </h3>
-                                <button
-                                  type="button"
-                                  className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
-                                >
-                                  <FaPlus size={8} /> Add Sub Menu
-                                </button>
                               </div>
                             </td>
                           </tr>
@@ -353,14 +323,6 @@ export default function ViewModuleModal({
                                       });
                                     }}
                                   />
-                                </td>
-                                <td className="p-2 text-center w-[10%]">
-                                  <button
-                                    disabled
-                                    className="text-red-400 hover:text-red-600 hover:scale-110 hover:cursor-pointer duration-300"
-                                  >
-                                    <FaTrash size={12} />
-                                  </button>
                                 </td>
                               </tr>
                             ),

@@ -28,7 +28,7 @@ export interface ModuleApiDaum {
   title: string;
   permission: PermissionResponseAPI[];
 }
-export interface BodyRoleResponseAPI {
+export interface BodyModuleResponseAPI {
   success: string;
   message: string;
   data: ModuleApiDaum[];

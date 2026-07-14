@@ -4,9 +4,16 @@ import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
-import { MenuDetail, ModuleFormData, PermissionDataItem } from "@/types/module";
+import {
+  BodyModuleResponseAPI,
+  MenuDetail,
+  ModuleFormData,
+  PermissionDataItem,
+} from "@/types/module";
 import { IoClose } from "react-icons/io5";
 import React from "react";
+import { apiPost } from "@/utils/api";
+import Swal from "sweetalert2";
 
 interface DataProps {
   isOpen: boolean;
@@ -33,12 +40,56 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
   }, []);
 
   // ============================ H A N D L E R ============================
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      // Ubah actions dari array of object ({ label, value }) menjadi array of
+      // string (ambil value-nya saja) — baik di permission maupun children.
+      const payload = {
+        ...formData,
+        permission: formData.permission.map((row) => ({
+          ...row,
+          actions: (row.actions ?? []).map((action) => action.value),
+          children: (row.children ?? []).map((child) => ({
+            ...child,
+            actions: (child.actions ?? []).map((action) => action.value),
+          })),
+        })),
+      };
+
+      const result = await apiPost<BodyModuleResponseAPI>(
+        "/module",
+        payload,
+        false,
+        false,
+      );
+
       setIsLoading(false);
+
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Created successfully",
+          text: result.message || "Your data has been saved successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+
+        // Reset form lalu tutup modal.
+        setFormData(defaultValue);
+        onClose();
+      }
     } catch (error) {
       setIsLoading(false);
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: "Failed to save data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
     }
   };
   const handleChangeRow = (

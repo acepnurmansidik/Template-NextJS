@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { apiGet, type QueryParams } from "@/utils/api";
-import { BodyRoleResponseAPI, ModuleApiDaum } from "@/types/module";
+import { BodyModuleResponseAPI, ModuleApiDaum } from "@/types/module";
 
 interface ModuleState {
   data: ModuleApiDaum[];
@@ -18,12 +18,12 @@ const initialState: ModuleState = {
 // Params dinamis & opsional — fetchModules() untuk ambil semua, atau kirim
 // { search: "..." } dsb sesuai kebutuhan backend.
 export const fetchModules = createAsyncThunk<
-  BodyRoleResponseAPI,
+  BodyModuleResponseAPI,
   QueryParams | void,
   { rejectValue: string }
 >("module/fetchModules", async (params, { rejectWithValue }) => {
   try {
-    return await apiGet<BodyRoleResponseAPI>("/module", params ?? undefined);
+    return await apiGet<BodyModuleResponseAPI>("/module", params ?? undefined);
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Gagal mengambil data module";

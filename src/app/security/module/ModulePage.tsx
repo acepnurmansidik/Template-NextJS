@@ -4,14 +4,18 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import CreateModuleModal from "@/components/atoms/modals/create/CreateModuleModal";
 import { TableModule } from "@/components/atoms/table/tableModule";
 import { USER_IAM } from "@/utils/permission";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
+import { apiGet } from "@/utils/api";
+import { BodyModuleResponseAPI, ModuleApiDaum } from "@/types/module";
+import { useAppSelector } from "@/store/hooks";
+import Loading from "@/components/atoms/shared/Loading";
 
 const columns = [
-  { title: "Mark All", value: "*" },
+  // { title: "Mark All", value: "*" },
   { title: "Code", value: "name" },
   { title: "Title", value: "title" },
   { title: "Action", value: "action" },
@@ -22,17 +26,33 @@ interface DataProps {
   subtitle: string;
 }
 export const ModulePage = ({ title, subtitle }: DataProps) => {
+  const currentUser = useAppSelector((state) => state.iam.data);
+
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
   /* ============================= MODALS ============================= */
   const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
-  /* ============================= PAGINATION STATE ============================= */
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  /* ============================= PAGINATION & SEARCH STATE ============================= */
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [search, setSearch] = useState<string>("");
+
+  /* ============================= DATA STATE ============================= */
+  const [initiateData, setInitiateData] = useState<ModuleApiDaum[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // UBAH BAGIAN INI AGAR DINAMIS
-  const totalData = USER_IAM.length;
+  const totalData = initiateData.length;
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
+
+  useEffect(() => {
+    if (currentUser) {
+      const matched = currentUser.role_id.path_access.find(
+        (item) => item.path === pathname,
+      );
+      setHasAccess(matched?.actions ?? {});
+    }
+  }, [currentUser, pathname]);
 
   // Pastikan jika page saat ini lebih besar dari totalPage akibat filter, reset ke halaman 1
   useEffect(() => {
@@ -41,19 +61,27 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
     }
   }, [totalPage, page]);
 
+  // Fungsi fetch dibuat reusable agar bisa dipanggil ulang (refetch) setelah
+  // create/update/delete tanpa perlu refresh halaman.
+  const fetchModuleData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const result = await apiGet<BodyModuleResponseAPI>(
+        "/module",
+        { page, limit, search },
+        false,
+      );
+      setInitiateData(result.data ?? []);
+      setIsLoading(false);
+    } catch (error) {
+      setInitiateData([]);
+      setIsLoading(false);
+    }
+  }, [page, limit, search]);
+
   useEffect(() => {
-    // ambil data role halaman di cookies yang sudah di hash
-    // cari datanya dai dalam array of object dengan yang di url
-    // masukan ke state
-    setHasAccess({
-      view: true,
-      create: true,
-      delete: true,
-      update: false,
-      import: true,
-      export: false,
-    });
-  }, []);
+    fetchModuleData();
+  }, [fetchModuleData, isModalCreateOpen]);
 
   const windowPages = (() => {
     if (totalData === 0) return [1];
@@ -114,7 +142,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
   return (
     <CMSLayout>
       {/* Container utama: Ditambahkan warna text judul dinamis */}
-      <div className="w-full px-6 transition-colors duration-300">
+      <div className="relative min-h-full w-full px-6 transition-colors duration-300">
         {/* =========================== DASHBOARD HEADER ============================ */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
           {/* SISI KIRI: Judul dan Deskripsi Dashboard */}
@@ -180,6 +208,11 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
                 <input
                   type="text"
                   placeholder="Search..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full py-1.5 px-1 text-sm border-b-2 border-gray-200 dark:border-zinc-700 outline-none transition-colors duration-200 focus:border-blue-600 dark:focus:border-blue-500 bg-transparent text-gray-800 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500"
                 />
               </div>
@@ -259,25 +292,30 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
             </div>
           </div>
 
-          {/* =========================== TABLE ============================ */}
-          <TableModule
-            hasAccess={hasAccess}
-            columns={columns}
-            data={[]}
-            visibleColumns={visibleColumns}
-            selectedNames={selectedNames}
-            handleSelectAll={handleSelectAll}
-            toggleSelectName={toggleSelectName}
-            expandedRow={expandedRow}
-            toggleRow={toggleRow}
-            page={page}
-            limit={limit}
-            totalData={totalData}
-            totalPage={totalPage}
-            setPage={setPage}
-            setLimit={setLimit}
-            windowPages={windowPages}
-          />
+          {/* =========================== TABLE / LOADING ============================ */}
+          {isLoading ? (
+            <Loading />
+          ) : (
+            <TableModule
+              hasAccess={hasAccess}
+              columns={columns}
+              data={initiateData}
+              visibleColumns={visibleColumns}
+              selectedNames={selectedNames}
+              handleSelectAll={handleSelectAll}
+              toggleSelectName={toggleSelectName}
+              expandedRow={expandedRow}
+              toggleRow={toggleRow}
+              page={page}
+              limit={limit}
+              totalData={totalData}
+              totalPage={totalPage}
+              setPage={setPage}
+              setLimit={setLimit}
+              windowPages={windowPages}
+              onRefresh={fetchModuleData}
+            />
+          )}
         </div>
       </div>
 

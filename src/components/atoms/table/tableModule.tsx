@@ -3,16 +3,23 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 import { useState } from "react";
-import UpdateModuleModal from "../modals/update/UpdateModuleModal";
-import { ModuleResponseAPI } from "@/types/module";
+import {
+  BodyModuleResponseAPI,
+  ModuleApiDaum,
+  ModuleResponseAPI,
+} from "@/types/module";
 import ViewModuleModal from "../modals/view/ViewModuleModal";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io";
+import UpdateModuleModal from "../modals/update/UpdateModuleModal";
+import { apiDelete } from "@/utils/api";
+import Swal from "sweetalert2";
+import axios from "axios";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
   columns: { title: string; value: string }[];
-  data: ModuleResponseAPI[];
+  data: ModuleApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
   handleSelectAll: () => void;
@@ -26,6 +33,7 @@ interface DataProps {
   windowPages: number[];
   setLimit: (limit: number) => void;
   setPage: (page: number) => void;
+  onRefresh?: () => void;
 }
 
 export const TableModule = ({
@@ -45,7 +53,9 @@ export const TableModule = ({
   setPage,
   setLimit,
   windowPages,
+  onRefresh,
 }: DataProps) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
   const [showModalView, setShowModalView] = useState<boolean>(false);
   const [selectedData, setSelectedData] = useState<ModuleResponseAPI[] | any>(
@@ -60,6 +70,68 @@ export const TableModule = ({
     setShowModalUpdate(true);
     setSelectedData(newData);
   };
+
+  const handleDeleteData = async (id: string) => {
+    try {
+      // 1. Tampilkan konfirmasi Swal sebelum menghapus
+      const confirmation = await Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this data!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626", // Warna merah untuk konfirmasi hapus
+        cancelButtonColor: "#6b7280", // Warna abu-abu untuk batal
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "No, cancel",
+      });
+
+      // 2. Jika user membatalkan, langsung hentikan fungsi
+      if (!confirmation.isConfirmed) {
+        return;
+      }
+
+      // 3. Jika user setuju, jalankan proses loading dan hit API
+      setIsLoading(true);
+      const result = await apiDelete<BodyModuleResponseAPI>(
+        `/module/${id}`,
+        {},
+        false,
+      );
+
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted successfully", // Diubah dari "Updated" menjadi "Deleted" agar sesuai konteks
+          text: result.message || "Your data has been deleted successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+
+        // Ambil ulang data terbaru tanpa perlu refresh halaman.
+        onRefresh?.();
+      }
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+
+      // console.error("delete module error", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: serverMessage || "Failed to delete data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 items-center">
       {/* =========================== TABLE WRAPPER ============================ */}
@@ -197,6 +269,7 @@ export const TableModule = ({
                               <div className="flex items-center text-gray-500 dark:text-zinc-400">
                                 {hasAccess.whatsapp && (
                                   <button
+                                    disabled={isLoading}
                                     onClick={() => handleModalView(row)}
                                     className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
                                   >
@@ -205,6 +278,7 @@ export const TableModule = ({
                                 )}
                                 {hasAccess.pdf && (
                                   <button
+                                    disabled={isLoading}
                                     onClick={() => handleModalView(row)}
                                     className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
                                   >
@@ -213,6 +287,7 @@ export const TableModule = ({
                                 )}
                                 {hasAccess.view && (
                                   <button
+                                    disabled={isLoading}
                                     onClick={() => handleModalView(row)}
                                     className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
                                   >
@@ -221,6 +296,7 @@ export const TableModule = ({
                                 )}
                                 {hasAccess.update && (
                                   <button
+                                    disabled={isLoading}
                                     onClick={() => handleModalUpdate(row)}
                                     className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                                   >
@@ -228,7 +304,11 @@ export const TableModule = ({
                                   </button>
                                 )}
                                 {hasAccess.delete && (
-                                  <button className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleDeleteData(row._id)}
+                                    className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                  >
                                     <FaTrash size={16} />
                                   </button>
                                 )}
@@ -345,13 +425,17 @@ export const TableModule = ({
           key={selectedData?._id}
           isOpen={showModalUpdate}
           onClose={() => setShowModalUpdate(!showModalUpdate)}
+          onSuccess={() => {
+            setShowModalUpdate(false);
+            onRefresh?.();
+          }}
           initialData={selectedData}
         />
       )}
       {showModalView && (
         <ViewModuleModal
           key={selectedData?._id}
-          isOpen={showModalUpdate}
+          isOpen={showModalView}
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />

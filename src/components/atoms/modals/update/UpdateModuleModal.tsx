@@ -5,24 +5,30 @@ import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions } from "@/utils/utils";
 import {
+  BodyModuleResponseAPI,
   MenuDetail,
+  ModuleApiDaum,
   ModuleFormData,
-  ModuleResponseAPI,
   PermissionDataItem,
   PermissionResponseAPI,
 } from "@/types/module";
 import { IoClose } from "react-icons/io5";
 import React from "react";
+import { apiPut } from "@/utils/api";
+import Swal from "sweetalert2";
+import axios from "axios";
 
 interface DataProps {
-  initialData: ModuleResponseAPI;
+  initialData: ModuleApiDaum;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 export default function UpdateModuleModal({
   isOpen,
   onClose,
+  onSuccess,
   initialData,
 }: DataProps) {
   // =============================== S T A T E ===============================
@@ -69,12 +75,74 @@ export default function UpdateModuleModal({
   }, [isOpen, initialData]);
 
   // ====================== H A N D L E R * S U B M I T ======================
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      // Bangun payload secara eksplisit — hanya kirim field yang dibutuhkan
+      // backend. Ini penting karena formData di-seed dari respons API sehingga
+      // permission/children masih membawa field asing (mis. _id) yang bila ikut
+      // terkirim akan ditolak backend (400). actions juga diubah dari array of
+      // object ({ label, value }) menjadi array of string.
+      const payload = {
+        name: formData.name,
+        title: formData.title,
+        permission: formData.permission.map((row: PermissionDataItem) => ({
+          icon: row.icon,
+          menu_name: row.menu_name,
+          path: row.path,
+          actions: (row.actions ?? []).map((action) => action.value),
+          children: (row.children ?? []).map((child) => ({
+            name: child.name,
+            path: child.path,
+            actions: (child.actions ?? []).map((action) => action.value),
+          })),
+        })),
+      };
+
+      const result = await apiPut<BodyModuleResponseAPI>(
+        `/module/${initialData._id}`,
+        payload,
+        false,
+        false,
+      );
+
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Updated successfully",
+          text: result.message || "Your data has been updated successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+
+        // Tutup modal & refetch data terbaru bila parent menyediakan onSuccess,
+        // jika tidak cukup tutup modalnya saja.
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          onClose();
+        }
+      }
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
+
+      // Ambil pesan error dari respons backend bila ada (axios error).
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+
+      // console.error("update module error", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: serverMessage || "Failed to update data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
     }
   };
 
@@ -171,7 +239,7 @@ export default function UpdateModuleModal({
     });
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !formData) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -195,6 +263,7 @@ export default function UpdateModuleModal({
                 Name
               </label>
               <input
+                value={formData.name}
                 onChange={(e) =>
                   setFormData((prev: ModuleFormData) => ({
                     ...prev,
@@ -210,6 +279,7 @@ export default function UpdateModuleModal({
                 Title
               </label>
               <input
+                value={formData.title}
                 onChange={(e) =>
                   setFormData((prev: ModuleFormData) => ({
                     ...prev,
@@ -270,6 +340,7 @@ export default function UpdateModuleModal({
                                 Icon
                               </label>
                               <input
+                                value={row.icon}
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "icon")
                                 }
@@ -283,6 +354,7 @@ export default function UpdateModuleModal({
                                 Menu Name
                               </label>
                               <input
+                                value={row.menu_name}
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "menu_name")
                                 }
@@ -296,6 +368,7 @@ export default function UpdateModuleModal({
                                 Path
                               </label>
                               <input
+                                value={row.path}
                                 onChange={(e) =>
                                   handleChangeRow(e, indexRow, "path")
                                 }

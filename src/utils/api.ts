@@ -53,3 +53,72 @@ export const apiGet = async <T>(
 
   return res.data;
 };
+
+// Bangun headers dinamis dipakai bersama POST/PUT/DELETE.
+// - `token`   : bila true, ambil Bearer dari cookie "TT" (sama seperti apiGet).
+// - `isFormData`: bila true, payload berupa file/FormData (multipart) sehingga
+//   Content-Type dibiarkan diatur otomatis oleh browser (lengkap dgn boundary);
+//   bila false/undefined dipakai application/json.
+const buildHeaders = (
+  token?: boolean,
+  isFormData?: boolean,
+): Record<string, string> => {
+  const headers: Record<string, string> = {};
+
+  // Cek dulu apakah ini upload file (multipart) atau JSON biasa.
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Cek token — logika sama seperti apiGet.
+  if (token) {
+    const accessToken = Cookies.get("TT");
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+  }
+
+  return headers;
+};
+
+// POST generik. `isFormData` true bila `data` berupa FormData (upload file).
+export const apiPost = async <T>(
+  endpoint: string,
+  data?: unknown,
+  token?: boolean,
+  isFormData?: boolean,
+): Promise<T> => {
+  const headers = buildHeaders(token, isFormData ?? false);
+  const res = await axios.post<T>(`${API_BASE_URL}${endpoint}`, data, {
+    headers,
+  });
+  return res.data;
+};
+
+// PUT generik. `isFormData` true bila `data` berupa FormData (upload file).
+export const apiPut = async <T>(
+  endpoint: string,
+  data?: unknown,
+  token?: boolean,
+  isFormData?: boolean,
+): Promise<T> => {
+  const headers = buildHeaders(token, isFormData ?? false);
+  const res = await axios.put<T>(`${API_BASE_URL}${endpoint}`, data, {
+    headers,
+  });
+  return res.data;
+};
+
+// DELETE generik. Mendukung query params opsional & token.
+export const apiDelete = async <T>(
+  endpoint: string,
+  params?: QueryParams,
+  token?: boolean,
+): Promise<T> => {
+  const headers = buildHeaders(token);
+  const res = await axios.delete<T>(
+    `${API_BASE_URL}${endpoint}${buildQuery(params)}`,
+    { headers },
+  );
+  return res.data;
+};

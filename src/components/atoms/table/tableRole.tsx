@@ -369,7 +369,7 @@ export const TableRole = ({
       {showModalView && (
         <ViewModuleModal
           key={selectedData?._id}
-          isOpen={showModalUpdate}
+          isOpen={showModalView}
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />

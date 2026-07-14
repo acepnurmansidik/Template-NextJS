@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { API_BASE_URL } from "./utils/api";
 import type { BodyIAMResponseApiDaum } from "./types/IAM";
-import { BodyRoleResponseAPI } from "./types/module";
+import { BodyModuleResponseAPI } from "./types/module";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -69,7 +69,7 @@ export async function middleware(request: NextRequest) {
         // Middleware jalan di Edge runtime -> paksa adapter fetch.
         adapter: "fetch",
       }),
-      axios.get<BodyRoleResponseAPI>(`${API_BASE_URL}/module?limit=100000`, {
+      axios.get<BodyModuleResponseAPI>(`${API_BASE_URL}/module?limit=100000`, {
         headers: {
           "Content-Type": "application/json",
           // Teruskan cookie request agar backend tahu current user.
