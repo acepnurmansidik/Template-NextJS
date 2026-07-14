@@ -63,7 +63,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
 
   // Fungsi fetch dibuat reusable agar bisa dipanggil ulang (refetch) setelah
   // create/update/delete tanpa perlu refresh halaman.
-  const fetchModuleData = useCallback(async () => {
+  const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await apiGet<BodyModuleResponseAPI>(
@@ -80,8 +80,8 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
   }, [page, limit, search]);
 
   useEffect(() => {
-    fetchModuleData();
-  }, [fetchModuleData, isModalCreateOpen]);
+    fetchingData();
+  }, [fetchingData, isModalCreateOpen]);
 
   const windowPages = (() => {
     if (totalData === 0) return [1];
@@ -313,7 +313,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
               setPage={setPage}
               setLimit={setLimit}
               windowPages={windowPages}
-              onRefresh={fetchModuleData}
+              onRefresh={fetchingData}
             />
           )}
         </div>

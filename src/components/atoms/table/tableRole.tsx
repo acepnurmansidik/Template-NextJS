@@ -3,9 +3,14 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 import { useState } from "react";
-import { RoleApiDaum } from "@/types/role";
+import { BodyRoleResponseAPI, RoleApiDaum } from "@/types/role";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io";
+import UpdateRoleModal from "../modals/update/UpdateRoleModal";
+import ViewRoleModal from "../modals/view/ViewRoleModal";
+import Swal from "sweetalert2";
+import { apiDelete } from "@/utils/api";
+import axios from "axios";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
@@ -24,6 +29,7 @@ interface DataProps {
   windowPages: number[];
   setLimit: (limit: number) => void;
   setPage: (page: number) => void;
+  onRefresh: () => void;
 }
 
 export const TableRole = ({
@@ -43,7 +49,9 @@ export const TableRole = ({
   setPage,
   setLimit,
   windowPages,
+  onRefresh,
 }: DataProps) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
   const [showModalView, setShowModalView] = useState<boolean>(false);
   const [selectedData, setSelectedData] = useState<RoleApiDaum[] | any>(null);
@@ -56,6 +64,68 @@ export const TableRole = ({
     setShowModalUpdate(true);
     setSelectedData(newData);
   };
+
+  const handleDeleteData = async (id: string) => {
+    try {
+      // 1. Tampilkan konfirmasi Swal sebelum menghapus
+      const confirmation = await Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this data!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626", // Warna merah untuk konfirmasi hapus
+        cancelButtonColor: "#6b7280", // Warna abu-abu untuk batal
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "No, cancel",
+      });
+
+      // 2. Jika user membatalkan, langsung hentikan fungsi
+      if (!confirmation.isConfirmed) {
+        return;
+      }
+
+      // 3. Jika user setuju, jalankan proses loading dan hit API
+      setIsLoading(true);
+      const result = await apiDelete<BodyRoleResponseAPI>(
+        `/role/${id}`,
+        {},
+        false,
+      );
+
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted successfully", // Diubah dari "Updated" menjadi "Deleted" agar sesuai konteks
+          text: result.message || "Your data has been deleted successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+
+        // Ambil ulang data terbaru tanpa perlu refresh halaman.
+        onRefresh?.();
+      }
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+
+      // console.error("delete module error", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: serverMessage || "Failed to delete data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 items-center">
       {/* =========================== TABLE WRAPPER ============================ */}
@@ -223,14 +293,17 @@ export const TableRole = ({
                                 </button>
                               )}
                               {hasAccess.delete && (
-                                <button className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                <button
+                                  onClick={() => handleDeleteData(row._id)}
+                                  className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                >
                                   <FaTrash size={16} />
                                 </button>
                               )}
                             </div>
                           ) : col.value === "has_access_module" ? (
                             <div className="flex flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
-                              {row.has_access_module.length > 0 ? (
+                              {row.has_access_module?.length > 0 ? (
                                 row.has_access_module.map((item, indexItem) => (
                                   <span
                                     key={indexItem}
@@ -246,7 +319,7 @@ export const TableRole = ({
                               )}
 
                               {/* Indikator titik jika data banyak (opsional: ini hanya muncul jika ada overflow) */}
-                              {row.has_access_module.length > 6 && (
+                              {row.has_access_module?.length > 6 && (
                                 <span className="text-[10px] text-zinc-500 font-bold self-center">
                                   ...
                                 </span>
@@ -358,22 +431,26 @@ export const TableRole = ({
         </div>
       </div>
 
-      {/* {showModalUpdate && (
-        <UpdateModuleModal
+      {showModalUpdate && (
+        <UpdateRoleModal
           key={selectedData?._id}
           isOpen={showModalUpdate}
           onClose={() => setShowModalUpdate(!showModalUpdate)}
           initialData={selectedData}
+          onSuccess={() => {
+            setShowModalUpdate(false);
+            onRefresh?.();
+          }}
         />
       )}
       {showModalView && (
-        <ViewModuleModal
+        <ViewRoleModal
           key={selectedData?._id}
           isOpen={showModalView}
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />
-      )} */}
+      )}
     </div>
   );
 };

@@ -9,17 +9,19 @@ type Option = { value: string; label: string; data: any };
 
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { BodyRoleResponseAPI, RoleFormData } from "@/types/role";
+import { BodyRoleResponseAPI, RoleApiDaum, RoleFormData } from "@/types/role";
 import {
   BodyModuleResponseAPI,
   MenuDetailResponseAPI,
   PermissionResponseAPI,
 } from "@/types/module";
-import { apiGet, apiPost } from "@/utils/api";
+import { apiGet, apiPut } from "@/utils/api";
 
 interface DataProps {
+  initialData: RoleApiDaum;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 const defaultValue: RoleFormData = {
@@ -27,7 +29,12 @@ const defaultValue: RoleFormData = {
   has_access_module: [],
 };
 
-export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
+export default function UpdateRoleModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+}: DataProps) {
   // ==================== C A C H E * F E T C H * D A T A ====================
   const [cacheDataModule, setCacheDataModule] = useState<Option[]>([]);
 
@@ -35,6 +42,10 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dataModuleOptions, setDataModuleOptions] = useState<Option[]>([]);
+
+  useEffect(() => {
+    setFormData(initialData);
+  }, [isOpen]);
 
   useEffect(() => {
     const fetchModuleOptions = async () => {
@@ -89,37 +100,58 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const result = await apiPost<BodyRoleResponseAPI>(
-        "/role",
-        formData,
+      // Bangun payload eksplisit — hanya kirim field yang dikelola form.
+      // formData di-seed dari initialData (RoleApiDaum) sehingga masih membawa
+      // field asing dari struktur BE ternormalisasi (_id, role_id, slug,
+      // path_access, is_delete, timestamps) yang bila ikut terkirim bisa
+      // ditolak backend (400). actions tetap Record<string, boolean> (Map di BE).
+      const payload = {
+        name: formData.name,
+        has_access_module: (formData.has_access_module ?? []).map((mod) => ({
+          name: mod.name,
+          title: mod.title,
+          permission: (mod.permission ?? []).map((perm) => ({
+            icon: perm.icon,
+            menu_name: perm.menu_name,
+            path: perm.path,
+            actions: perm.actions,
+            children: (perm.children ?? []).map((child) => ({
+              name: child.name,
+              path: child.path,
+              actions: child.actions,
+            })),
+          })),
+        })),
+      };
+
+      const result = await apiPut<BodyRoleResponseAPI>(
+        `/role/${initialData._id}`,
+        payload,
         false,
         false,
       );
       if (result.success) {
         await Swal.fire({
           icon: "success",
-          title: "Created successfully",
-          text: result.message || "Your data has been saved successfully.",
+          title: "Updated successfully",
+          text: result.message || "Your data has been updated successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
           timerProgressBar: true,
         });
 
-        // Reset form lalu tutup modal.
-        setFormData(defaultValue);
-        onClose();
+        // Tutup modal & refetch data terbaru bila parent menyediakan onSuccess,
+        // jika tidak cukup tutup modalnya saja.
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          onClose();
+        }
       }
+      setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong",
-        text: "Failed to save data. Please try again.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#dc2626",
-      });
     }
   };
 
@@ -271,7 +303,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Role Access
+          Update Role Access
         </h2>
         <button
           onClick={onClose}
@@ -605,7 +637,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
           disabled={isLoading}
           className={`px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg ${isLoading ?? "italic"}`}
         >
-          {isLoading ? "Creating..." : "Submit"}
+          {isLoading ? "Updating..." : "Submit"}
         </button>
       </div>
     </div>

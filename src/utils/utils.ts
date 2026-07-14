@@ -1,3 +1,9 @@
+// Format khusus untuk field "name" module: selalu UPPERCASE dan setiap
+// spasi (termasuk beruntun / tab) diubah menjadi underscore.
+// Contoh: "user access" -> "USER_ACCESS"
+export const formatModuleName = (value: string): string =>
+  value.toUpperCase().replace(/\s+/g, "_");
+
 export const CHART_COLORS = [
   "#3B82F6", // Blue-500
   "#10B981", // Emerald-500

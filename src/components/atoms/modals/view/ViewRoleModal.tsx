@@ -2,22 +2,22 @@
 
 import { useEffect, useState } from "react";
 import AsyncSelect from "react-select/async";
-import { FaPlus, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 type Option = { value: string; label: string; data: any };
 
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { BodyRoleResponseAPI, RoleFormData } from "@/types/role";
+import { RoleApiDaum, RoleFormData } from "@/types/role";
 import {
   BodyModuleResponseAPI,
   MenuDetailResponseAPI,
   PermissionResponseAPI,
 } from "@/types/module";
-import { apiGet, apiPost } from "@/utils/api";
+import { apiGet, apiPut } from "@/utils/api";
 
 interface DataProps {
+  initialData: RoleApiDaum;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -27,14 +27,21 @@ const defaultValue: RoleFormData = {
   has_access_module: [],
 };
 
-export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
+export default function ViewRoleModal({
+  isOpen,
+  onClose,
+  initialData,
+}: DataProps) {
   // ==================== C A C H E * F E T C H * D A T A ====================
   const [cacheDataModule, setCacheDataModule] = useState<Option[]>([]);
 
   // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dataModuleOptions, setDataModuleOptions] = useState<Option[]>([]);
+
+  useEffect(() => {
+    setFormData(initialData);
+  }, [isOpen]);
 
   useEffect(() => {
     const fetchModuleOptions = async () => {
@@ -84,44 +91,6 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
-
-  // ====================== H A N D L E R * S U B M I T ======================
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    try {
-      const result = await apiPost<BodyRoleResponseAPI>(
-        "/role",
-        formData,
-        false,
-        false,
-      );
-      if (result.success) {
-        await Swal.fire({
-          icon: "success",
-          title: "Created successfully",
-          text: result.message || "Your data has been saved successfully.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#2563eb",
-          timer: 2500,
-          timerProgressBar: true,
-        });
-
-        // Reset form lalu tutup modal.
-        setFormData(defaultValue);
-        onClose();
-      }
-    } catch (error) {
-      setIsLoading(false);
-
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong",
-        text: "Failed to save data. Please try again.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#dc2626",
-      });
-    }
-  };
 
   // ====================== H A N D L E R * A C T I O N ======================
   const toggleAction = (
@@ -271,7 +240,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Role Access
+          View Role Access
         </h2>
         <button
           onClick={onClose}
@@ -288,6 +257,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
               Role Name
             </label>
             <input
+              disabled
               value={formData.name}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -300,13 +270,6 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-100">
               access <span className="text-red-600">*</span>
             </h3>
-            <button
-              type="button"
-              onClick={handleAddModule}
-              className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline hover:cursor-pointer"
-            >
-              <FaPlus size={10} /> Add Row
-            </button>
           </div>
 
           {formData.has_access_module.length === 0 ? (
@@ -338,6 +301,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                       module <span className="text-red-600">*</span>
                     </label>
                     <AsyncSelect
+                      isDisabled
                       isSearchable
                       cacheOptions
                       defaultOptions={dataModuleOptions}
@@ -433,6 +397,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                                         {Object.keys(perm.actions).length >
                                           0 && (
                                           <button
+                                            disabled
                                             type="button"
                                             onClick={() =>
                                               toggleSelectAll(
@@ -456,6 +421,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                                                 className="flex items-center gap-1.5 cursor-pointer group"
                                               >
                                                 <input
+                                                  disabled
                                                   type="checkbox"
                                                   checked={status}
                                                   onChange={() =>
@@ -577,16 +543,6 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                       </div>
                     )}
                   </div>
-
-                  {/* BUTTON CTA */}
-                  <div className="col-span-1 pt-6 text-right order-2 lg:order-3 ">
-                    <button
-                      onClick={() => handleRemoveModule(modIdx)}
-                      className="text-red-500 hover:cursor-pointer hover:text-red-700"
-                    >
-                      <FaTrash size={20} />
-                    </button>
-                  </div>
                 </div>
               </div>
             ))
@@ -599,13 +555,6 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
           className="px-6 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-200 rounded-lg"
         >
           Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className={`px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg ${isLoading ?? "italic"}`}
-        >
-          {isLoading ? "Creating..." : "Submit"}
         </button>
       </div>
     </div>

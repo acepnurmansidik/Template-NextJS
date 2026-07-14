@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
-import { actionDefaultOptions } from "@/utils/utils";
+import { actionDefaultOptions, formatModuleName } from "@/utils/utils";
 import {
   BodyModuleResponseAPI,
   MenuDetail,
@@ -208,8 +208,13 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                 Name <span className="text-red-500">*</span>
               </label>
               <input
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    // Name selalu uppercase & spasi diubah jadi underscore.
+                    name: formatModuleName(e.target.value),
+                  }))
                 }
                 type="text"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"

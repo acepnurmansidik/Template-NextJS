@@ -2,13 +2,16 @@
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { USER_IAM } from "@/utils/permission";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { TableRole } from "@/components/atoms/table/tableRole";
 import CreateRoleModal from "@/components/atoms/modals/create/CreateRoleModal";
 import { usePathname } from "next/navigation";
+import { BodyRoleResponseAPI, RoleApiDaum } from "@/types/role";
+import { apiGet } from "@/utils/api";
+import { useAppSelector } from "@/store/hooks";
 
 const columns = [
   { title: "Mark All", value: "*" },
@@ -23,14 +26,21 @@ interface DataProps {
 }
 
 export const RolePage = ({ title, subtitle }: DataProps) => {
+  const currentUser = useAppSelector((state) => state.iam.data);
+
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
   /* ============================= MODALS ============================= */
   const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
   /* ============================= PAGINATION STATE ============================= */
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [search, setSearch] = useState<string>("");
+
+  /* ============================= DATA STATE ============================= */
+  const [initiateData, setInitiateData] = useState<RoleApiDaum[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // UBAH BAGIAN INI AGAR DINAMIS
   const totalData = USER_IAM.length;
@@ -43,21 +53,34 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
     }
   }, [totalPage, page]);
 
+  const fetchingData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const result = await apiGet<BodyRoleResponseAPI>(
+        "/role",
+        { limit, page, search },
+        false,
+      );
+      setInitiateData(result.data ?? []);
+      setIsLoading(false);
+    } catch (error) {
+      setInitiateData([]);
+      setIsLoading(false);
+    }
+  }, [limit, page, search]);
+
   useEffect(() => {
-    // ambil data role halaman di cookies yang sudah di hash
-    // cari datanya dai dalam array of object dengan yang di url
-    // masukan ke state
-    setHasAccess({
-      view: true,
-      create: true,
-      delete: true,
-      update: false,
-      import: true,
-      export: false,
-      pdf: true,
-      whatsapp: true,
-    });
-  }, []);
+    fetchingData();
+  }, [fetchingData, isModalCreateOpen]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const matched = currentUser.role_id.path_access.find(
+        (item) => item.path === pathname,
+      );
+      setHasAccess(matched?.actions ?? {});
+    }
+  }, [currentUser, pathname]);
 
   const windowPages = (() => {
     if (totalData === 0) return [1];
@@ -266,32 +289,7 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
           <TableRole
             hasAccess={hasAccess}
             columns={columns}
-            data={[
-              {
-                name: "Ultraman",
-                slug: "ultraman",
-                has_access_module: [
-                  {
-                    name: "MOD_DOC",
-                    title: "Documntation",
-                    permission: [
-                      {
-                        icon: "",
-                        menu_name: "Form",
-                        path: "documntation/form",
-                        actions: {
-                          view: true,
-                          create: true,
-                          update: true,
-                          delete: true,
-                        },
-                        children: [],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ]}
+            data={initiateData}
             visibleColumns={visibleColumns}
             selectedNames={selectedNames}
             handleSelectAll={handleSelectAll}
@@ -305,6 +303,7 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
             setPage={setPage}
             setLimit={setLimit}
             windowPages={windowPages}
+            onRefresh={fetchingData}
           />
         </div>
       </div>

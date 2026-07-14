@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
-import { actionDefaultOptions } from "@/utils/utils";
+import { actionDefaultOptions, formatModuleName } from "@/utils/utils";
 import {
   BodyModuleResponseAPI,
   MenuDetail,
@@ -267,7 +267,8 @@ export default function UpdateModuleModal({
                 onChange={(e) =>
                   setFormData((prev: ModuleFormData) => ({
                     ...prev,
-                    name: e.target.value,
+                    // Name selalu uppercase & spasi diubah jadi underscore.
+                    name: formatModuleName(e.target.value),
                   }))
                 }
                 type="text"
