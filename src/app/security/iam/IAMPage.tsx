@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import { TableIAM } from "@/components/atoms/table/tableIAM";
 
 const columns = [
-  { title: "Mark All", value: "*" },
+  // { title: "Mark All", value: "*" },
   { title: "Name", value: "name" },
   { title: "Role Name", value: "title" },
   { title: "Action", value: "action" },

@@ -6,7 +6,7 @@ import { API_BASE_URL } from "./utils/api";
 import type { BodyIAMResponseApiDaum } from "./types/IAM";
 import { BodyModuleResponseAPI } from "./types/module";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const defaultAllowPath = new Set<string>([
     "/auth/login",
@@ -81,7 +81,11 @@ export async function middleware(request: NextRequest) {
     ]);
 
     const modulePaths = resultModules.data.data.flatMap((item) =>
-      item.permission.flatMap((path) => path.path),
+      item.permission.flatMap((perm) =>
+        perm.children.length > 0
+          ? [...(perm.children?.map((child) => child.path) ?? [])]
+          : [perm.path],
+      ),
     );
     modulePaths.forEach((path) => allPaths.add(path));
 
