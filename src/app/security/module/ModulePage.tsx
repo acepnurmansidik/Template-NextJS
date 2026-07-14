@@ -139,6 +139,9 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
   const handleDeleteAll = () => {
     setSelectedNames([]);
   };
+
+  const handleImport = () => {};
+  const handleExport = () => {};
   return (
     <CMSLayout>
       {/* Container utama: Ditambahkan warna text judul dinamis */}
@@ -159,7 +162,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
           <div className="flex items-center gap-2">
             {hasAccess.import && (
               <button
-                onClick={() => setIsModalCreateOpen(true)}
+                onClick={handleImport}
                 className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
               >
                 <CiImport
@@ -172,7 +175,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
             )}
             {hasAccess.export && (
               <button
-                onClick={() => setIsModalCreateOpen(true)}
+                onClick={handleExport}
                 className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
               >
                 <CiExport

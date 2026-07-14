@@ -56,6 +56,13 @@ export const TableRole = ({
   const [showModalView, setShowModalView] = useState<boolean>(false);
   const [selectedData, setSelectedData] = useState<RoleApiDaum[] | any>(null);
 
+  const handleDownloadPdf = (newData: RoleApiDaum) => {
+    setSelectedData(newData);
+  };
+  const handleWhatsApp = (newData: RoleApiDaum) => {
+    setSelectedData(newData);
+  };
+
   const handleModalView = (newData: RoleApiDaum) => {
     setShowModalView(true);
     setSelectedData(newData);
@@ -260,46 +267,53 @@ export const TableRole = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              {hasAccess.whatsapp && (
-                                <button
-                                  onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
-                                >
-                                  <IoLogoWhatsapp size={18} />
-                                </button>
-                              )}
-                              {hasAccess.pdf && (
-                                <button
-                                  onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
-                                >
-                                  <FaFilePdf size={18} />
-                                </button>
-                              )}
-                              {hasAccess.view && (
-                                <button
-                                  onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-                                >
-                                  <FaEye size={18} />
-                                </button>
-                              )}
-                              {hasAccess.update && (
-                                <button
-                                  onClick={() => handleModalUpdate(row)}
-                                  className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                                >
-                                  <FaEdit size={18} />
-                                </button>
-                              )}
-                              {hasAccess.delete && (
-                                <button
-                                  onClick={() => handleDeleteData(row._id)}
-                                  className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
-                                >
-                                  <FaTrash size={16} />
-                                </button>
-                              )}
+                              <div className="flex items-center text-gray-500 dark:text-zinc-400">
+                                {hasAccess.whatsapp && (
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleWhatsApp(row)}
+                                    className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
+                                  >
+                                    <IoLogoWhatsapp size={18} />
+                                  </button>
+                                )}
+                                {hasAccess.pdf && (
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleDownloadPdf(row)}
+                                    className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
+                                  >
+                                    <FaFilePdf size={18} />
+                                  </button>
+                                )}
+                                {hasAccess.view && (
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleModalView(row)}
+                                    className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                                  >
+                                    <FaEye size={18} />
+                                  </button>
+                                )}
+                                {hasAccess.update && (
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleModalUpdate(row)}
+                                    className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                                  >
+                                    <FaEdit size={18} />
+                                  </button>
+                                )}
+                                {hasAccess.delete && (
+                                  <button
+                                    disabled={isLoading}
+                                    onClick={() => handleDeleteData(row._id)}
+                                    className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                  >
+                                    <FaTrash size={16} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ) : col.value === "has_access_module" ? (
                             <div className="flex flex-wrap gap-2 max-h-[50px] overflow-hidden relative">

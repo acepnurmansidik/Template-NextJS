@@ -62,6 +62,12 @@ export const TableModule = ({
     null,
   );
 
+  const handleDownloadPdf = (newData: ModuleResponseAPI) => {
+    setSelectedData(newData);
+  };
+  const handleWhatsApp = (newData: ModuleResponseAPI) => {
+    setSelectedData(newData);
+  };
   const handleModalView = (newData: ModuleResponseAPI) => {
     setShowModalView(true);
     setSelectedData(newData);
@@ -270,7 +276,7 @@ export const TableModule = ({
                                 {hasAccess.whatsapp && (
                                   <button
                                     disabled={isLoading}
-                                    onClick={() => handleModalView(row)}
+                                    onClick={() => handleWhatsApp(row)}
                                     className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
                                   >
                                     <IoLogoWhatsapp size={18} />
@@ -279,7 +285,7 @@ export const TableModule = ({
                                 {hasAccess.pdf && (
                                   <button
                                     disabled={isLoading}
-                                    onClick={() => handleModalView(row)}
+                                    onClick={() => handleDownloadPdf(row)}
                                     className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
                                   >
                                     <FaFilePdf size={18} />
