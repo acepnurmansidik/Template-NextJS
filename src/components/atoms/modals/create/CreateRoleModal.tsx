@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AsyncSelect from "react-select/async";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import debounce from "lodash/debounce";
 
 type Option = { value: string; label: string; data: any };
 
@@ -34,49 +35,39 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [dataModuleOptions, setDataModuleOptions] = useState<Option[]>([]);
 
-  useEffect(() => {
-    const fetchModuleOptions = async () => {
-      try {
-        const result = await apiGet<BodyModuleResponseAPI>(
-          "/module",
-          { page: 1, limit: 5 },
-          false,
-        );
-        setDataModuleOptions(
-          result.data.map((mod) => ({
-            value: mod.name,
-            label: mod.title,
-            data: mod,
-          })) ?? [],
-        );
-      } catch (error) {
-        setDataModuleOptions([]);
-      }
-    };
-    fetchModuleOptions();
-  }, [isOpen]);
+  // ====================== S E L E C T * O P T I O N ======================
+  // Satu fungsi untuk semua: dipakai saat modal dibuka (via defaultOptions)
+  // maupun saat user mengetik (loadOptions AsyncSelect). Di-debounce 3 detik;
+  // leading:true agar saat modal pertama dibuka langsung hit, sedangkan saat
+  // mengetik menunggu jeda 3 detik sebelum hit ke server.
+  const loadModuleOptions = useMemo(
+    () =>
+      debounce(
+        (inputValue: string, callback: (options: Option[]) => void) => {
+          apiGet<BodyModuleResponseAPI>(
+            "/module",
+            { page: 1, limit: 5, search: inputValue },
+            false,
+          )
+            .then((result) =>
+              callback(
+                (result.data ?? []).map((mod) => ({
+                  value: mod.name,
+                  label: mod.title,
+                  data: mod,
+                })),
+              ),
+            )
+            .catch(() => callback([]));
+        },
+        3000,
+        { leading: true },
+      ),
+    [],
+  );
 
-  // Fetch module ke server berdasarkan kata kunci pencarian (server-side search).
-  // Dipakai AsyncSelect saat user mengetik.
-  const loadModuleOptions = async (inputValue: string): Promise<Option[]> => {
-    try {
-      const result = await apiGet<BodyModuleResponseAPI>(
-        "/module",
-        { page: 1, limit: 10, search: inputValue },
-        false,
-      );
-      return (result.data ?? []).map((mod) => ({
-        value: mod.name,
-        label: mod.title,
-        data: mod,
-      }));
-    } catch (error) {
-      return [];
-    }
-  };
-
+  // ======================== U S E * E F F E C T ==========================
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -285,7 +276,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
         <div className="max-w-full px-5 mx-auto space-y-8">
           <div className="group">
             <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-              Role Name
+              Role Name<span className="text-red-500">*</span>
             </label>
             <input
               value={formData.name}
@@ -340,7 +331,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                     <AsyncSelect
                       isSearchable
                       cacheOptions
-                      defaultOptions={dataModuleOptions}
+                      defaultOptions={true}
                       loadOptions={loadModuleOptions}
                       instanceId={`module-select-${modIdx}`} // Pastikan unique per row
                       classNamePrefix="rs"

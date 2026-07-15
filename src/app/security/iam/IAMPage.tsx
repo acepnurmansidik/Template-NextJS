@@ -2,17 +2,23 @@
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { USER_IAM } from "@/utils/permission";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import debounce from "lodash/debounce";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
 import { TableIAM } from "@/components/atoms/table/tableIAM";
+import { useAppSelector } from "@/store/hooks";
+import { BodyUsersResponseApiDaum, UserApiDaum } from "@/types/users";
+import { apiGet } from "@/utils/api";
+import CreateUserIAMModal from "@/components/atoms/modals/create/CreateUserIAMModal";
 
 const columns = [
   // { title: "Mark All", value: "*" },
   { title: "Name", value: "name" },
-  { title: "Role Name", value: "title" },
+  { title: "Email", value: "email" },
+  { title: "Role Name", value: "role_name" },
   { title: "Action", value: "action" },
 ];
 
@@ -21,17 +27,70 @@ interface DataProps {
   subtitle: string;
 }
 export const IAMPage = ({ title, subtitle }: DataProps) => {
+  const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
   /* ============================= MODALS ============================= */
   const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
-  /* ============================= PAGINATION STATE ============================= */
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  /* ============================= PAGINATION & SEARCH STATE ============================= */
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  // `searchInput` = nilai yang terlihat di kolom (update tiap ketikan).
+  // `search` = nilai yang dipakai untuk hit API, di-debounce 3 detik.
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
 
-  // UBAH BAGIAN INI AGAR DINAMIS
-  const totalData = USER_IAM.length;
+  // Debounce 3 detik: fetch baru dijalankan setelah user berhenti mengetik.
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearch(value);
+        setPage(1);
+      }, 3000),
+    [],
+  );
+
+  useEffect(() => {
+    return () => debouncedSearch.cancel();
+  }, [debouncedSearch]);
+  // Total seluruh record diambil dari `page_size` response API (server-side pagination), bukan dari konstanta statis.
+  const [totalData, setTotalData] = useState<number>(0);
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
+
+  /* ============================= DATA STATE ============================= */
+  const [initiateData, setInitiateData] = useState<UserApiDaum[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const fetchingData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const result = await apiGet<BodyUsersResponseApiDaum>(
+        "/users",
+        { page, limit, search },
+        false,
+      );
+      setInitiateData(result.data ?? []);
+      setTotalData(result.page_size ?? 0);
+      setIsLoading(false);
+    } catch (error) {
+      setInitiateData([]);
+      setTotalData(0);
+      setIsLoading(false);
+    }
+  }, [page, limit, search]);
+
+  useEffect(() => {
+    fetchingData();
+  }, [fetchingData, isModalCreateOpen]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const matched = currentUser.role_id.path_access.find(
+        (item) => item.path === pathname,
+      );
+      setHasAccess(matched?.actions ?? {});
+    }
+  }, [currentUser, pathname]);
 
   // Pastikan jika page saat ini lebih besar dari totalPage akibat filter, reset ke halaman 1
   useEffect(() => {
@@ -39,20 +98,6 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
       setPage(1);
     }
   }, [totalPage, page]);
-
-  useEffect(() => {
-    // ambil data role halaman di cookies yang sudah di hash
-    // cari datanya dai dalam array of object dengan yang di url
-    // masukan ke state
-    setHasAccess({
-      view: true,
-      create: true,
-      delete: true,
-      update: true,
-      import: true,
-      export: true,
-    });
-  }, []);
 
   const windowPages = (() => {
     if (totalData === 0) return [1];
@@ -179,6 +224,12 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
                 <input
                   type="text"
                   placeholder="Search..."
+                  value={searchInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchInput(value);
+                    debouncedSearch(value);
+                  }}
                   className="w-full py-1.5 px-1 text-sm border-b-2 border-gray-200 dark:border-zinc-700 outline-none transition-colors duration-200 focus:border-blue-600 dark:focus:border-blue-500 bg-transparent text-gray-800 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500"
                 />
               </div>
@@ -262,7 +313,7 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
           <TableIAM
             hasAccess={hasAccess}
             columns={columns}
-            data={[]}
+            data={initiateData}
             visibleColumns={visibleColumns}
             selectedNames={selectedNames}
             handleSelectAll={handleSelectAll}
@@ -276,13 +327,17 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
             setPage={setPage}
             setLimit={setLimit}
             windowPages={windowPages}
+            onRefresh={fetchingData}
           />
         </div>
       </div>
 
-      {/* {isModalCreateOpen && (
-      
-      )} */}
+      {isModalCreateOpen && (
+        <CreateUserIAMModal
+          isOpen={isModalCreateOpen}
+          onClose={() => setIsModalCreateOpen(!isModalCreateOpen)}
+        />
+      )}
 
       {/* =========================== MODAL CREATE ============================ */}
     </CMSLayout>

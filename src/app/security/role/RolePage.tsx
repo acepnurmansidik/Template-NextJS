@@ -2,7 +2,14 @@
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { USER_IAM } from "@/utils/permission";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import debounce from "lodash/debounce";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
@@ -36,15 +43,31 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
   /* ============================= PAGINATION STATE ============================= */
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
+  // `searchInput` = nilai yang terlihat di kolom (update tiap ketikan).
+  // `search` = nilai yang dipakai untuk hit API, di-debounce 3 detik.
+  const [searchInput, setSearchInput] = useState<string>("");
   const [search, setSearch] = useState<string>("");
+
+  // Debounce 3 detik: fetch baru dijalankan setelah user berhenti mengetik.
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearch(value);
+        setPage(1);
+      }, 3000),
+    [],
+  );
+
+  useEffect(() => {
+    return () => debouncedSearch.cancel();
+  }, [debouncedSearch]);
+  // Total seluruh record diambil dari `page_size` response API (server-side pagination), bukan dari konstanta statis.
+  const [totalData, setTotalData] = useState<number>(0);
+  const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
   /* ============================= DATA STATE ============================= */
   const [initiateData, setInitiateData] = useState<RoleApiDaum[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // UBAH BAGIAN INI AGAR DINAMIS
-  const totalData = USER_IAM.length;
-  const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
   // Pastikan jika page saat ini lebih besar dari totalPage akibat filter, reset ke halaman 1
   useEffect(() => {
@@ -62,9 +85,11 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
         false,
       );
       setInitiateData(result.data ?? []);
+      setTotalData(result.page_size ?? 0);
       setIsLoading(false);
     } catch (error) {
       setInitiateData([]);
+      setTotalData(0);
       setIsLoading(false);
     }
   }, [limit, page, search]);
@@ -209,6 +234,12 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
                 <input
                   type="text"
                   placeholder="Search..."
+                  value={searchInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchInput(value);
+                    debouncedSearch(value);
+                  }}
                   className="w-full py-1.5 px-1 text-sm border-b-2 border-gray-200 dark:border-zinc-700 outline-none transition-colors duration-200 focus:border-blue-600 dark:focus:border-blue-500 bg-transparent text-gray-800 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500"
                 />
               </div>

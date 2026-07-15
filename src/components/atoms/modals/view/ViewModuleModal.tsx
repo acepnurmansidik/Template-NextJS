@@ -88,7 +88,7 @@ export default function ViewModuleModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="group">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-                Name
+                Name<span className="text-red-500">*</span>
               </label>
               <input
                 disabled
@@ -99,7 +99,7 @@ export default function ViewModuleModal({
             </div>
             <div className="group">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-                Title
+                Title<span className="text-red-500">*</span>
               </label>
               <input
                 disabled
@@ -113,7 +113,7 @@ export default function ViewModuleModal({
           <div>
             <div className="flex justify-between items-end mb-3">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                Permissions
+                Permissions<span className="text-red-500">*</span>
               </h3>
             </div>
 

@@ -3,14 +3,17 @@
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { get } from "lodash";
 import { useState } from "react";
-import { FaFilePdf } from "react-icons/fa6";
-import { IoLogoWhatsapp } from "react-icons/io";
-import { IAMApiDaum } from "@/types/IAM";
+import Swal from "sweetalert2";
+import { BodyUsersResponseApiDaum, UserApiDaum } from "@/types/users";
+import { apiDelete } from "@/utils/api";
+import axios from "axios";
+import UpdateUserIAMModal from "../modals/update/UpdateUserIAMModal";
+import ViewUserIAMModal from "../modals/view/ViewUserIAMModal";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
   columns: { title: string; value: string }[];
-  data: IAMApiDaum[];
+  data: UserApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
   handleSelectAll: () => void;
@@ -24,6 +27,7 @@ interface DataProps {
   windowPages: number[];
   setLimit: (limit: number) => void;
   setPage: (page: number) => void;
+  onRefresh?: () => void;
 }
 
 export const TableIAM = ({
@@ -43,16 +47,79 @@ export const TableIAM = ({
   setPage,
   setLimit,
   windowPages,
+  onRefresh,
 }: DataProps) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModalUpdate, setShowModalUpdate] = useState<boolean>(false);
   const [showModalView, setShowModalView] = useState<boolean>(false);
-  const [selectedData, setSelectedData] = useState<IAMApiDaum[] | any>(null);
+  const [selectedData, setSelectedData] = useState<UserApiDaum[] | any>(null);
 
-  const handleModalView = (newData: IAMApiDaum) => {
+  const handleDeleteData = async (id: string) => {
+    try {
+      // 1. Tampilkan konfirmasi Swal sebelum menghapus
+      const confirmation = await Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this data!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626", // Warna merah untuk konfirmasi hapus
+        cancelButtonColor: "#6b7280", // Warna abu-abu untuk batal
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "No, cancel",
+      });
+
+      // 2. Jika user membatalkan, langsung hentikan fungsi
+      if (!confirmation.isConfirmed) {
+        return;
+      }
+
+      // 3. Jika user setuju, jalankan proses loading dan hit API
+      setIsLoading(true);
+      const result = await apiDelete<BodyUsersResponseApiDaum>(
+        `/users/${id}`,
+        {},
+        false,
+      );
+
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted successfully", // Diubah dari "Updated" menjadi "Deleted" agar sesuai konteks
+          text: result.message || "Your data has been deleted successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+
+        // Ambil ulang data terbaru tanpa perlu refresh halaman.
+        onRefresh?.();
+      }
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+
+      // console.error("delete module error", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: serverMessage || "Failed to delete data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    }
+  };
+
+  const handleModalView = (newData: UserApiDaum) => {
     setShowModalView(true);
     setSelectedData(newData);
   };
-  const handleModalUpdate = (newData: IAMApiDaum) => {
+  const handleModalUpdate = (newData: UserApiDaum) => {
     setShowModalUpdate(true);
     setSelectedData(newData);
   };
@@ -190,22 +257,6 @@ export const TableIAM = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              {hasAccess.whatsapp && (
-                                <button
-                                  onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
-                                >
-                                  <IoLogoWhatsapp size={18} />
-                                </button>
-                              )}
-                              {hasAccess.pdf && (
-                                <button
-                                  onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
-                                >
-                                  <FaFilePdf size={18} />
-                                </button>
-                              )}
                               {hasAccess.view && (
                                 <button
                                   onClick={() => handleModalView(row)}
@@ -223,14 +274,21 @@ export const TableIAM = ({
                                 </button>
                               )}
                               {hasAccess.delete && (
-                                <button className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                                <button
+                                  onClick={() => handleDeleteData(row._id)}
+                                  className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                >
                                   <FaTrash size={16} />
                                 </button>
                               )}
                             </div>
-                          ) : col.value === "role" ? (
+                          ) : col.value === "role_name" ? (
+                            <div className="flex border border-blue-400 rounded-full justify-center items-center py-0.5 bg-blue-50 font-semibold text-blue-500 flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
+                              {row.role_id.name}
+                            </div>
+                          ) : col.value === "email" ? (
                             <div className="flex flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
-                              {"role_id.name"}
+                              {row.auth_id.email}
                             </div>
                           ) : (
                             get(row, col.value, "-")
@@ -338,22 +396,26 @@ export const TableIAM = ({
         </div>
       </div>
 
-      {/* {showModalUpdate && (
-        <UpdateModuleModal
+      {showModalUpdate && (
+        <UpdateUserIAMModal
           key={selectedData?._id}
           isOpen={showModalUpdate}
           onClose={() => setShowModalUpdate(!showModalUpdate)}
+          onSuccess={() => {
+            setShowModalUpdate(false);
+            onRefresh?.();
+          }}
           initialData={selectedData}
         />
       )}
       {showModalView && (
-        <ViewModuleModal
+        <ViewUserIAMModal
           key={selectedData?._id}
           isOpen={showModalView}
           onClose={() => setShowModalView(!showModalView)}
           initialData={selectedData}
         />
-      )} */}
+      )}
     </div>
   );
 };

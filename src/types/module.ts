@@ -32,6 +32,9 @@ export interface BodyModuleResponseAPI {
   success: string;
   message: string;
   data: ModuleApiDaum[];
+  // Total seluruh record (bukan panjang halaman saat ini) & halaman aktif.
+  page_size?: number;
+  current_page?: number;
 }
 export interface ModuleResponseAPI {
   name: string;

@@ -1,17 +1,7 @@
-import { ModuleApiDaum, ModuleResponseAPI } from "./module";
-
-// FORM DATA
-export interface IAMFormDataDaum {
-  user_id: string;
-  role_id: string;
-}
+import { ModuleResponseAPI } from "./module";
+import { AuthResponseAPI } from "./users";
 
 // API RESPONSE ====================================
-export interface AuthResponseAPI {
-  _id: string;
-  email: string;
-  username: string;
-}
 
 export interface PathAccessResponseAPI {
   path: string;

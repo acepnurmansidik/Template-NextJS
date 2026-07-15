@@ -254,7 +254,7 @@ export default function ViewRoleModal({
         <div className="max-w-full px-5 mx-auto space-y-8">
           <div className="group">
             <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-              Role Name
+              Role Name<span className="text-red-500">*</span>
             </label>
             <input
               disabled
