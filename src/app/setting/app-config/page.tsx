@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { IAMPage } from "./IAMPage";
+import { AppConfigPage } from "./AppConfigPage";
 
 export const metadata: Metadata = {
-  title: "IAM",
+  title: "App Config",
 };
 
 const Page = () => {
   return (
-    <IAMPage
-      title="IAM"
+    <AppConfigPage
+      title="App Config"
       subtitle={
         "Centralized control for user identities, role assignments, and system access hierarchy."
       }
