@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { FiClock, FiFileText } from "react-icons/fi";
-import React from "react";
+import { FiClock, FiFileText, FiTool } from "react-icons/fi";
 import { apiGet } from "@/utils/api";
 import {
   AppConfigApiDaum,
@@ -74,7 +73,7 @@ export default function ViewAppConfigModal({
     try {
       const result = await apiGet<BodyAppReleaseLogResponseApiDaum>(
         "/app-configs/release-history",
-        { page: 1, limit: 1000 },
+        { page: 1, limit: 1000, platform: initialData.platform },
         false,
       );
       const data = result.data ?? [];
@@ -210,6 +209,19 @@ export default function ViewAppConfigModal({
                         <p className="text-sm text-zinc-400 italic">
                           Tidak ada catatan rilis.
                         </p>
+                      )}
+
+                      {/* Keterangan status maintenance */}
+                      {log.status_maintenance && (
+                        <div className="mt-3 flex items-start gap-2 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-700 dark:border-orange-500/40 dark:bg-orange-950/30 dark:text-orange-300">
+                          <FiTool className="mt-0.5 shrink-0" />
+                          <span>
+                            Versi ini dirilis dalam status{" "}
+                            <span className="font-semibold">maintenance</span>.
+                            Aplikasi mungkin dibatasi atau tidak dapat diakses
+                            selama periode ini.
+                          </span>
+                        </div>
                       )}
                     </div>
                   </li>

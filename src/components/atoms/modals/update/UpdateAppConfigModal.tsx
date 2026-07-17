@@ -6,6 +6,7 @@ import { IoClose } from "react-icons/io5";
 import React from "react";
 import Select from "react-select";
 import semver from "semver";
+import axios from "axios";
 import { apiPut } from "@/utils/api";
 import {
   AppConfigApiDaum,
@@ -93,15 +94,6 @@ export default function UpdateAppConfigModal({
       return;
     }
 
-    if (!formData.download_url.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Download URL is required",
-        confirmButtonColor: "#2563eb",
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
       const payload: AppConfigForm = {
@@ -134,14 +126,20 @@ export default function UpdateAppConfigModal({
           onClose();
         }
       }
+
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
 
+      // Ambil pesan error asli dari server bila ada, jatuh ke pesan default.
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+
       Swal.fire({
         icon: "error",
         title: "Something went wrong",
-        text: "Failed to save data. Please try again.",
+        text: serverMessage || "Failed to save data. Please try again.",
         confirmButtonText: "OK",
         confirmButtonColor: "#dc2626",
       });
@@ -150,7 +148,10 @@ export default function UpdateAppConfigModal({
 
   // ====================== H A N D L E R * A C T I O N ======================
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, platform: e.target.value.toLowerCase() }));
+    setFormData((prev) => ({
+      ...prev,
+      platform: e.target.value.toLowerCase(),
+    }));
   };
 
   const handleVersionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,7 +258,7 @@ export default function UpdateAppConfigModal({
             {/* DOWNLOAD URL */}
             <div className="group">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-                Download Url<span className="text-red-500">*</span>
+                Download Url
               </label>
               <input
                 name="download_url"
