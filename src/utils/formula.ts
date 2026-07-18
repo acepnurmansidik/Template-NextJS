@@ -12,6 +12,8 @@ import { isPopulatedComponent } from "@/types/calculatedFormula";
 //   decimal_place SENDIRI (dinamis, ditetapkan pada tiap "(") sebelum dipakai
 //   lanjut; bila "(" tak punya decimal_place, jatuh ke decimal_place formula.
 //   Hasil akhir dibulatkan ke decimal_place formula.
+// - arah pembulatan (RoundMode) juga per-kurung & untuk hasil akhir:
+//   terdekat / ke atas / ke bawah / tanpa pembulatan (nilai asli).
 
 export type RateLike = {
   rate_type?: string;
@@ -23,11 +25,43 @@ export type RateLike = {
 // Prioritas operator (ala matematika).
 const PRECEDENCE: Record<string, number> = { "+": 1, "-": 1, "*": 2, "/": 2 };
 
-// Bulatkan `num` ke `dp` desimal. Fallback ke 2 bila dp bukan integer >= 0.
-export const roundTo = (num: number, dp: number): number => {
-  const safeDp = Number.isInteger(dp) && dp >= 0 ? dp : 2;
+// Arah pembulatan:
+//  - "round" : ke terdekat (perilaku default, kompatibel dgn data lama)
+//  - "up"    : dibulatkan ke atas (ceil)
+//  - "down"  : dibulatkan ke bawah (floor)
+//  - "none"  : TIDAK dibulatkan sama sekali (nilai asli)
+export type RoundMode = "round" | "up" | "down" | "none";
+
+export const ROUND_MODES: { value: RoundMode; label: string }[] = [
+  { value: "round", label: "Normal (terdekat)" },
+  { value: "up", label: "Ke atas" },
+  { value: "down", label: "Ke bawah" },
+  { value: "none", label: "Tanpa pembulatan" },
+];
+
+const isRoundMode = (v: unknown): v is RoundMode =>
+  v === "round" || v === "up" || v === "down" || v === "none";
+
+// Bulatkan `num` ke `dp` desimal dengan arah `mode`.
+// - "none" mengembalikan nilai asli (tanpa pembulatan).
+// - dp fallback ke 2 bila bukan integer >= 0.
+export const roundTo = (
+  num: number,
+  dp: number,
+  mode: RoundMode = "round",
+): number => {
   const value = Number(num);
   if (Number.isNaN(value)) return 0;
+  if (mode === "none") return value;
+  const safeDp = Number.isInteger(dp) && dp >= 0 ? dp : 2;
+  if (mode === "up" || mode === "down") {
+    const factor = 10 ** safeDp;
+    // toPrecision(12) meredam galat biner (mis. 1.005*100 = 100.4999…)
+    // sebelum ceil/floor agar hasilnya sesuai ekspektasi desimal.
+    const scaled = Number((value * factor).toPrecision(12));
+    const rounded = mode === "up" ? Math.ceil(scaled) : Math.floor(scaled);
+    return rounded / factor;
+  }
   return Number(value.toFixed(safeDp));
 };
 
@@ -54,14 +88,19 @@ export const formatRate = (value: number, dp = 2): string =>
 export type CalcToken =
   | { type: "operand"; value: number }
   | { type: "operator"; operator: string }
-  // decimalPlace hanya relevan pada "(" (pembulatan grup kurung ini).
-  | { type: "paren"; paren: "(" | ")"; decimalPlace?: number };
+  // decimalPlace & rounding hanya relevan pada "(" (pembulatan grup ini).
+  | {
+      type: "paren";
+      paren: "(" | ")";
+      decimalPlace?: number;
+      rounding?: RoundMode;
+    };
 
 type RpnToken =
   | { type: "operand"; value: number }
   | { type: "operator"; operator: string }
-  // decimalPlace: pembulatan grup ini (undefined → pakai decimal_place formula).
-  | { type: "group"; decimalPlace?: number };
+  // decimalPlace/rounding grup ini (undefined → pakai setelan formula).
+  | { type: "group"; decimalPlace?: number; rounding?: RoundMode };
 
 class ExpressionError extends Error {}
 
@@ -101,11 +140,13 @@ const toRPN = (tokens: CalcToken[]): RpnToken[] => {
         throw new ExpressionError("Tanda ')' tidak diharapkan di sini.");
       let matched = false;
       let groupDecimalPlace: number | undefined;
+      let groupRounding: RoundMode | undefined;
       while (ops.length) {
         const top = ops.pop() as CalcToken;
         if (top.type === "paren" && top.paren === "(") {
           matched = true;
           groupDecimalPlace = top.decimalPlace;
+          groupRounding = top.rounding;
           break;
         }
         output.push({
@@ -114,7 +155,11 @@ const toRPN = (tokens: CalcToken[]): RpnToken[] => {
         });
       }
       if (!matched) throw new ExpressionError("Tanda kurung tidak seimbang.");
-      output.push({ type: "group", decimalPlace: groupDecimalPlace });
+      output.push({
+        type: "group",
+        decimalPlace: groupDecimalPlace,
+        rounding: groupRounding,
+      });
       expectOperand = false;
     }
   }
@@ -135,7 +180,11 @@ const toRPN = (tokens: CalcToken[]): RpnToken[] => {
   return output;
 };
 
-const evalRPN = (rpn: RpnToken[], decimalPlace: number): number => {
+const evalRPN = (
+  rpn: RpnToken[],
+  decimalPlace: number,
+  rounding: RoundMode = "round",
+): number => {
   const stack: number[] = [];
   for (const t of rpn) {
     if (t.type === "operand") {
@@ -162,12 +211,14 @@ const evalRPN = (rpn: RpnToken[], decimalPlace: number): number => {
     } else if (t.type === "group") {
       const v = stack.pop();
       if (v === undefined) throw new ExpressionError("Ekspresi tidak valid.");
-      // Pembulatan grup pakai decimal_place kurung ini; fallback ke formula.
-      stack.push(roundTo(v, t.decimalPlace ?? decimalPlace));
+      // Pembulatan grup pakai decimal_place & arah kurung ini; fallback formula.
+      stack.push(
+        roundTo(v, t.decimalPlace ?? decimalPlace, t.rounding ?? rounding),
+      );
     }
   }
   if (stack.length !== 1) throw new ExpressionError("Ekspresi tidak valid.");
-  return roundTo(stack[0], decimalPlace);
+  return roundTo(stack[0], decimalPlace, rounding);
 };
 
 // Konversi token ekspresi ter-populate (dari API) → CalcToken untuk evaluasi
@@ -185,6 +236,7 @@ export const expressionToCalcTokens = (
         decimalPlace: Number.isInteger(t.decimal_place)
           ? t.decimal_place
           : undefined,
+        rounding: isRoundMode(t.rounding) ? t.rounding : undefined,
       };
     if (t.type === "constant")
       return { type: "operand", value: Number(t.value ?? 0) };
@@ -201,18 +253,32 @@ export const expressionToCalcTokens = (
 export const computeExpressionResult = (
   expression: ExpressionToken[] | undefined,
   decimalPlace: number,
+  rounding: RoundMode = "round",
 ): number | null => {
   const evaluation = evaluateExpression(
     expressionToCalcTokens(expression),
     decimalPlace,
+    rounding,
   );
   return evaluation.ok ? evaluation.value : null;
 };
+
+// Format hasil akhir untuk ditampilkan. Bila mode "none", tampilkan nilai asli
+// tanpa memaksa jumlah desimal; selain itu ikuti decimal_place.
+export const formatResult = (
+  value: number,
+  dp: number,
+  mode: RoundMode = "round",
+): string =>
+  mode === "none"
+    ? Number(value).toLocaleString("en-US", { maximumFractionDigits: 20 })
+    : formatRate(value, dp);
 
 // Evaluasi ekspresi (non-throwing) untuk preview UI.
 export const evaluateExpression = (
   tokens: CalcToken[],
   decimalPlace: number,
+  rounding: RoundMode = "round",
 ): { ok: boolean; value: number; error?: string } => {
   const operandCount = tokens.filter((t) => t.type === "operand").length;
   if (operandCount === 0) {
@@ -220,7 +286,7 @@ export const evaluateExpression = (
   }
   try {
     const rpn = toRPN(tokens);
-    return { ok: true, value: evalRPN(rpn, decimalPlace) };
+    return { ok: true, value: evalRPN(rpn, decimalPlace, rounding) };
   } catch (e) {
     return {
       ok: false,

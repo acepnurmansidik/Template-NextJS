@@ -33,9 +33,12 @@ import {
 } from "@/types/calculatedFormula";
 import {
   CalcToken,
+  RoundMode,
+  ROUND_MODES,
   evaluateExpression,
   getComponentRate,
   formatRate,
+  formatResult,
 } from "@/utils/formula";
 import NumberInput from "./NumberInput";
 
@@ -43,8 +46,14 @@ export type BuilderToken =
   | { _uid: string; kind: "component"; component: PopulatedComponent }
   | { _uid: string; kind: "constant"; value: number }
   | { _uid: string; kind: "operator"; operator: string }
-  // decimalPlace hanya dipakai pada "(" (pembulatan grup kurung ini).
-  | { _uid: string; kind: "paren"; paren: "(" | ")"; decimalPlace?: number };
+  // decimalPlace & rounding hanya dipakai pada "(" (pembulatan grup ini).
+  | {
+      _uid: string;
+      kind: "paren";
+      paren: "(" | ")";
+      decimalPlace?: number;
+      rounding?: RoundMode;
+    };
 
 type Option = { value: string; label: string };
 
@@ -80,8 +89,15 @@ export const builderToPayload = (
       case "operator":
         return { type: "operator", operator: t.operator };
       case "paren":
-        return t.paren === "(" && Number.isInteger(t.decimalPlace)
-          ? { type: "paren", paren: t.paren, decimal_place: t.decimalPlace }
+        return t.paren === "("
+          ? {
+              type: "paren",
+              paren: t.paren,
+              ...(Number.isInteger(t.decimalPlace)
+                ? { decimal_place: t.decimalPlace }
+                : {}),
+              ...(t.rounding ? { rounding: t.rounding } : {}),
+            }
           : { type: "paren", paren: t.paren };
     }
   });
@@ -93,7 +109,12 @@ export const builderToCalcTokens = (tokens: BuilderToken[]): CalcToken[] =>
     if (t.kind === "constant") return { type: "operand", value: t.value };
     if (t.kind === "operator")
       return { type: "operator", operator: t.operator };
-    return { type: "paren", paren: t.paren, decimalPlace: t.decimalPlace };
+    return {
+      type: "paren",
+      paren: t.paren,
+      decimalPlace: t.decimalPlace,
+      rounding: t.rounding,
+    };
   });
 
 export const apiTokensToBuilder = (
@@ -115,6 +136,9 @@ export const apiTokensToBuilder = (
           decimalPlace: Number.isInteger(t.decimal_place)
             ? t.decimal_place
             : undefined,
+          rounding: (ROUND_MODES.some((m) => m.value === t.rounding)
+            ? t.rounding
+            : undefined) as RoundMode | undefined,
         };
       return null;
     })
@@ -139,12 +163,14 @@ function SortableToken({
   onOperatorChange,
   onConstantChange,
   onParenDecimalChange,
+  onParenRoundingChange,
   onRemove,
 }: {
   token: BuilderToken;
   onOperatorChange: (uid: string, operator: string) => void;
   onConstantChange: (uid: string, value: number) => void;
   onParenDecimalChange: (uid: string, value: number) => void;
+  onParenRoundingChange: (uid: string, rounding: RoundMode) => void;
   onRemove: (uid: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -230,19 +256,44 @@ function SortableToken({
             {token.paren}
           </span>
           {token.paren === "(" && (
-            <label className="flex items-center gap-1" title="Pembulatan hasil kurung ini (angka di belakang koma)">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500/80">
-                dp
-              </span>
-              <NumberInput
-                value={token.decimalPlace ?? 0}
-                onChange={(v) =>
-                  onParenDecimalChange(token._uid, Math.max(0, Math.trunc(v)))
+            <div className="flex items-center gap-1.5">
+              <select
+                value={token.rounding ?? "round"}
+                onChange={(e) =>
+                  onParenRoundingChange(token._uid, e.target.value as RoundMode)
                 }
-                aria-label="Decimal place kurung"
-                className="w-12 bg-white dark:bg-zinc-900 px-1.5 py-1 border border-amber-200 dark:border-amber-800 rounded-md text-xs font-semibold text-amber-700 dark:text-amber-300 outline-none focus:border-amber-500 text-center"
-              />
-            </label>
+                aria-label="Arah pembulatan kurung"
+                title="Arah pembulatan hasil kurung ini"
+                className="h-7 rounded-md border border-amber-200 dark:border-amber-800 bg-white dark:bg-zinc-900 text-[11px] font-semibold text-amber-700 dark:text-amber-300 outline-none focus:border-amber-500 cursor-pointer px-1"
+              >
+                {ROUND_MODES.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              {(token.rounding ?? "round") !== "none" && (
+                <label
+                  className="flex items-center gap-1"
+                  title="Angka di belakang koma untuk hasil kurung ini"
+                >
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500/80">
+                    dp
+                  </span>
+                  <NumberInput
+                    value={token.decimalPlace ?? 0}
+                    onChange={(v) =>
+                      onParenDecimalChange(
+                        token._uid,
+                        Math.max(0, Math.trunc(v)),
+                      )
+                    }
+                    aria-label="Decimal place kurung"
+                    className="w-12 bg-white dark:bg-zinc-900 px-1.5 py-1 border border-amber-200 dark:border-amber-800 rounded-md text-xs font-semibold text-amber-700 dark:text-amber-300 outline-none focus:border-amber-500 text-center"
+                  />
+                </label>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -265,6 +316,7 @@ interface DataProps {
   onChange: (next: BuilderToken[]) => void;
   availableComponents: PopulatedComponent[];
   decimalPlace: number;
+  rounding?: RoundMode; // arah pembulatan hasil akhir (untuk preview)
   isLoadingComponents?: boolean;
 }
 
@@ -273,6 +325,7 @@ export default function FormulaBuilder({
   onChange,
   availableComponents,
   decimalPlace,
+  rounding = "round",
   isLoadingComponents,
 }: DataProps) {
   const [pendingComponent, setPendingComponent] = useState<Option | null>(null);
@@ -317,7 +370,13 @@ export default function FormulaBuilder({
   const handleAddParen = (paren: "(" | ")") =>
     append(
       paren === "("
-        ? { _uid: makeUid(), kind: "paren", paren, decimalPlace: decimalPlace }
+        ? {
+            _uid: makeUid(),
+            kind: "paren",
+            paren,
+            decimalPlace: decimalPlace,
+            rounding: "round",
+          }
         : { _uid: makeUid(), kind: "paren", paren },
     );
 
@@ -344,6 +403,15 @@ export default function FormulaBuilder({
       ),
     );
 
+  const handleParenRoundingChange = (uid: string, mode: RoundMode) =>
+    onChange(
+      tokens.map((t) =>
+        t._uid === uid && t.kind === "paren" && t.paren === "("
+          ? { ...t, rounding: mode }
+          : t,
+      ),
+    );
+
   const handleRemove = (uid: string) =>
     onChange(tokens.filter((t) => t._uid !== uid));
 
@@ -361,8 +429,8 @@ export default function FormulaBuilder({
   };
 
   const evaluation = useMemo(
-    () => evaluateExpression(builderToCalcTokens(tokens), decimalPlace),
-    [tokens, decimalPlace],
+    () => evaluateExpression(builderToCalcTokens(tokens), decimalPlace, rounding),
+    [tokens, decimalPlace, rounding],
   );
 
   const toolbarBtn =
@@ -505,6 +573,7 @@ export default function FormulaBuilder({
                       onOperatorChange={handleOperatorChange}
                       onConstantChange={handleConstantChange}
                       onParenDecimalChange={handleParenDecimalChange}
+                      onParenRoundingChange={handleParenRoundingChange}
                       onRemove={handleRemove}
                     />
                   ))}
@@ -514,10 +583,10 @@ export default function FormulaBuilder({
           )}
         </div>
         <p className="mt-1.5 text-[11px] text-zinc-400">
-          Prioritas: × ÷ sebelum + −. Isi kurung dihitung lebih dulu, dan
-          hasil tiap kurung dibulatkan ke <b>dp</b> masing-masing (atur di tiap
-          &ldquo;(&rdquo;). Hasil akhir dibulatkan ke {decimalPlace} angka di
-          belakang koma.
+          Prioritas: × ÷ sebelum + −. Isi kurung dihitung lebih dulu; tiap
+          &ldquo;(&rdquo; punya <b>dp</b> &amp; arah pembulatan sendiri (ke
+          atas / ke bawah / tanpa pembulatan). Hasil akhir dibulatkan ke{" "}
+          {decimalPlace} angka di belakang koma.
         </p>
       </div>
 
@@ -560,7 +629,7 @@ export default function FormulaBuilder({
             </span>
             {evaluation.ok ? (
               <span className="text-2xl font-black text-blue-600 dark:text-blue-300 tabular-nums">
-                {formatRate(evaluation.value, decimalPlace)}
+                {formatResult(evaluation.value, decimalPlace, rounding)}
               </span>
             ) : (
               <span className="text-sm font-semibold text-red-500 dark:text-red-400">

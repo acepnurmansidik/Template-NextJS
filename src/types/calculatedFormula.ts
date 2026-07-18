@@ -19,6 +19,14 @@ export enum TokenType {
   PAREN = "paren",
 }
 
+// Arah pembulatan hasil (tiap kurung & hasil akhir).
+export enum RoundMode {
+  ROUND = "round", // ke terdekat
+  UP = "up", // ke atas
+  DOWN = "down", // ke bawah
+  NONE = "none", // nilai asli (tanpa pembulatan)
+}
+
 // Bentuk komponen ter-populate pada GET list (backend .populate select:
 // "name slug rate_type fixed_rate calculated_rate decimal_place").
 export interface PopulatedComponent {
@@ -41,6 +49,7 @@ export interface ExpressionToken {
   paren?: "(" | ")";
   // Khusus paren "(" : pembulatan hasil grup kurung ini (dinamis per kurung).
   decimal_place?: number;
+  rounding?: RoundMode | string; // arah pembulatan grup kurung ini
 }
 
 // Token pada payload create/update (component = id string).
@@ -52,11 +61,13 @@ export interface ExpressionTokenPayload {
   paren?: "(" | ")";
   // Khusus paren "(" : pembulatan hasil grup kurung ini (dinamis per kurung).
   decimal_place?: number;
+  rounding?: RoundMode | string; // arah pembulatan grup kurung ini
 }
 
 export interface CalculatedFormulaForm {
   name: string;
   decimal_place: number;
+  rounding: RoundMode | string; // arah pembulatan hasil akhir
   expression: ExpressionTokenPayload[];
 }
 
@@ -66,6 +77,7 @@ export interface CalculatedFormulaApiDaum {
   slug?: string;
   expression: ExpressionToken[];
   decimal_place: number;
+  rounding?: RoundMode | string; // arah pembulatan hasil akhir
   // Catatan: hasil hitung TIDAK disimpan di backend (model hanya menyimpan
   // definisi formula). Hasil dihitung dinamis di client dari `expression`.
   created_at?: string;

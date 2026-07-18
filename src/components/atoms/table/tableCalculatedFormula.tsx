@@ -11,7 +11,11 @@ import {
   isPopulatedComponent,
 } from "@/types/calculatedFormula";
 import { apiDelete } from "@/utils/api";
-import { formatRate, computeExpressionResult } from "@/utils/formula";
+import {
+  formatResult,
+  computeExpressionResult,
+  RoundMode,
+} from "@/utils/formula";
 import UpdateCalculatedFormulaModal from "../modals/update/UpdateCalculatedFormulaModal";
 import ViewCalculatedFormulaModal from "../modals/view/ViewCalculatedFormulaModal";
 
@@ -284,15 +288,22 @@ export const TableCalculatedFormula = ({
                             </div>
                           ) : col.value === "result" ? (
                             (() => {
+                              const mode = (row.rounding ??
+                                "round") as RoundMode;
                               const value = computeExpressionResult(
                                 row.expression,
                                 row.decimal_place,
+                                mode,
                               );
                               return (
                                 <span className="font-bold text-blue-600 dark:text-blue-400 tabular-nums">
                                   {value === null
                                     ? "—"
-                                    : formatRate(value, row.decimal_place)}
+                                    : formatResult(
+                                        value,
+                                        row.decimal_place,
+                                        mode,
+                                      )}
                                 </span>
                               );
                             })()

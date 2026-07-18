@@ -12,7 +12,7 @@ import {
   SingleCalculatedFormulaResponseApiDaum,
 } from "@/types/calculatedFormula";
 import { BodyComponentFormulaResponseApiDaum } from "@/types/componentFormula";
-import { evaluateExpression } from "@/utils/formula";
+import { evaluateExpression, RoundMode, ROUND_MODES } from "@/utils/formula";
 import FormulaBuilder, {
   BuilderToken,
   builderToPayload,
@@ -36,6 +36,7 @@ export default function UpdateCalculatedFormulaModal({
 }: DataProps) {
   const [name, setName] = useState<string>("");
   const [decimalPlace, setDecimalPlace] = useState<number>(2);
+  const [rounding, setRounding] = useState<RoundMode>("round");
   const [tokens, setTokens] = useState<BuilderToken[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -66,6 +67,11 @@ export default function UpdateCalculatedFormulaModal({
       fetchComponents();
       setName(initialData.name ?? "");
       setDecimalPlace(initialData.decimal_place ?? 2);
+      setRounding(
+        (ROUND_MODES.some((m) => m.value === initialData.rounding)
+          ? initialData.rounding
+          : "round") as RoundMode,
+      );
       // Seed token dari ekspresi ter-populate (list endpoint mem-populate).
       setTokens(apiTokensToBuilder(initialData.expression));
     }
@@ -100,6 +106,7 @@ export default function UpdateCalculatedFormulaModal({
     const evaluation = evaluateExpression(
       builderToCalcTokens(tokens),
       decimalPlace,
+      rounding,
     );
     if (!evaluation.ok) {
       Swal.fire({
@@ -116,6 +123,7 @@ export default function UpdateCalculatedFormulaModal({
       const payload: CalculatedFormulaForm = {
         name: name.trim(),
         decimal_place: decimalPlace,
+        rounding,
         expression: builderToPayload(tokens),
       };
 
@@ -174,7 +182,7 @@ export default function UpdateCalculatedFormulaModal({
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="group md:col-span-2">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
                 Name<span className="text-red-500">*</span>
@@ -199,7 +207,28 @@ export default function UpdateCalculatedFormulaModal({
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                Dipakai untuk hasil tiap kurung &amp; hasil akhir.
+                Untuk hasil akhir (kurung punya dp sendiri).
+              </p>
+            </div>
+
+            <div className="group">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Pembulatan Akhir
+              </label>
+              <select
+                value={rounding}
+                onChange={(e) => setRounding(e.target.value as RoundMode)}
+                aria-label="Arah pembulatan hasil akhir"
+                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
+              >
+                {ROUND_MODES.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-zinc-400">
+                Arah pembulatan hasil akhir.
               </p>
             </div>
           </div>
@@ -209,6 +238,7 @@ export default function UpdateCalculatedFormulaModal({
             onChange={setTokens}
             availableComponents={availableComponents}
             decimalPlace={decimalPlace}
+            rounding={rounding}
             isLoadingComponents={isLoadingComponents}
           />
         </div>

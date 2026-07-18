@@ -10,7 +10,10 @@ import {
 import {
   getComponentRate,
   formatRate,
+  formatResult,
   computeExpressionResult,
+  ROUND_MODES,
+  RoundMode,
 } from "@/utils/formula";
 
 interface DataProps {
@@ -21,6 +24,9 @@ interface DataProps {
 
 const opSymbol = (op: string) =>
   ({ "+": "+", "-": "−", "*": "×", "/": "÷" })[op] ?? op;
+
+const roundLabel = (mode: string | undefined) =>
+  ROUND_MODES.find((m) => m.value === (mode ?? "round"))?.label ?? "Normal";
 
 export default function ViewCalculatedFormulaModal({
   initialData,
@@ -51,9 +57,11 @@ export default function ViewCalculatedFormulaModal({
   );
 
   const expression = initialData.expression ?? [];
+  const finalRounding = (initialData.rounding ?? "round") as RoundMode;
   const computedResult = computeExpressionResult(
     expression,
     initialData.decimal_place,
+    finalRounding,
   );
 
   return (
@@ -76,11 +84,16 @@ export default function ViewCalculatedFormulaModal({
             {field("Name", initialData.name ?? "-")}
             {field("Slug", initialData.slug ?? "-")}
             {field("Decimal Place", String(initialData.decimal_place ?? "-"))}
+            {field("Pembulatan Akhir", roundLabel(initialData.rounding))}
             {field(
               "Result (live)",
               computedResult === null
                 ? "—"
-                : formatRate(computedResult, initialData.decimal_place),
+                : formatResult(
+                    computedResult,
+                    initialData.decimal_place,
+                    finalRounding,
+                  ),
             )}
           </div>
 
@@ -111,9 +124,19 @@ export default function ViewCalculatedFormulaModal({
                       return (
                         <span
                           key={index}
-                          className="text-lg font-black text-amber-600 dark:text-amber-400"
+                          className="inline-flex items-center gap-1 text-lg font-black text-amber-600 dark:text-amber-400"
                         >
                           {token.paren}
+                          {token.paren === "(" && (
+                            <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500/80 normal-case">
+                              {(token.rounding ?? "round") === "none"
+                                ? "asli"
+                                : `${roundLabel(token.rounding)} · ${
+                                    token.decimal_place ??
+                                    initialData.decimal_place
+                                  }dp`}
+                            </span>
+                          )}
                         </span>
                       );
                     }
@@ -154,8 +177,10 @@ export default function ViewCalculatedFormulaModal({
               )}
             </div>
             <p className="mt-1.5 text-[11px] text-zinc-400">
-              Prioritas × ÷ sebelum + −. Isi kurung dihitung lebih dulu &amp;
-              dibulatkan ke {initialData.decimal_place} angka di belakang koma.
+              Prioritas × ÷ sebelum + −. Isi kurung dihitung lebih dulu; tiap
+              &ldquo;(&rdquo; punya dp &amp; arah pembulatan sendiri. Hasil
+              akhir: {roundLabel(initialData.rounding)} ·{" "}
+              {initialData.decimal_place} angka di belakang koma.
             </p>
           </div>
         </div>
