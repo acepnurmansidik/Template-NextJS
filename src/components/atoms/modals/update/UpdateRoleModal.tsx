@@ -2,8 +2,25 @@
 
 import { useEffect, useState } from "react";
 import AsyncSelect from "react-select/async";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash, FaGripVertical } from "react-icons/fa";
 import Swal from "sweetalert2";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Option = { value: string; label: string; data: any };
 
@@ -28,6 +45,59 @@ const defaultValue: RoleFormData = {
   name: "",
   has_access_module: [],
 };
+
+// Kartu access-item yang bisa di-drag (naik/turun) untuk reposisi.
+// Drag hanya aktif dari handle (grip) agar checkbox & select tetap bisa dipakai.
+function SortableModuleCard({
+  id,
+  children,
+}: {
+  id: number;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl space-y-4 bg-zinc-50/30 dark:bg-zinc-900/20 ${
+        isDragging ? "ring-2 ring-blue-300 dark:ring-blue-900 shadow-lg" : ""
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Drag untuk mengubah urutan"
+          title="Drag untuk mengubah urutan"
+          className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 touch-none"
+        >
+          <FaGripVertical size={14} />
+        </button>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 select-none">
+          Drag untuk reposisi
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function UpdateRoleModal({
   isOpen,
@@ -283,6 +353,25 @@ export default function UpdateRoleModal({
     }));
   };
 
+  // ==================== D R A G * & * D R O P * (reorder) ====================
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = Number(active.id);
+    const newIndex = Number(over.id);
+    setFormData((prev) => ({
+      ...prev,
+      has_access_module: arrayMove(prev.has_access_module, oldIndex, newIndex),
+    }));
+  };
+
   // ========================= H A N D L E R * E T C =========================
   const showWarning = (text: string) => {
     const isDarkMode = document.documentElement.classList.contains("dark");
@@ -357,13 +446,20 @@ export default function UpdateRoleModal({
               </button>
             </div>
           ) : (
-            formData.has_access_module.map((mod, modIdx) => (
-              <div
-                key={modIdx}
-                className="border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl space-y-6 bg-zinc-50/30 dark:bg-zinc-900/20"
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={formData.has_access_module.map((_, i) => i)}
+                strategy={verticalListSortingStrategy}
               >
-                {/* Header Module */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="space-y-8">
+                  {formData.has_access_module.map((mod, modIdx) => (
+                    <SortableModuleCard key={modIdx} id={modIdx}>
+                      {/* Header Module */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* MODULE */}
                   <div className="col-span-3 order-1">
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
@@ -619,9 +715,12 @@ export default function UpdateRoleModal({
                       <FaTrash size={20} />
                     </button>
                   </div>
+                      </div>
+                    </SortableModuleCard>
+                  ))}
                 </div>
-              </div>
-            ))
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
