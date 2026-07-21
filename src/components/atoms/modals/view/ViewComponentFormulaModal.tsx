@@ -2,8 +2,37 @@
 
 import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import { ComponentFormulaApiDaum, RateType } from "@/types/componentFormula";
+import {
+  ComponentFormulaApiDaum,
+  RateType,
+  AccountRef,
+} from "@/types/componentFormula";
 import { getComponentRate, formatRate } from "@/utils/formula";
+
+// Label akun ter-populate (atau id string bila belum populate).
+const accountLabel = (a: AccountRef): string => {
+  if (typeof a === "string") return a;
+  const code = a.code ? `${a.code}` : "";
+  const name = a.name ?? a._id;
+  return code ? `${code} — ${name}` : name;
+};
+
+// Render daftar akun sebagai chip.
+const AccountChips = ({ accounts }: { accounts?: AccountRef[] }) =>
+  !accounts || accounts.length === 0 ? (
+    <span className="text-sm text-zinc-400 italic">Tidak ada akun.</span>
+  ) : (
+    <div className="flex flex-wrap gap-1.5">
+      {accounts.map((a, i) => (
+        <span
+          key={typeof a === "string" ? a : (a._id ?? i)}
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border border-blue-300 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
+        >
+          {accountLabel(a)}
+        </span>
+      ))}
+    </div>
+  );
 
 interface DataProps {
   initialData: ComponentFormulaApiDaum;
@@ -27,7 +56,9 @@ export default function ViewComponentFormulaModal({
   if (!isOpen) return null;
 
   const isCalculated = initialData.rate_type === RateType.CALCULATED;
+  const isExternal = initialData.rate_type === RateType.EXTERNAL;
   const usedByCount = initialData.component_id?.length ?? 0;
+  const dp = initialData.decimal_place ?? 2;
 
   const field = (label: string, value: string) => (
     <div className="group">
@@ -61,19 +92,43 @@ export default function ViewComponentFormulaModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {field("Name", initialData.name ?? "-")}
             {field("Slug", initialData.slug ?? "-")}
-            {field("Rate Type", initialData.rate_type ?? "-")}
             {field(
-              isCalculated ? "Calculated Rate" : "Fixed Rate",
-              String(
-                isCalculated
-                  ? initialData.calculated_rate
-                  : initialData.fixed_rate,
+              "Rate Type",
+              isExternal ? "External (x)" : (initialData.rate_type ?? "-"),
+            )}
+            {field(
+              isExternal ? "Rate" : isCalculated ? "Calculated Rate" : "Fixed Rate",
+              formatRate(
+                isCalculated || isExternal
+                  ? (initialData.calculated_rate ?? 0)
+                  : (initialData.fixed_rate ?? 0),
+                dp,
               ),
             )}
             {field("Decimal Place", String(initialData.decimal_place ?? "-"))}
             {field(
               "Effective Rate",
-              formatRate(getComponentRate(initialData), initialData.decimal_place),
+              formatRate(getComponentRate(initialData), dp),
+            )}
+
+            {/* ACCOUNTS */}
+            <div className="group md:col-span-2">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Accounts
+              </label>
+              <AccountChips accounts={initialData.accounts} />
+            </div>
+            {isExternal && (
+              <div className="group md:col-span-2">
+                <p className="text-[11px] text-zinc-400">
+                  Tipe EXTERNAL: saat dipakai di Calculated Formula ia tampil
+                  sebagai <b>x {"{operator}"} rate</b> (mis. <b>x + {formatRate(
+                    initialData.calculated_rate ?? 0,
+                    dp,
+                  )}</b>). Nilai <b>x</b> adalah target dari perhitungan koleksi
+                  lain; operator dipilih di formula.
+                </p>
+              </div>
             )}
 
             {/* USED BY */}

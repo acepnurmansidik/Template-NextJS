@@ -34,10 +34,13 @@ interface DataProps {
   onRefresh?: () => void;
 }
 
-const rateTypeBadge = (type: RateType) =>
-  type === RateType.CALCULATED
-    ? "border-violet-400 bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300"
-    : "border-emerald-400 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300";
+const rateTypeBadge = (type: RateType) => {
+  if (type === RateType.CALCULATED)
+    return "border-violet-400 bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300";
+  if (type === RateType.EXTERNAL)
+    return "border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300";
+  return "border-emerald-400 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300";
+};
 
 export const TableComponentFormula = ({
   hasAccess,

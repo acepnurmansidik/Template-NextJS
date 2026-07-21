@@ -1,25 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
 import {
+  AccountAssignment,
+  ACCOUNT_ASSIGNMENT_LABEL,
+  CalcType,
   CalculatedFormulaApiDaum,
   CalculatedFormulaForm,
   PopulatedComponent,
   SingleCalculatedFormulaResponseApiDaum,
 } from "@/types/calculatedFormula";
-import { BodyComponentFormulaResponseApiDaum } from "@/types/componentFormula";
+import {
+  BodyComponentFormulaResponseApiDaum,
+  refId,
+} from "@/types/componentFormula";
+import {
+  BodyChartOfAccountResponseApiDaum,
+  ChartOfAccountApiDaum,
+} from "@/types/chartOfAccount";
 import { evaluateExpression, RoundMode, ROUND_MODES } from "@/utils/formula";
+import AccountsSelect, {
+  AccountOption,
+} from "@/components/atoms/shared/AccountsSelect";
 import FormulaBuilder, {
   BuilderToken,
   builderToPayload,
   builderToCalcTokens,
   apiTokensToBuilder,
 } from "@/components/atoms/shared/FormulaBuilder";
+import PerComponentBuilder, {
+  ComponentDraft,
+  componentDraftToPayload,
+  apiComponentToDraft,
+} from "@/components/atoms/shared/PerComponentBuilder";
 import NumberInput from "@/components/atoms/shared/NumberInput";
+import CalcTypeToggle from "@/components/atoms/shared/CalcTypeToggle";
 
 interface DataProps {
   isOpen: boolean;
@@ -35,16 +54,27 @@ export default function UpdateCalculatedFormulaModal({
   initialData,
 }: DataProps) {
   const [name, setName] = useState<string>("");
+  const [calcType, setCalcType] = useState<CalcType>(CalcType.SINGLE);
   const [decimalPlace, setDecimalPlace] = useState<number>(2);
   const [rounding, setRounding] = useState<RoundMode>("round");
   const [tokens, setTokens] = useState<BuilderToken[]>([]);
+  const [perComponents, setPerComponents] = useState<ComponentDraft[]>([]);
+  const [accounts, setAccounts] = useState<string[]>([]);
+  const [accountAssignment, setAccountAssignment] = useState<AccountAssignment>(
+    AccountAssignment.FORMULA_COMPONENT,
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState<boolean>(false);
 
   const [availableComponents, setAvailableComponents] = useState<
     PopulatedComponent[]
   >([]);
   const [isLoadingComponents, setIsLoadingComponents] =
     useState<boolean>(false);
+
+  const [availableAccounts, setAvailableAccounts] = useState<
+    ChartOfAccountApiDaum[]
+  >([]);
 
   const fetchComponents = useCallback(async () => {
     try {
@@ -62,10 +92,47 @@ export default function UpdateCalculatedFormulaModal({
     }
   }, []);
 
+  const fetchAccounts = useCallback(async () => {
+    try {
+      setIsLoadingAccounts(true);
+      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        "/chart-of-account",
+        { page: 1, limit: 1000, search: "", is_header: false },
+        false,
+      );
+      setAvailableAccounts(result.data ?? []);
+    } catch {
+      setAvailableAccounts([]);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, []);
+
+  const accountOptions: AccountOption[] = useMemo(
+    () =>
+      availableAccounts.map((a) => ({
+        value: a._id,
+        label: `${a.code} — ${a.name}`,
+      })),
+    [availableAccounts],
+  );
+
   useEffect(() => {
     if (isOpen) {
       fetchComponents();
+      fetchAccounts();
       setName(initialData.name ?? "");
+      setAccounts((initialData.accounts ?? []).map(refId).filter(Boolean));
+      setAccountAssignment(
+        initialData.account_assignment === AccountAssignment.COMPONENT_DETAIL
+          ? AccountAssignment.COMPONENT_DETAIL
+          : AccountAssignment.FORMULA_COMPONENT,
+      );
+      const type =
+        initialData.calc_type === CalcType.PER_COMPONENT
+          ? CalcType.PER_COMPONENT
+          : CalcType.SINGLE;
+      setCalcType(type);
       setDecimalPlace(initialData.decimal_place ?? 2);
       setRounding(
         (ROUND_MODES.some((m) => m.value === initialData.rounding)
@@ -74,8 +141,10 @@ export default function UpdateCalculatedFormulaModal({
       );
       // Seed token dari ekspresi ter-populate (list endpoint mem-populate).
       setTokens(apiTokensToBuilder(initialData.expression));
+      // Seed komponen bila formula bertipe PER_COMPONENT.
+      setPerComponents((initialData.components ?? []).map(apiComponentToDraft));
     }
-  }, [isOpen, initialData, fetchComponents]);
+  }, [isOpen, initialData, fetchComponents, fetchAccounts]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -103,30 +172,82 @@ export default function UpdateCalculatedFormulaModal({
       });
       return;
     }
-    const evaluation = evaluateExpression(
-      builderToCalcTokens(tokens),
-      decimalPlace,
-      rounding,
-    );
-    if (!evaluation.ok) {
-      Swal.fire({
-        icon: "warning",
-        title: "Formula belum valid",
-        text: evaluation.error || "Periksa kembali susunan ekspresi.",
-        confirmButtonColor: "#2563eb",
-      });
-      return;
+
+    let payload: CalculatedFormulaForm;
+
+    if (calcType === CalcType.PER_COMPONENT) {
+      if (perComponents.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "Minimal 1 komponen",
+          text: "Tambahkan setidaknya satu komponen perhitungan.",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+      for (let i = 0; i < perComponents.length; i++) {
+        const c = perComponents[i];
+        if (!c.name.trim()) {
+          Swal.fire({
+            icon: "warning",
+            title: `Komponen #${i + 1} belum punya nama`,
+            confirmButtonColor: "#2563eb",
+          });
+          return;
+        }
+        const evaln = evaluateExpression(
+          builderToCalcTokens(c.tokens),
+          c.decimalPlace,
+          c.rounding,
+        );
+        if (!evaln.ok) {
+          Swal.fire({
+            icon: "warning",
+            title: `Ekspresi komponen #${i + 1} belum valid`,
+            text: evaln.error || "Periksa kembali susunan ekspresi.",
+            confirmButtonColor: "#2563eb",
+          });
+          return;
+        }
+      }
+      payload = {
+        name: name.trim(),
+        calc_type: CalcType.PER_COMPONENT,
+        decimal_place: decimalPlace,
+        rounding,
+        accounts,
+        account_assignment: accountAssignment,
+        expression: [],
+        components: perComponents.map(componentDraftToPayload),
+      };
+    } else {
+      const evaluation = evaluateExpression(
+        builderToCalcTokens(tokens),
+        decimalPlace,
+        rounding,
+      );
+      if (!evaluation.ok) {
+        Swal.fire({
+          icon: "warning",
+          title: "Formula belum valid",
+          text: evaluation.error || "Periksa kembali susunan ekspresi.",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+      payload = {
+        name: name.trim(),
+        calc_type: CalcType.SINGLE,
+        decimal_place: decimalPlace,
+        rounding,
+        accounts,
+        account_assignment: accountAssignment,
+        expression: builderToPayload(tokens),
+      };
     }
 
     setIsLoading(true);
     try {
-      const payload: CalculatedFormulaForm = {
-        name: name.trim(),
-        decimal_place: decimalPlace,
-        rounding,
-        expression: builderToPayload(tokens),
-      };
-
       const result = await apiPut<SingleCalculatedFormulaResponseApiDaum>(
         `/calculated-formula/${initialData._id}`,
         payload,
@@ -182,6 +303,8 @@ export default function UpdateCalculatedFormulaModal({
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
+          <CalcTypeToggle value={calcType} onChange={setCalcType} />
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="group md:col-span-2">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
@@ -233,14 +356,76 @@ export default function UpdateCalculatedFormulaModal({
             </div>
           </div>
 
-          <FormulaBuilder
-            tokens={tokens}
-            onChange={setTokens}
-            availableComponents={availableComponents}
-            decimalPlace={decimalPlace}
-            rounding={rounding}
-            isLoadingComponents={isLoadingComponents}
-          />
+          {/* ACCOUNTS HASIL AKHIR (diposisikan di atas komponen) */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="group md:col-span-3">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Accounts (hasil akhir)
+              </label>
+              <AccountsSelect
+                instanceId="calc-final-accounts-update"
+                value={accounts}
+                onChange={setAccounts}
+                options={accountOptions}
+                isLoading={isLoadingAccounts}
+              />
+              <p className="mt-1 text-[11px] text-zinc-400">
+                {calcType === CalcType.PER_COMPONENT
+                  ? "Akun untuk hasil akhir. Tiap komponen punya akun sendiri di bawah."
+                  : "Akun untuk hasil akhir formula."}
+              </p>
+            </div>
+
+            {/* JENIS ASSIGN AKUN */}
+            <div className="group md:col-span-2">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Assign Account Type
+              </label>
+              <select
+                value={accountAssignment}
+                onChange={(e) =>
+                  setAccountAssignment(e.target.value as AccountAssignment)
+                }
+                aria-label="Jenis assign akun"
+                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
+              >
+                {Object.entries(ACCOUNT_ASSIGNMENT_LABEL).map(
+                  ([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ),
+                )}
+              </select>
+              <p className="mt-1 text-[11px] text-zinc-400">
+                {accountAssignment === AccountAssignment.COMPONENT_DETAIL
+                  ? "Nilai di-assign ke akun tiap komponen detail (Chart of Account yang di-set di koleksi Component Formula)."
+                  : "Nilai di-assign hanya ke akun yang di-set pada formula ini / komponennya."}
+              </p>
+            </div>
+          </div>
+
+          {calcType === CalcType.PER_COMPONENT ? (
+            <PerComponentBuilder
+              components={perComponents}
+              onChange={setPerComponents}
+              availableComponents={availableComponents}
+              accountOptions={accountOptions}
+              masterDecimalPlace={decimalPlace}
+              masterRounding={rounding}
+              isLoadingComponents={isLoadingComponents}
+              isLoadingAccounts={isLoadingAccounts}
+            />
+          ) : (
+            <FormulaBuilder
+              tokens={tokens}
+              onChange={setTokens}
+              availableComponents={availableComponents}
+              decimalPlace={decimalPlace}
+              rounding={rounding}
+              isLoadingComponents={isLoadingComponents}
+            />
+          )}
         </div>
       </div>
 

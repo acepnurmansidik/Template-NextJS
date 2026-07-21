@@ -1,18 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
-import { apiPut } from "@/utils/api";
+import { apiGet, apiPut } from "@/utils/api";
 import {
   ComponentFormulaApiDaum,
   ComponentFormulaForm,
   RateType,
+  refId,
   SingleComponentFormulaResponseApiDaum,
 } from "@/types/componentFormula";
+import {
+  BodyChartOfAccountResponseApiDaum,
+  ChartOfAccountApiDaum,
+} from "@/types/chartOfAccount";
 import NumberInput from "@/components/atoms/shared/NumberInput";
+import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import AccountsSelect, {
+  AccountOption,
+} from "@/components/atoms/shared/AccountsSelect";
 
 type Option = { value: string; label: string };
 
@@ -26,7 +35,16 @@ interface DataProps {
 const RATE_TYPE_OPTIONS: Option[] = [
   { value: RateType.FIXED, label: "Fixed" },
   { value: RateType.CALCULATED, label: "Calculated" },
+  { value: RateType.EXTERNAL, label: "External (x)" },
 ];
+
+// Rate berformat currency (grup ribuan gaya en-US, boleh negatif & desimal).
+const rateInputProps = {
+  allowNegative: true,
+  maxDecimals: 6,
+  groupSeparator: ",",
+  decimalSeparator: ".",
+} as const;
 
 const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
@@ -44,20 +62,53 @@ export default function UpdateComponentFormulaModal({
     fixed_rate: 0,
     calculated_rate: 0,
     decimal_place: 2,
+    accounts: [],
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const [availableAccounts, setAvailableAccounts] = useState<
+    ChartOfAccountApiDaum[]
+  >([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState<boolean>(false);
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      setIsLoadingAccounts(true);
+      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        "/chart-of-account",
+        { page: 1, limit: 1000, search: "", is_header: false },
+        false,
+      );
+      setAvailableAccounts(result.data ?? []);
+    } catch {
+      setAvailableAccounts([]);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, []);
+
+  const accountOptions: AccountOption[] = useMemo(
+    () =>
+      availableAccounts.map((a) => ({
+        value: a._id,
+        label: `${a.code} — ${a.name}`,
+      })),
+    [availableAccounts],
+  );
+
   useEffect(() => {
     if (isOpen) {
+      fetchAccounts();
       setFormData({
         name: initialData.name ?? "",
         rate_type: initialData.rate_type ?? RateType.FIXED,
         fixed_rate: initialData.fixed_rate ?? 0,
         calculated_rate: initialData.calculated_rate ?? 0,
         decimal_place: initialData.decimal_place ?? 2,
+        accounts: (initialData.accounts ?? []).map(refId).filter(Boolean),
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, fetchAccounts]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -68,17 +119,7 @@ export default function UpdateComponentFormulaModal({
   }, [onClose]);
 
   const isCalculated = formData.rate_type === RateType.CALCULATED;
-  const activeRate = isCalculated
-    ? formData.calculated_rate
-    : formData.fixed_rate;
-
-  const setActiveRate = (value: number) => {
-    setFormData((prev) =>
-      isCalculated
-        ? { ...prev, calculated_rate: value }
-        : { ...prev, fixed_rate: value },
-    );
-  };
+  const isExternal = formData.rate_type === RateType.EXTERNAL;
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -210,17 +251,39 @@ export default function UpdateComponentFormulaModal({
               />
             </div>
 
-            {/* RATE VALUE */}
+            {/* RATE VALUE (nominal, tanpa currency) */}
             <div className="group">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-                {isCalculated ? "Calculated Rate" : "Fixed Rate"}
+                {isExternal
+                  ? "Rate"
+                  : isCalculated
+                    ? "Calculated Rate"
+                    : "Fixed Rate"}
               </label>
-              <NumberInput
-                value={activeRate}
-                onChange={setActiveRate}
-                aria-label={isCalculated ? "Calculated rate" : "Fixed rate"}
-                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
+              <CurrencyInput
+                value={
+                  isCalculated || isExternal
+                    ? formData.calculated_rate
+                    : formData.fixed_rate
+                }
+                onChange={(v) =>
+                  setFormData((prev) =>
+                    isCalculated || isExternal
+                      ? { ...prev, calculated_rate: v }
+                      : { ...prev, fixed_rate: v },
+                  )
+                }
+                {...rateInputProps}
+                aria-label="Rate"
+                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 text-right"
               />
+              {isExternal && (
+                <p className="mt-1 text-[11px] text-zinc-400">
+                  Tipe EXTERNAL: nilai luar <b>x</b> &amp; operator penggabung
+                  (mis. <b>x + rate</b>) ditentukan saat komponen ini dipakai di
+                  Calculated Formula — bukan di sini.
+                </p>
+              )}
             </div>
 
             {/* DECIMAL PLACE */}
@@ -239,6 +302,25 @@ export default function UpdateComponentFormulaModal({
               />
               <p className="mt-1 text-[11px] text-zinc-400">
                 Jumlah desimal pembulatan rate (bilangan bulat).
+              </p>
+            </div>
+
+            {/* ACCOUNTS */}
+            <div className="group md:col-span-2">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Accounts
+              </label>
+              <AccountsSelect
+                instanceId="component-accounts-update"
+                value={formData.accounts}
+                onChange={(ids) =>
+                  setFormData((prev) => ({ ...prev, accounts: ids }))
+                }
+                options={accountOptions}
+                isLoading={isLoadingAccounts}
+              />
+              <p className="mt-1 text-[11px] text-zinc-400">
+                Akun (Chart of Account) yang terkait komponen ini.
               </p>
             </div>
           </div>

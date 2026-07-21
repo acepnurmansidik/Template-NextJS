@@ -5,6 +5,7 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
 import {
+  CalcType,
   CalculatedFormulaApiDaum,
   ExpressionToken,
   SingleCalculatedFormulaResponseApiDaum,
@@ -14,6 +15,7 @@ import { apiDelete } from "@/utils/api";
 import {
   formatResult,
   computeExpressionResult,
+  computeComponentsTotal,
   RoundMode,
 } from "@/utils/formula";
 import UpdateCalculatedFormulaModal from "../modals/update/UpdateCalculatedFormulaModal";
@@ -278,23 +280,55 @@ export const TableCalculatedFormula = ({
                               )}
                             </div>
                           ) : col.value === "components" ? (
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 shrink-0">
-                                {row.expression?.length ?? 0}
-                              </span>
-                              <span className="truncate text-xs text-zinc-500 dark:text-zinc-400 max-w-md">
-                                {formulaPreview(row.expression)}
-                              </span>
-                            </div>
+                            (() => {
+                              const isPerComp =
+                                row.calc_type === CalcType.PER_COMPONENT;
+                              const count = isPerComp
+                                ? row.components?.length ?? 0
+                                : row.expression?.length ?? 0;
+                              const preview = isPerComp
+                                ? (row.components ?? [])
+                                    .map((c) => c.name)
+                                    .join(" + ") || "-"
+                                : formulaPreview(row.expression);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                                      isPerComp
+                                        ? "border-blue-300 bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                                        : "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600"
+                                    }`}
+                                    title={
+                                      isPerComp
+                                        ? "Per Komponen"
+                                        : "Ekspresi Tunggal"
+                                    }
+                                  >
+                                    {isPerComp ? `${count} komp` : count}
+                                  </span>
+                                  <span className="truncate text-xs text-zinc-500 dark:text-zinc-400 max-w-md">
+                                    {preview}
+                                  </span>
+                                </div>
+                              );
+                            })()
                           ) : col.value === "result" ? (
                             (() => {
                               const mode = (row.rounding ??
                                 "round") as RoundMode;
-                              const value = computeExpressionResult(
-                                row.expression,
-                                row.decimal_place,
-                                mode,
-                              );
+                              const value =
+                                row.calc_type === CalcType.PER_COMPONENT
+                                  ? computeComponentsTotal(
+                                      row.components,
+                                      row.decimal_place,
+                                      mode,
+                                    ).total
+                                  : computeExpressionResult(
+                                      row.expression,
+                                      row.decimal_place,
+                                      mode,
+                                    );
                               return (
                                 <span className="font-bold text-blue-600 dark:text-blue-400 tabular-nums">
                                   {value === null

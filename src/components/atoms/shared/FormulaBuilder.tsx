@@ -35,15 +35,29 @@ import {
   CalcToken,
   RoundMode,
   ROUND_MODES,
+  applyOp,
+  EXTERNAL_X_PREVIEW,
   evaluateExpression,
   getComponentRate,
   formatRate,
   formatResult,
 } from "@/utils/formula";
 import NumberInput from "./NumberInput";
+import CurrencyInput from "./CurrencyInput";
+
+// Konstanta angka pada formula ditampilkan berformat currency (grup ribuan,
+// gaya en-US agar konsisten dgn preview formatRate) — boleh negatif & desimal.
+const NUM_MAX_DECIMALS = 6;
 
 export type BuilderToken =
-  | { _uid: string; kind: "component"; component: PopulatedComponent }
+  // xOperator hanya dipakai bila component.rate_type === "EXTERNAL":
+  // operand = x {xOperator} rate (x = target koleksi lain; preview pakai 0).
+  | {
+      _uid: string;
+      kind: "component";
+      component: PopulatedComponent;
+      xOperator?: string;
+    }
   | { _uid: string; kind: "constant"; value: number }
   | { _uid: string; kind: "operator"; operator: string }
   // decimalPlace & rounding hanya dipakai pada "(" (pembulatan grup ini).
@@ -76,6 +90,10 @@ export const makeUid = (): string =>
     ? crypto.randomUUID()
     : `uid_${Math.random().toString(36).slice(2)}`;
 
+// Apakah komponen bertipe EXTERNAL (digabung dgn nilai luar x di formula).
+const isExternalComponent = (c: PopulatedComponent): boolean =>
+  String(c.rate_type ?? "").toUpperCase() === "EXTERNAL";
+
 // ---- Konversi builder <-> API/eval ----
 export const builderToPayload = (
   tokens: BuilderToken[],
@@ -83,7 +101,14 @@ export const builderToPayload = (
   tokens.map((t) => {
     switch (t.kind) {
       case "component":
-        return { type: "component", component: t.component._id };
+        return {
+          type: "component",
+          component: t.component._id,
+          // Operator x hanya relevan utk komponen EXTERNAL.
+          ...(isExternalComponent(t.component)
+            ? { x_operator: t.xOperator ?? "+" }
+            : {}),
+        };
       case "constant":
         return { type: "constant", value: t.value };
       case "operator":
@@ -104,8 +129,15 @@ export const builderToPayload = (
 
 export const builderToCalcTokens = (tokens: BuilderToken[]): CalcToken[] =>
   tokens.map((t) => {
-    if (t.kind === "component")
-      return { type: "operand", value: getComponentRate(t.component) };
+    if (t.kind === "component") {
+      const rate = getComponentRate(t.component);
+      return {
+        type: "operand",
+        value: isExternalComponent(t.component)
+          ? applyOp(EXTERNAL_X_PREVIEW, t.xOperator ?? "+", rate)
+          : rate,
+      };
+    }
     if (t.kind === "constant") return { type: "operand", value: t.value };
     if (t.kind === "operator")
       return { type: "operator", operator: t.operator };
@@ -123,7 +155,12 @@ export const apiTokensToBuilder = (
   (tokens ?? [])
     .map((t): BuilderToken | null => {
       if (t.type === "component" && isPopulatedComponent(t.component))
-        return { _uid: makeUid(), kind: "component", component: t.component };
+        return {
+          _uid: makeUid(),
+          kind: "component",
+          component: t.component,
+          xOperator: t.x_operator,
+        };
       if (t.type === "constant")
         return { _uid: makeUid(), kind: "constant", value: Number(t.value ?? 0) };
       if (t.type === "operator")
@@ -147,9 +184,15 @@ export const apiTokensToBuilder = (
 const tokenLabel = (t: BuilderToken): string => {
   switch (t.kind) {
     case "component":
-      return t.component.name;
+      // EXTERNAL tampil sbg "x {op} rate" (mis. "x + 3.2"); lainnya nama komponen.
+      return isExternalComponent(t.component)
+        ? `x ${t.xOperator ?? "+"} ${formatRate(
+            getComponentRate(t.component),
+            t.component.decimal_place,
+          )}`
+        : t.component.name;
     case "constant":
-      return String(t.value);
+      return t.value.toLocaleString("en-US", { maximumFractionDigits: 6 });
     case "operator":
       return operatorSymbol(t.operator);
     case "paren":
@@ -164,6 +207,7 @@ function SortableToken({
   onConstantChange,
   onParenDecimalChange,
   onParenRoundingChange,
+  onComponentXOperatorChange,
   onRemove,
 }: {
   token: BuilderToken;
@@ -171,6 +215,7 @@ function SortableToken({
   onConstantChange: (uid: string, value: number) => void;
   onParenDecimalChange: (uid: string, value: number) => void;
   onParenRoundingChange: (uid: string, rounding: RoundMode) => void;
+  onComponentXOperatorChange: (uid: string, operator: string) => void;
   onRemove: (uid: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -211,27 +256,65 @@ function SortableToken({
         <FaGripVertical size={11} />
       </button>
 
-      {token.kind === "component" && (
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-            {token.component.name}
-          </span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-            {token.component.rate_type} ·{" "}
-            {formatRate(
-              getComponentRate(token.component),
-              token.component.decimal_place,
-            )}
-          </span>
-        </div>
-      )}
+      {token.kind === "component" &&
+        (isExternalComponent(token.component) ? (
+          // EXTERNAL: "x {operator} rate" — operator dipilih di sini.
+          <div className="flex items-center gap-1.5">
+            <span className="text-base font-black text-zinc-500 dark:text-zinc-300">
+              x
+            </span>
+            <select
+              value={token.xOperator ?? "+"}
+              onChange={(e) =>
+                onComponentXOperatorChange(token._uid, e.target.value)
+              }
+              aria-label="Operator x"
+              title="Operator penggabung x dengan rate"
+              className="h-8 w-11 text-center text-base font-bold rounded-md border border-blue-200 dark:border-blue-800 bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 outline-none cursor-pointer"
+            >
+              {OPERATOR_OPTIONS.map((op) => (
+                <option key={op.value} value={op.value}>
+                  {op.symbol}
+                </option>
+              ))}
+            </select>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                {formatRate(
+                  getComponentRate(token.component),
+                  token.component.decimal_place,
+                )}
+              </span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                {token.component.name} · EXTERNAL
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              {token.component.name}
+            </span>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+              {token.component.rate_type} ·{" "}
+              {formatRate(
+                getComponentRate(token.component),
+                token.component.decimal_place,
+              )}
+            </span>
+          </div>
+        ))}
 
       {token.kind === "constant" && (
-        <NumberInput
+        <CurrencyInput
           value={token.value}
           onChange={(v) => onConstantChange(token._uid, v)}
+          allowNegative
+          maxDecimals={NUM_MAX_DECIMALS}
+          groupSeparator=","
+          decimalSeparator="."
           aria-label="Nilai konstanta"
-          className="w-20 bg-white dark:bg-zinc-900 px-2 py-1 border border-emerald-200 dark:border-emerald-800 rounded-md text-sm font-semibold text-emerald-700 dark:text-emerald-300 outline-none focus:border-emerald-500"
+          className="w-28 bg-white dark:bg-zinc-900 px-2 py-1 border border-emerald-200 dark:border-emerald-800 rounded-md text-sm font-semibold text-emerald-700 dark:text-emerald-300 outline-none focus:border-emerald-500 text-right"
         />
       )}
 
@@ -355,7 +438,13 @@ export default function FormulaBuilder({
       (c) => c._id === pendingComponent.value,
     );
     if (!component) return;
-    append({ _uid: makeUid(), kind: "component", component });
+    append({
+      _uid: makeUid(),
+      kind: "component",
+      component,
+      // Komponen EXTERNAL default operator "+" (x + rate).
+      ...(isExternalComponent(component) ? { xOperator: "+" } : {}),
+    });
     setPendingComponent(null);
   };
 
@@ -409,6 +498,13 @@ export default function FormulaBuilder({
         t._uid === uid && t.kind === "paren" && t.paren === "("
           ? { ...t, rounding: mode }
           : t,
+      ),
+    );
+
+  const handleComponentXOperatorChange = (uid: string, operator: string) =>
+    onChange(
+      tokens.map((t) =>
+        t._uid === uid && t.kind === "component" ? { ...t, xOperator: operator } : t,
       ),
     );
 
@@ -478,11 +574,15 @@ export default function FormulaBuilder({
             <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
               Number
             </label>
-            <NumberInput
+            <CurrencyInput
               value={pendingConstant}
               onChange={setPendingConstant}
+              allowNegative
+              maxDecimals={NUM_MAX_DECIMALS}
+              groupSeparator=","
+              decimalSeparator="."
               aria-label="Konstanta"
-              className="w-28 bg-white dark:bg-zinc-950 p-2 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100"
+              className="w-32 bg-white dark:bg-zinc-950 p-2 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500 dark:text-zinc-100 text-right"
             />
           </div>
           <button
@@ -574,6 +674,7 @@ export default function FormulaBuilder({
                       onConstantChange={handleConstantChange}
                       onParenDecimalChange={handleParenDecimalChange}
                       onParenRoundingChange={handleParenRoundingChange}
+                      onComponentXOperatorChange={handleComponentXOperatorChange}
                       onRemove={handleRemove}
                     />
                   ))}

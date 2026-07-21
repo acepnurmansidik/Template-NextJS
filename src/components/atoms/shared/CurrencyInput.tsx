@@ -1,8 +1,9 @@
 "use client";
 
 // Input nominal berformat CURRENCY (grup ribuan) TANPA simbol mata uang.
-// Tampilan mengikuti locale id-ID: pemisah ribuan "." dan desimal ",".
-// Contoh: ketik "1500000" → tampil "1.500.000". Ke atas (form/DB) tetap NUMBER.
+// Default mengikuti locale id-ID: pemisah ribuan "." dan desimal ",".
+// Bisa dikonfigurasi ke gaya en-US (grup "," desimal ".") lewat prop separator.
+// Contoh (id-ID): ketik "1500000" → tampil "1.500.000". Ke atas (form/DB) tetap NUMBER.
 import React, { useEffect, useState } from "react";
 
 interface DataProps {
@@ -12,34 +13,50 @@ interface DataProps {
   placeholder?: string;
   className?: string;
   maxDecimals?: number;
+  allowNegative?: boolean;
+  groupSeparator?: string; // pemisah ribuan (default ".")
+  decimalSeparator?: string; // pemisah desimal (default ",")
   "aria-label"?: string;
 }
 
-// Kelompokkan bagian bilangan bulat dengan titik tiap 3 digit.
-const groupInt = (digits: string): string => {
+// Kelompokkan bagian bilangan bulat tiap 3 digit dengan `sep`.
+const groupInt = (digits: string, sep: string): string => {
   if (!digits) return "";
   const trimmed = digits.replace(/^0+(?=\d)/, ""); // buang nol di depan
-  return trimmed.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return trimmed.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 };
 
-// NUMBER → string tampilan (grup ribuan + desimal koma bila ada).
-const numToDisplay = (value: number, maxDecimals: number): string => {
+// NUMBER → string tampilan (grup ribuan + desimal bila ada), hormati tanda minus.
+const numToDisplay = (
+  value: number,
+  maxDecimals: number,
+  groupSep: string,
+  decSep: string,
+): string => {
   if (!Number.isFinite(value) || value === 0) return "";
-  const fixed =
-    Math.round(value * 10 ** maxDecimals) / 10 ** maxDecimals;
-  const [intPart, decPart] = String(Math.abs(fixed)).split(".");
-  const grouped = groupInt(intPart);
-  return decPart ? `${grouped},${decPart}` : grouped;
+  const neg = value < 0;
+  const factor = 10 ** maxDecimals;
+  const fixed = Math.round(Math.abs(value) * factor) / factor;
+  const [intPart, decPart] = String(fixed).split(".");
+  const grouped = groupInt(intPart, groupSep);
+  const body = decPart ? `${grouped}${decSep}${decPart}` : grouped;
+  return neg ? `-${body}` : body;
 };
 
-// String tampilan → NUMBER (buang titik grup, koma jadi titik desimal).
-const displayToNum = (display: string): number => {
-  const cleaned = display
-    .replace(/\./g, "")
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "");
+// String tampilan → NUMBER (buang pemisah ribuan, pemisah desimal → titik).
+const displayToNum = (
+  display: string,
+  decSep: string,
+): number => {
+  const neg = display.trim().startsWith("-");
+  let cleaned = "";
+  for (const ch of display) {
+    if (ch >= "0" && ch <= "9") cleaned += ch;
+    else if (ch === decSep && !cleaned.includes(".")) cleaned += ".";
+  }
   const n = Number(cleaned);
-  return Number.isFinite(n) ? n : 0;
+  const val = Number.isFinite(n) ? n : 0;
+  return neg ? -val : val;
 };
 
 export default function CurrencyInput({
@@ -49,40 +66,51 @@ export default function CurrencyInput({
   placeholder,
   className,
   maxDecimals = 2,
+  allowNegative = false,
+  groupSeparator = ".",
+  decimalSeparator = ",",
   "aria-label": ariaLabel,
 }: DataProps) {
-  const [text, setText] = useState<string>(numToDisplay(value, maxDecimals));
+  const [text, setText] = useState<string>(
+    numToDisplay(value, maxDecimals, groupSeparator, decimalSeparator),
+  );
 
-  // Sinkronkan bila value berubah dari luar (mis. reset form, atau pasangan
-  // debit/kredit yang otomatis di-nol-kan) — tanpa mengganggu ketikan berjalan.
+  // Sinkronkan bila value berubah dari luar (mis. reset form / load data edit) —
+  // tanpa mengganggu ketikan berjalan.
   useEffect(() => {
-    if (displayToNum(text) !== value) {
-      setText(numToDisplay(value, maxDecimals));
+    if (displayToNum(text, decimalSeparator) !== value) {
+      setText(numToDisplay(value, maxDecimals, groupSeparator, decimalSeparator));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const handleChange = (raw: string) => {
-    // Sisakan digit & satu koma desimal; sisanya (termasuk titik grup) dibuang.
-    let cleaned = raw.replace(/[^\d,]/g, "");
-    const firstComma = cleaned.indexOf(",");
-    if (firstComma !== -1) {
-      cleaned =
-        cleaned.slice(0, firstComma + 1) +
-        cleaned.slice(firstComma + 1).replace(/,/g, "");
+    const neg = allowNegative && raw.trim().startsWith("-");
+
+    // Sisakan digit & satu pemisah desimal; pemisah ribuan & lainnya dibuang.
+    let cleaned = "";
+    for (const ch of raw) {
+      if (ch >= "0" && ch <= "9") cleaned += ch;
+      else if (ch === decimalSeparator && !cleaned.includes(decimalSeparator))
+        cleaned += decimalSeparator;
     }
 
-    const hasComma = cleaned.includes(",");
-    const [intDigitsRaw, decDigitsRaw = ""] = cleaned.split(",");
+    const hasDec = cleaned.includes(decimalSeparator);
+    const [intDigitsRaw, decDigitsRaw = ""] = cleaned.split(decimalSeparator);
     const decDigits =
       maxDecimals > 0 ? decDigitsRaw.slice(0, maxDecimals) : "";
-    const grouped = groupInt(intDigitsRaw);
+    const grouped = groupInt(intDigitsRaw, groupSeparator);
 
-    const display = hasComma && maxDecimals > 0 ? `${grouped},${decDigits}` : grouped;
+    const body =
+      hasDec && maxDecimals > 0
+        ? `${grouped}${decimalSeparator}${decDigits}`
+        : grouped;
+    const display = (neg ? "-" : "") + body;
     setText(display);
 
     const intForNum = intDigitsRaw.replace(/^0+(?=\d)/, "") || "0";
-    const numeric = Number(`${intForNum}.${decDigits || "0"}`);
+    const numAbs = Number(`${intForNum}.${decDigits || "0"}`);
+    const numeric = neg ? -numAbs : numAbs;
     onChange(Number.isFinite(numeric) ? numeric : 0);
   };
 

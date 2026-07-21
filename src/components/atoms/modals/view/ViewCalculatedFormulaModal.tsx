@@ -3,15 +3,22 @@
 import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 import {
+  AccountAssignment,
+  ACCOUNT_ASSIGNMENT_LABEL,
+  CalcType,
+  CALC_TYPE_LABEL,
   CalculatedFormulaApiDaum,
+  ExpressionToken,
   PopulatedComponent,
   isPopulatedComponent,
 } from "@/types/calculatedFormula";
+import { AccountRef } from "@/types/componentFormula";
 import {
   getComponentRate,
   formatRate,
   formatResult,
   computeExpressionResult,
+  computeComponentsTotal,
   ROUND_MODES,
   RoundMode,
 } from "@/utils/formula";
@@ -24,6 +31,30 @@ interface DataProps {
 
 const opSymbol = (op: string) =>
   ({ "+": "+", "-": "−", "*": "×", "/": "÷" })[op] ?? op;
+
+// Label & chip untuk akun (Chart of Account) ter-populate.
+const accountLabel = (a: AccountRef): string => {
+  if (typeof a === "string") return a;
+  const code = a.code ? `${a.code}` : "";
+  const name = a.name ?? a._id;
+  return code ? `${code} — ${name}` : name;
+};
+
+const AccountChips = ({ accounts }: { accounts?: AccountRef[] }) =>
+  !accounts || accounts.length === 0 ? (
+    <span className="text-sm text-zinc-400 italic">Tidak ada akun.</span>
+  ) : (
+    <div className="flex flex-wrap gap-1.5">
+      {accounts.map((a, i) => (
+        <span
+          key={typeof a === "string" ? a : (a._id ?? i)}
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border border-blue-300 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
+        >
+          {accountLabel(a)}
+        </span>
+      ))}
+    </div>
+  );
 
 const roundLabel = (mode: string | undefined) =>
   ROUND_MODES.find((m) => m.value === (mode ?? "round"))?.label ?? "Normal";
@@ -58,11 +89,108 @@ export default function ViewCalculatedFormulaModal({
 
   const expression = initialData.expression ?? [];
   const finalRounding = (initialData.rounding ?? "round") as RoundMode;
-  const computedResult = computeExpressionResult(
-    expression,
+  const isPerComponent = initialData.calc_type === CalcType.PER_COMPONENT;
+
+  const perComponent = computeComponentsTotal(
+    initialData.components,
     initialData.decimal_place,
     finalRounding,
   );
+  const computedResult = isPerComponent
+    ? perComponent.total
+    : computeExpressionResult(
+        expression,
+        initialData.decimal_place,
+        finalRounding,
+      );
+
+  // Render satu deretan token ekspresi (dipakai untuk SINGLE & tiap komponen).
+  const renderExpression = (tokens: ExpressionToken[]) => {
+    if (!tokens || tokens.length === 0) {
+      return (
+        <p className="text-sm text-zinc-400 italic">Tidak ada ekspresi.</p>
+      );
+    }
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {tokens.map((token, index) => {
+          if (token.type === "operator") {
+            return (
+              <span
+                key={index}
+                className="text-base font-bold text-blue-600 dark:text-blue-400"
+              >
+                {opSymbol(token.operator ?? "+")}
+              </span>
+            );
+          }
+          if (token.type === "paren") {
+            return (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 text-lg font-black text-amber-600 dark:text-amber-400"
+              >
+                {token.paren}
+                {token.paren === "(" && (
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500/80 normal-case">
+                    {(token.rounding ?? "round") === "none"
+                      ? "asli"
+                      : `${roundLabel(token.rounding)} · ${
+                          token.decimal_place ?? initialData.decimal_place
+                        }dp`}
+                  </span>
+                )}
+              </span>
+            );
+          }
+          if (token.type === "constant") {
+            return (
+              <span
+                key={index}
+                className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
+              >
+                {token.value}
+              </span>
+            );
+          }
+          // component
+          const populated = isPopulatedComponent(token.component)
+            ? (token.component as PopulatedComponent)
+            : null;
+          const isExt =
+            (populated?.rate_type ?? "").toString().toUpperCase() ===
+            "EXTERNAL";
+          return (
+            <div
+              key={index}
+              className="flex flex-col leading-tight rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5"
+            >
+              <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                {!populated
+                  ? "Unknown component"
+                  : isExt
+                    ? `x ${token.x_operator ?? "+"} ${formatRate(
+                        getComponentRate(populated),
+                        populated.decimal_place,
+                      )}`
+                    : populated.name}
+              </span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                {!populated
+                  ? "component telah dihapus"
+                  : isExt
+                    ? `${populated.name} · EXTERNAL`
+                    : `${populated.rate_type} · ${formatRate(
+                        getComponentRate(populated),
+                        populated.decimal_place,
+                      )}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -82,11 +210,25 @@ export default function ViewCalculatedFormulaModal({
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {field("Name", initialData.name ?? "-")}
-            {field("Slug", initialData.slug ?? "-")}
+            {field(
+              "Tipe Perhitungan",
+              CALC_TYPE_LABEL[
+                isPerComponent ? CalcType.PER_COMPONENT : CalcType.SINGLE
+              ],
+            )}
             {field("Decimal Place", String(initialData.decimal_place ?? "-"))}
             {field("Pembulatan Akhir", roundLabel(initialData.rounding))}
             {field(
-              "Result (live)",
+              "Assign Account Type",
+              ACCOUNT_ASSIGNMENT_LABEL[
+                initialData.account_assignment ===
+                AccountAssignment.COMPONENT_DETAIL
+                  ? AccountAssignment.COMPONENT_DETAIL
+                  : AccountAssignment.FORMULA_COMPONENT
+              ],
+            )}
+            {field(
+              isPerComponent ? "Total (live)" : "Result (live)",
               computedResult === null
                 ? "—"
                 : formatResult(
@@ -97,92 +239,108 @@ export default function ViewCalculatedFormulaModal({
             )}
           </div>
 
-          {/* EXPRESSION (read-only) */}
+          {/* ACCOUNTS HASIL AKHIR */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
-              Expression
+              Accounts (hasil akhir)
             </label>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 p-4">
-              {expression.length === 0 ? (
+            <AccountChips accounts={initialData.accounts} />
+          </div>
+
+          {isPerComponent ? (
+            /* ---------- PER_COMPONENT: rincian per komponen ---------- */
+            <div className="space-y-4">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                Komponen (dihitung terpisah, lalu dijumlahkan)
+              </label>
+              {(initialData.components ?? []).length === 0 ? (
                 <p className="text-sm text-zinc-400 italic">
-                  Tidak ada ekspresi.
+                  Tidak ada komponen.
                 </p>
               ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                  {expression.map((token, index) => {
-                    if (token.type === "operator") {
-                      return (
-                        <span
-                          key={index}
-                          className="text-base font-bold text-blue-600 dark:text-blue-400"
-                        >
-                          {opSymbol(token.operator ?? "+")}
+                (initialData.components ?? []).map((c, i) => {
+                  const sub = perComponent.breakdown.find(
+                    (b) => b.name === c.name,
+                  );
+                  return (
+                    <div
+                      key={c._id ?? i}
+                      className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                          #{i + 1} · {c.name}
                         </span>
-                      );
-                    }
-                    if (token.type === "paren") {
-                      return (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-1 text-lg font-black text-amber-600 dark:text-amber-400"
-                        >
-                          {token.paren}
-                          {token.paren === "(" && (
-                            <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500/80 normal-case">
-                              {(token.rounding ?? "round") === "none"
-                                ? "asli"
-                                : `${roundLabel(token.rounding)} · ${
-                                    token.decimal_place ??
-                                    initialData.decimal_place
-                                  }dp`}
-                            </span>
-                          )}
-                        </span>
-                      );
-                    }
-                    if (token.type === "constant") {
-                      return (
-                        <span
-                          key={index}
-                          className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
-                        >
-                          {token.value}
-                        </span>
-                      );
-                    }
-                    // component
-                    const populated = isPopulatedComponent(token.component)
-                      ? (token.component as PopulatedComponent)
-                      : null;
-                    return (
-                      <div
-                        key={index}
-                        className="flex flex-col leading-tight rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5"
-                      >
-                        <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                          {populated ? populated.name : "Unknown component"}
-                        </span>
-                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                          {populated
-                            ? `${populated.rate_type} · ${formatRate(
-                                getComponentRate(populated),
-                                populated.decimal_place,
-                              )}`
-                            : "component telah dihapus"}
+                        <span className="text-[10px] text-zinc-400">
+                          {roundLabel(c.rounding)} · {c.decimal_place}dp
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      {renderExpression(c.expression)}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <span className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            Component Line
+                          </span>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-200">
+                            {c.component_line
+                              ? typeof c.component_line === "string"
+                                ? c.component_line
+                                : (c.component_line.name ??
+                                  c.component_line._id)
+                              : "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            Accounts
+                          </span>
+                          <AccountChips accounts={c.accounts} />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 text-sm">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">
+                          Subtotal
+                        </span>
+                        <span className="font-black text-blue-600 dark:text-blue-300 tabular-nums">
+                          {sub && sub.value !== null
+                            ? formatResult(
+                                sub.value,
+                                c.decimal_place,
+                                (c.rounding ?? "round") as RoundMode,
+                              )
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
               )}
+              <p className="mt-1.5 text-[11px] text-zinc-400">
+                Tiap komponen dihitung terpisah dgn pembulatannya sendiri, lalu
+                semua hasil dijumlahkan. Total akhir:{" "}
+                {roundLabel(initialData.rounding)} · {initialData.decimal_place}{" "}
+                angka di belakang koma.
+              </p>
             </div>
-            <p className="mt-1.5 text-[11px] text-zinc-400">
-              Prioritas × ÷ sebelum + −. Isi kurung dihitung lebih dulu; tiap
-              &ldquo;(&rdquo; punya dp &amp; arah pembulatan sendiri. Hasil
-              akhir: {roundLabel(initialData.rounding)} ·{" "}
-              {initialData.decimal_place} angka di belakang koma.
-            </p>
-          </div>
+          ) : (
+            /* ---------- SINGLE: satu ekspresi ---------- */
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">
+                Expression
+              </label>
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+                {renderExpression(expression)}
+              </div>
+              <p className="mt-1.5 text-[11px] text-zinc-400">
+                Prioritas × ÷ sebelum + −. Isi kurung dihitung lebih dulu; tiap
+                &ldquo;(&rdquo; punya dp &amp; arah pembulatan sendiri. Hasil
+                akhir: {roundLabel(initialData.rounding)} ·{" "}
+                {initialData.decimal_place} angka di belakang koma.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

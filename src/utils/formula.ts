@@ -1,4 +1,7 @@
-import type { ExpressionToken } from "@/types/calculatedFormula";
+import type {
+  ExpressionToken,
+  FormulaComponentApiDaum,
+} from "@/types/calculatedFormula";
 import { isPopulatedComponent } from "@/types/calculatedFormula";
 
 // Helper perhitungan formula — MIRROR persis logika backend
@@ -21,6 +24,25 @@ export type RateLike = {
   calculated_rate?: number;
   decimal_place?: number;
 };
+
+// Terapkan operator biner. Pembagian oleh nol → a (kompatibel dgn evalRPN).
+export const applyOp = (a: number, op: string, b: number): number => {
+  switch (op) {
+    case "-":
+      return a - b;
+    case "*":
+      return a * b;
+    case "/":
+      return b === 0 ? a : a / b;
+    default:
+      return a + b; // "+" (default)
+  }
+};
+
+// Nilai "x" yang dipakai untuk PREVIEW komponen EXTERNAL. Nilai x sebenarnya
+// adalah target dari perhitungan koleksi lain (tidak diketahui di sini), jadi
+// preview memakai x = 0.
+export const EXTERNAL_X_PREVIEW = 0;
 
 // Prioritas operator (ala matematika).
 const PRECEDENCE: Record<string, number> = { "+": 1, "-": 1, "*": 2, "/": 2 };
@@ -68,8 +90,11 @@ export const roundTo = (
 // Rate efektif sebuah komponen: calculated_rate bila CALCULATED, selain itu
 // fixed_rate. Dibulatkan memakai decimal_place komponen.
 export const getComponentRate = (component: RateLike): number => {
+  const type = (component.rate_type ?? "FIXED").toUpperCase();
+  // EXTERNAL & CALCULATED sama-sama memakai calculated_rate sebagai "rate".
+  // Penggabungan dgn x (khusus EXTERNAL) terjadi di level TOKEN formula.
   const raw =
-    (component.rate_type ?? "FIXED").toUpperCase() === "CALCULATED"
+    type === "CALCULATED" || type === "EXTERNAL"
       ? (component.calculated_rate ?? 0)
       : (component.fixed_rate ?? 0);
   return roundTo(raw, component.decimal_place ?? 2);
@@ -240,12 +265,18 @@ export const expressionToCalcTokens = (
       };
     if (t.type === "constant")
       return { type: "operand", value: Number(t.value ?? 0) };
-    return {
-      type: "operand",
-      value: isPopulatedComponent(t.component)
-        ? getComponentRate(t.component)
-        : 0,
-    };
+    // component
+    if (!isPopulatedComponent(t.component))
+      return { type: "operand", value: 0 };
+    const rate = getComponentRate(t.component);
+    // EXTERNAL: operand = x {x_operator} rate (x pakai preview = 0).
+    if ((t.component.rate_type ?? "").toUpperCase() === "EXTERNAL") {
+      return {
+        type: "operand",
+        value: applyOp(EXTERNAL_X_PREVIEW, t.x_operator ?? "+", rate),
+      };
+    }
+    return { type: "operand", value: rate };
   });
 
 // Hitung hasil formula dari ekspresi ter-populate (helper ringkas untuk tabel/
@@ -273,6 +304,47 @@ export const formatResult = (
   mode === "none"
     ? Number(value).toLocaleString("en-US", { maximumFractionDigits: 20 })
     : formatRate(value, dp);
+
+// ======================= PER-COMPONENT (Per Komponen) =======================
+// Pada mode PER_COMPONENT, tiap komponen dihitung TERPISAH memakai
+// decimal_place & rounding-nya SENDIRI, lalu SELURUH hasil komponen
+// DIJUMLAHKAN. Total akhir dibulatkan ke setelan (dp/mode) formula induk.
+
+export interface ComponentBreakdownItem {
+  name: string;
+  value: number | null; // null bila ekspresi komponen belum valid
+}
+
+// Hitung nilai tiap komponen (independen) → rincian bernama.
+export const computeComponentsBreakdown = (
+  components: FormulaComponentApiDaum[] | undefined,
+): ComponentBreakdownItem[] =>
+  (components ?? []).map((c) => ({
+    name: c.name,
+    value: computeExpressionResult(
+      c.expression,
+      c.decimal_place,
+      (c.rounding ?? "round") as RoundMode,
+    ),
+  }));
+
+// Total PER_COMPONENT = jumlah seluruh hasil komponen, dibulatkan ke dp/mode
+// formula induk. Mengembalikan null bila ada komponen yang belum valid.
+export const computeComponentsTotal = (
+  components: FormulaComponentApiDaum[] | undefined,
+  masterDecimalPlace: number,
+  masterRounding: RoundMode = "round",
+): { total: number | null; breakdown: ComponentBreakdownItem[] } => {
+  const breakdown = computeComponentsBreakdown(components);
+  if (breakdown.length === 0 || breakdown.some((b) => b.value === null)) {
+    return { total: null, breakdown };
+  }
+  const sum = breakdown.reduce((acc, b) => acc + (b.value ?? 0), 0);
+  return {
+    total: roundTo(sum, masterDecimalPlace, masterRounding),
+    breakdown,
+  };
+};
 
 // Evaluasi ekspresi (non-throwing) untuk preview UI.
 export const evaluateExpression = (
