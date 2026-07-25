@@ -1,47 +1,55 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
-  BodyJournalEntryResponseApiDaum,
-  JournalEntryApiDaum,
-  JournalStatus,
-} from "@/types/journalEntry";
-import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
-import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
-
-const columns = [
-  { title: "Entry No", value: "entry_no", classname: "w-[16%]" },
-  { title: "Date", value: "date", classname: "w-[12%]" },
-  { title: "Description", value: "description", classname: "w-[28%]" },
-  { title: "Reference", value: "reference", classname: "w-[14%]" },
-  { title: "Amount", value: "amount", classname: "w-[14%] text-right" },
-  { title: "Status", value: "status", classname: "w-[8%]" },
-  { title: "Action", value: "action", classname: "w-[8%]" },
-];
+  ArApApiDaum,
+  ArApStatus,
+  AR_AP_STATUS_LABEL,
+  BodyArApResponseApiDaum,
+} from "@/types/arAp";
+import CreateAccountPayableModal from "@/components/atoms/modals/create/CreateAccountPayableModal";
+import { TableAccountPayable } from "@/components/atoms/table/tableAccountPayable";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const STATUS_FILTERS: { label: string; value: string }[] = [
-  { label: "All", value: "" },
-  { label: "Draft", value: JournalStatus.DRAFT },
-  { label: "Posted", value: JournalStatus.POSTED },
+const columns = [
+  { title: "Bill No", value: "entry_no", classname: "w-[12%]" },
+  { title: "Date", value: "date", classname: "w-[12%]" },
+  { title: "Due", value: "due_date", classname: "w-[12%]" },
+  { title: "Vendor", value: "party_name", classname: "w-[18%]" },
+  { title: "Total", value: "total_amount", classname: "w-[12%] text-right" },
+  { title: "Paid", value: "paid_amount", classname: "w-[12%] text-right" },
+  { title: "Status", value: "status", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[10%]" },
 ];
 
-export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
+const STATUS_FILTERS: { label: string; value: string }[] = [
+  { label: "All", value: "" },
+  { label: AR_AP_STATUS_LABEL[ArApStatus.DRAFT], value: ArApStatus.DRAFT },
+  { label: AR_AP_STATUS_LABEL[ArApStatus.OPEN], value: ArApStatus.OPEN },
+  { label: AR_AP_STATUS_LABEL[ArApStatus.PARTIAL], value: ArApStatus.PARTIAL },
+  { label: AR_AP_STATUS_LABEL[ArApStatus.PAID], value: ArApStatus.PAID },
+  {
+    label: AR_AP_STATUS_LABEL[ArApStatus.WRITE_OFF],
+    value: ArApStatus.WRITE_OFF,
+  },
+];
+
+export const AccountPayablePage = ({ title, subtitle }: DataProps) => {
   const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
-  const [data, setData] = useState<JournalEntryApiDaum[]>([]);
+  const [data, setData] = useState<ArApApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -65,8 +73,8 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyJournalEntryResponseApiDaum>(
-        "/journal-entry",
+      const result = await apiGet<BodyArApResponseApiDaum>(
+        "/account-payable",
         { page, limit, search, status },
         false,
       );
@@ -151,12 +159,12 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
                 <span className="font-semibold text-gray-500 dark:text-zinc-400">
                   Search
                 </span>{" "}
-                in entry no, reference
+                in no, vendor, reference
               </span>
             </div>
 
             {/* STATUS FILTER */}
-            <div className="flex items-center gap-1.5 self-start md:self-auto bg-gray-100 dark:bg-zinc-700/50 p-1 rounded-lg">
+            <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto bg-gray-100 dark:bg-zinc-700/50 p-1 rounded-lg">
               {STATUS_FILTERS.map((f) => (
                 <button
                   key={f.value || "all"}
@@ -176,7 +184,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
             </div>
           </div>
 
-          <TableJournalEntry
+          <TableAccountPayable
             columns={columns}
             hasAccess={hasAccess}
             data={data}
@@ -193,7 +201,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
       </div>
 
       {isModalCreateOpen && (
-        <CreateJournalEntryModal
+        <CreateAccountPayableModal
           isOpen={isModalCreateOpen}
           onClose={() => setIsModalCreateOpen(false)}
           onSuccess={() => {

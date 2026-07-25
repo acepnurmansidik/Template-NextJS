@@ -15,6 +15,7 @@ import UpdateModuleModal from "../modals/update/UpdateModuleModal";
 import { apiDelete } from "@/utils/api";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
@@ -272,53 +273,48 @@ export const TableModule = ({
                             </>
                           ) : col.value === "action" ? (
                             <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                              <div className="flex items-center text-gray-500 dark:text-zinc-400">
-                                {hasAccess.whatsapp && (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleWhatsApp(row)}
-                                    className="cursor-pointer me-3 transition-colors duration-300 hover:text-[#20bd5a] text-[#25D366]"
-                                  >
-                                    <IoLogoWhatsapp size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.pdf && (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleDownloadPdf(row)}
-                                    className="cursor-pointer me-3 hover:text-red-800 text-red-500 transition-colors duration-300"
-                                  >
-                                    <FaFilePdf size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.view && (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleModalView(row)}
-                                    className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-                                  >
-                                    <FaEye size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.update && (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleModalUpdate(row)}
-                                    className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                                  >
-                                    <FaEdit size={18} />
-                                  </button>
-                                )}
-                                {hasAccess.delete && (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleDeleteData(row._id)}
-                                    className="text-red-500 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
-                                  >
-                                    <FaTrash size={16} />
-                                  </button>
-                                )}
-                              </div>
+                              {hasAccess.whatsapp && (
+                                <button
+                                  disabled={isLoading}
+                                  onClick={() => handleWhatsApp(row)}
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-[#20bd5a] hover:bg-green-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                                >
+                                  <IoLogoWhatsapp size={18} />
+                                </button>
+                              )}
+                              {hasAccess.pdf && (
+                                <button
+                                  disabled={isLoading}
+                                  onClick={() => handleDownloadPdf(row)}
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-red-500 hover:bg-red-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                                >
+                                  <FaFilePdf size={18} />
+                                </button>
+                              )}
+                              {hasAccess.view && (
+                                <button
+                                  onClick={() => handleModalView(row)}
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                                >
+                                  <FiEye size={15} />
+                                </button>
+                              )}
+                              {hasAccess.update && (
+                                <button
+                                  onClick={() => handleModalUpdate(row)}
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
+                                >
+                                  <FiEdit2 size={15} />
+                                </button>
+                              )}
+                              {hasAccess.delete && (
+                                <button
+                                  onClick={() => handleDeleteData(row._id)}
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 cursor-pointer"
+                                >
+                                  <FiTrash2 size={15} />
+                                </button>
+                              )}
                             </div>
                           ) : (
                             get(row, col.value, "-")

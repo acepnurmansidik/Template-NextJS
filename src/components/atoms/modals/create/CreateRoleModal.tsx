@@ -419,261 +419,268 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                     <SortableModuleCard key={modIdx} id={modIdx}>
                       {/* Header Module */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  {/* MODULE */}
-                  <div className="col-span-3 order-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
-                      module <span className="text-red-600">*</span>
-                    </label>
-                    <AsyncSelect
-                      isSearchable
-                      cacheOptions
-                      defaultOptions={true}
-                      loadOptions={loadModuleOptions}
-                      instanceId={`module-select-${modIdx}`} // Pastikan unique per row
-                      classNamePrefix="rs"
-                      placeholder="Ketik untuk mencari..."
-                      // 1. Logika untuk mengisi value berdasarkan state formData
-                      value={
-                        mod.name
-                          ? {
-                              value: mod.name,
-                              label: mod.title,
-                              data: {
-                                name: mod.name,
-                                title: mod.title,
-                                permission: mod.permission,
-                              },
+                        {/* MODULE */}
+                        <div className="col-span-3 order-1">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            module <span className="text-red-600">*</span>
+                          </label>
+                          <AsyncSelect
+                            isSearchable
+                            cacheOptions
+                            defaultOptions={true}
+                            loadOptions={loadModuleOptions}
+                            instanceId={`module-select-${modIdx}`} // Pastikan unique per row
+                            classNamePrefix="rs"
+                            placeholder="Ketik untuk mencari..."
+                            // 1. Logika untuk mengisi value berdasarkan state formData
+                            value={
+                              mod.name
+                                ? {
+                                    value: mod.name,
+                                    label: mod.title,
+                                    data: {
+                                      name: mod.name,
+                                      title: mod.title,
+                                      permission: mod.permission,
+                                    },
+                                  }
+                                : null
                             }
-                          : null
-                      }
-                      onChange={(vals) => handleSelectedModule(vals, modIdx)}
-                      menuPortalTarget={
-                        typeof document !== "undefined" ? document.body : null
-                      }
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
-                    />
-                  </div>
+                            onChange={(vals) =>
+                              handleSelectedModule(vals, modIdx)
+                            }
+                            menuPortalTarget={
+                              typeof document !== "undefined"
+                                ? document.body
+                                : null
+                            }
+                            styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                            }}
+                          />
+                        </div>
 
-                  {/* MENU */}
-                  <div className="col-span-8 order-3 lg:order-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
-                      menu
-                    </label>
+                        {/* MENU */}
+                        <div className="col-span-8 order-3 lg:order-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            menu
+                          </label>
 
-                    {mod.permission.length > 0 ? (
-                      <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950">
-                        <table className="w-full text-left">
-                          <thead className="bg-zinc-100 dark:bg-zinc-800/50 hidden lg:table-header-group">
-                            <tr>
-                              <th className="p-3 text-[10px] font-bold uppercase text-zinc-500">
-                                Menu Name
-                              </th>
-                              <th className="p-3 text-[10px] font-bold uppercase text-zinc-500">
-                                Path
-                              </th>
-                              <th className="p-3 text-[10px] font-bold uppercase text-zinc-500 text-right">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            {mod.permission.map((perm, permIdx) => {
-                              // Helper untuk cek apakah semua aksi terpilih
-                              const allPermSelected = Object.values(
-                                perm.actions,
-                              ).every((v) => v === true);
+                          {mod.permission.length > 0 ? (
+                            <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950">
+                              <table className="w-full text-left">
+                                <thead className="bg-zinc-100 dark:bg-zinc-800/50 hidden lg:table-header-group">
+                                  <tr>
+                                    <th className="p-3 text-[10px] font-bold uppercase text-zinc-500">
+                                      Menu Name
+                                    </th>
+                                    <th className="p-3 text-[10px] font-bold uppercase text-zinc-500">
+                                      Path
+                                    </th>
+                                    <th className="p-3 text-[10px] font-bold uppercase text-zinc-500 text-right">
+                                      Actions
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                  {mod.permission.map((perm, permIdx) => {
+                                    // Helper untuk cek apakah semua aksi terpilih
+                                    const allPermSelected = Object.values(
+                                      perm.actions,
+                                    ).every((v) => v === true);
 
-                              return (
-                                <React.Fragment key={permIdx}>
-                                  {/* Parent Row */}
-                                  <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                                    <td className="p-3 text-md font-medium flex items-center gap-2">
-                                      <div
-                                        dangerouslySetInnerHTML={{
-                                          __html: perm.icon,
-                                        }}
-                                        className="w-6 h-6 text-zinc-500"
-                                      />
-                                      {perm.menu_name}
-                                    </td>
-                                    <td className="p-3 text-sm text-zinc-500">
-                                      {perm.path}
-                                    </td>
-                                    <td className="p-3">
-                                      {/* Letakkan style ini di luar mapping atau di bagian atas return komponen Anda */}
-                                      <style jsx>{`
-                                        input[type="checkbox"].custom-checkbox:checked::after {
-                                          content: "✓";
-                                          position: absolute;
-                                          color: white;
-                                          font-size: 10px; /* Disesuaikan agar pas dengan ukuran box 1.1rem */
-                                          font-weight: bold;
-                                          top: 0px;
-                                          left: 3px;
-                                        }
-                                      `}</style>
+                                    return (
+                                      <React.Fragment key={permIdx}>
+                                        {/* Parent Row */}
+                                        <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                                          <td className="p-3 text-md font-medium flex items-center gap-2">
+                                            <div
+                                              dangerouslySetInnerHTML={{
+                                                __html: perm.icon,
+                                              }}
+                                              className="w-6 h-6 text-zinc-500"
+                                            />
+                                            {perm.menu_name}
+                                          </td>
+                                          <td className="p-3 text-sm text-zinc-500">
+                                            {perm.path}
+                                          </td>
+                                          <td className="p-3">
+                                            {/* Letakkan style ini di luar mapping atau di bagian atas return komponen Anda */}
+                                            <style jsx>{`
+                                              input[type="checkbox"].custom-checkbox:checked::after {
+                                                content: "✓";
+                                                position: absolute;
+                                                color: white;
+                                                font-size: 10px; /* Disesuaikan agar pas dengan ukuran box 1.1rem */
+                                                font-weight: bold;
+                                                top: 0px;
+                                                left: 3px;
+                                              }
+                                            `}</style>
 
-                                      {/* Bagian Actions di dalam Table */}
-                                      <div className="flex flex-wrap items-center justify-end gap-3">
-                                        {Object.keys(perm.actions).length >
-                                          0 && (
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              toggleSelectAll(
-                                                modIdx,
-                                                "permission",
-                                                permIdx,
-                                                null,
-                                              )
-                                            }
-                                            className={`text-[9px] hover:cursor-pointer font-bold uppercase hover:underline ${allPermSelected ? "text-blue-600" : "text-zinc-400"}`}
-                                          >
-                                            All
-                                          </button>
-                                        )}
-
-                                        <div className="grid grid-cols-4 gap-2 ml-2">
-                                          {Object.entries(perm.actions).map(
-                                            ([key, status]) => (
-                                              <label
-                                                key={key}
-                                                className="flex items-center gap-1.5 cursor-pointer group"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  checked={status}
-                                                  onChange={() =>
-                                                    toggleAction(
+                                            {/* Bagian Actions di dalam Table */}
+                                            <div className="flex flex-wrap items-center justify-end gap-3">
+                                              {Object.keys(perm.actions)
+                                                .length > 0 && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    toggleSelectAll(
                                                       modIdx,
                                                       "permission",
                                                       permIdx,
                                                       null,
-                                                      key,
                                                     )
                                                   }
-                                                  // Class kustom diterapkan di sini
-                                                  className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
-                                                />
-                                                <span className="text-[10px] text-zinc-600 capitalize group-hover:text-blue-600 transition-colors">
-                                                  {key}
-                                                </span>
-                                              </label>
-                                            ),
-                                          )}
-                                        </div>
-                                      </div>
-                                    </td>
-                                  </tr>
-
-                                  {/* Child Rows */}
-                                  {perm.children.map((child, childIdx) => {
-                                    const allChildSelected = Object.values(
-                                      child.actions,
-                                    ).every((v) => v === true);
-
-                                    return (
-                                      <tr
-                                        key={childIdx}
-                                        className="bg-zinc-50/50 dark:bg-zinc-900/20"
-                                      >
-                                        <td className="p-3 pl-10 text-sm text-zinc-600 flex items-center gap-2">
-                                          <span className="text-zinc-300">
-                                            ↳
-                                          </span>{" "}
-                                          {child.name}
-                                        </td>
-                                        <td className="p-3 text-sm text-zinc-400">
-                                          {child.path}
-                                        </td>
-                                        <td className="p-3">
-                                          <style jsx>{`
-                                            input[type="checkbox"].custom-checkbox:checked::after {
-                                              content: "✓";
-                                              position: absolute;
-                                              color: white;
-                                              font-size: 10px; /* Disesuaikan agar pas dengan ukuran box 1.1rem */
-                                              font-weight: bold;
-                                              top: 0px;
-                                              left: 3px;
-                                            }
-                                          `}</style>
-                                          <div className="flex flex-wrap items-center justify-end gap-3">
-                                            {Object.keys(child.actions).length >
-                                              0 && (
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  toggleSelectAll(
-                                                    modIdx,
-                                                    "children",
-                                                    permIdx,
-                                                    childIdx,
-                                                  )
-                                                }
-                                                className={`text-[9px] hover:cursor-pointer font-bold uppercase hover:underline ${allChildSelected ? "text-blue-600" : "text-zinc-400"}`}
-                                              >
-                                                All
-                                              </button>
-                                            )}
-
-                                            <div className="grid grid-cols-4 gap-2 ml-2">
-                                              {Object.entries(
-                                                child.actions,
-                                              ).map(([key, status]) => (
-                                                <label
-                                                  key={key}
-                                                  className="flex items-center gap-1.5 cursor-pointer group"
+                                                  className={`text-[9px] hover:cursor-pointer font-bold uppercase hover:underline ${allPermSelected ? "text-blue-600" : "text-zinc-400"}`}
                                                 >
-                                                  <input
-                                                    type="checkbox"
-                                                    checked={status}
-                                                    onChange={() =>
-                                                      toggleAction(
-                                                        modIdx,
-                                                        "children",
-                                                        permIdx,
-                                                        childIdx,
-                                                        key,
-                                                      )
-                                                    }
-                                                    className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
-                                                  />
-                                                  <span className="text-[10px] text-zinc-600 capitalize group-hover:text-blue-600 transition-colors">
-                                                    {key}
-                                                  </span>
-                                                </label>
-                                              ))}
+                                                  All
+                                                </button>
+                                              )}
+
+                                              <div className="grid grid-cols-4 gap-2 ml-2">
+                                                {Object.entries(
+                                                  perm.actions,
+                                                ).map(([key, status]) => (
+                                                  <label
+                                                    key={key}
+                                                    className="flex items-center gap-1.5 cursor-pointer group"
+                                                  >
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={status}
+                                                      onChange={() =>
+                                                        toggleAction(
+                                                          modIdx,
+                                                          "permission",
+                                                          permIdx,
+                                                          null,
+                                                          key,
+                                                        )
+                                                      }
+                                                      // Class kustom diterapkan di sini
+                                                      className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
+                                                    />
+                                                    <span className="text-[10px] text-zinc-600 capitalize group-hover:text-blue-600 transition-colors">
+                                                      {key}
+                                                    </span>
+                                                  </label>
+                                                ))}
+                                              </div>
                                             </div>
-                                          </div>
-                                        </td>
-                                      </tr>
+                                          </td>
+                                        </tr>
+
+                                        {/* Child Rows */}
+                                        {perm.children.map(
+                                          (child, childIdx) => {
+                                            const allChildSelected =
+                                              Object.values(
+                                                child.actions,
+                                              ).every((v) => v === true);
+
+                                            return (
+                                              <tr
+                                                key={childIdx}
+                                                className="bg-zinc-50/50 dark:bg-zinc-900/20"
+                                              >
+                                                <td className="p-3 pl-10 text-sm text-zinc-600 flex items-center gap-2">
+                                                  <span className="text-zinc-300">
+                                                    ↳
+                                                  </span>{" "}
+                                                  {child.name}
+                                                </td>
+                                                <td className="p-3 text-sm text-zinc-400">
+                                                  {child.path}
+                                                </td>
+                                                <td className="p-3">
+                                                  <style jsx>{`
+                                                    input[type="checkbox"].custom-checkbox:checked::after {
+                                                      content: "✓";
+                                                      position: absolute;
+                                                      color: white;
+                                                      font-size: 10px; /* Disesuaikan agar pas dengan ukuran box 1.1rem */
+                                                      font-weight: bold;
+                                                      top: 0px;
+                                                      left: 3px;
+                                                    }
+                                                  `}</style>
+                                                  <div className="flex flex-wrap items-center justify-end gap-3">
+                                                    {Object.keys(child.actions)
+                                                      .length > 0 && (
+                                                      <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                          toggleSelectAll(
+                                                            modIdx,
+                                                            "children",
+                                                            permIdx,
+                                                            childIdx,
+                                                          )
+                                                        }
+                                                        className={`text-[9px] hover:cursor-pointer font-bold uppercase hover:underline ${allChildSelected ? "text-blue-600" : "text-zinc-400"}`}
+                                                      >
+                                                        All
+                                                      </button>
+                                                    )}
+
+                                                    <div className="grid grid-cols-4 gap-2 ml-2">
+                                                      {Object.entries(
+                                                        child.actions,
+                                                      ).map(([key, status]) => (
+                                                        <label
+                                                          key={key}
+                                                          className="flex items-center gap-1.5 cursor-pointer group"
+                                                        >
+                                                          <input
+                                                            type="checkbox"
+                                                            checked={status}
+                                                            onChange={() =>
+                                                              toggleAction(
+                                                                modIdx,
+                                                                "children",
+                                                                permIdx,
+                                                                childIdx,
+                                                                key,
+                                                              )
+                                                            }
+                                                            className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
+                                                          />
+                                                          <span className="text-[10px] text-zinc-600 capitalize group-hover:text-blue-600 transition-colors">
+                                                            {key}
+                                                          </span>
+                                                        </label>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                </td>
+                                              </tr>
+                                            );
+                                          },
+                                        )}
+                                      </React.Fragment>
                                     );
                                   })}
-                                </React.Fragment>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg p-4 text-zinc-400 text-xs italic">
-                        Select a module to view permissions
-                      </div>
-                    )}
-                  </div>
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="h-full flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg p-4 text-zinc-400 text-xs italic">
+                              Select a module to view permissions
+                            </div>
+                          )}
+                        </div>
 
-                  {/* BUTTON CTA */}
-                  <div className="col-span-1 pt-6 text-right order-2 lg:order-3 ">
-                    <button
-                      onClick={() => handleRemoveModule(modIdx)}
-                      className="text-red-500 hover:cursor-pointer hover:text-red-700"
-                    >
-                      <FaTrash size={20} />
-                    </button>
-                  </div>
+                        {/* BUTTON CTA */}
+                        <div className="col-span-1 pt-6 text-right order-2 lg:order-3 ">
+                          <button
+                            onClick={() => handleRemoveModule(modIdx)}
+                            className="text-red-500 hover:cursor-pointer hover:text-red-700"
+                          >
+                            <FaTrash size={20} />
+                          </button>
+                        </div>
                       </div>
                     </SortableModuleCard>
                   ))}

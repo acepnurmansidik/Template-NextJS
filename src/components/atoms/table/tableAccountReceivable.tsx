@@ -3,22 +3,32 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import {
+  AR_AP_STATUS_LABEL,
+  ArApApiDaum,
   formatAmount,
-  JournalEntryApiDaum,
-  JournalStatus,
-  SingleJournalEntryResponseApiDaum,
-} from "@/types/journalEntry";
-import UpdateJournalEntryModal from "../modals/update/UpdateJournalEntryModal";
-import ViewJournalEntryModal from "../modals/view/ViewJournalEntryModal";
-import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
+  SingleArApResponseApiDaum,
+} from "@/types/arAp";
+import UpdateAccountReceivableModal from "../modals/update/UpdateAccountReceivableModal";
+import ViewAccountReceivableModal from "../modals/view/ViewAccountReceivableModal";
+import { STATUS_BADGE } from "@/utils/utils";
 import { get } from "lodash";
 
+const fmtDate = (d?: string) =>
+  d
+    ? new Date(d).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
+
 interface DataProps {
-  hasAccess: Record<string, boolean>;
   columns: { title: string; value: string; classname: string }[];
-  data: JournalEntryApiDaum[];
+  hasAccess: Record<string, boolean>;
+  data: ArApApiDaum[];
   page: number;
   limit: number;
   totalData: number;
@@ -29,14 +39,7 @@ interface DataProps {
   onRefresh?: () => void;
 }
 
-const STATUS_BADGE: Record<JournalStatus, string> = {
-  [JournalStatus.DRAFT]:
-    "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
-  [JournalStatus.POSTED]:
-    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
-};
-
-export const TableJournalEntry = ({
+export const TableAccountReceivable = ({
   hasAccess,
   columns,
   data,
@@ -49,29 +52,27 @@ export const TableJournalEntry = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
-  const [selectedData, setSelectedData] = useState<JournalEntryApiDaum | null>(
-    null,
-  );
+  const [selectedData, setSelectedData] = useState<ArApApiDaum | null>(null);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
   const [showModalView, setShowModalView] = useState(false);
 
-  const handleModalView = (row: JournalEntryApiDaum) => {
+  const handleModalView = (row: ArApApiDaum) => {
     setSelectedData(row);
     setShowModalView(true);
   };
 
-  const handleModalUpdate = (row: JournalEntryApiDaum) => {
+  const handleModalUpdate = (row: ArApApiDaum) => {
     setSelectedData(row);
     setShowModalUpdate(true);
   };
 
-  const handleDelete = async (row: JournalEntryApiDaum) => {
+  const handleDelete = async (row: ArApApiDaum) => {
     try {
-      if (row.status === JournalStatus.POSTED) {
+      if ((row.paid_amount ?? 0) > 0) {
         Swal.fire({
           icon: "info",
-          title: "Posted entry",
-          text: "Posted journal entries cannot be deleted.",
+          title: "Payment recorded",
+          text: "This document already has a payment and cannot be deleted.",
           confirmButtonColor: "#2563eb",
         });
         return;
@@ -88,8 +89,8 @@ export const TableJournalEntry = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleJournalEntryResponseApiDaum>(
-        `/journal-entry/${row._id}`,
+      const result = await apiDelete<SingleArApResponseApiDaum>(
+        `/account-receivable/${row._id}`,
         {},
         false,
       );
@@ -119,10 +120,6 @@ export const TableJournalEntry = ({
     }
   };
 
-  function fmtDate(arg0: any): import("react").ReactNode {
-    throw new Error("Function not implemented.");
-  }
-
   return (
     <div className="grid grid-cols-1 items-center">
       <div className="overflow-hidden">
@@ -144,7 +141,7 @@ export const TableJournalEntry = ({
             <tbody>
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
+                  <td colSpan={columns.length} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="p-4 rounded-full bg-gray-50 dark:bg-zinc-700/30 text-gray-400 dark:text-zinc-500">
                         <svg
@@ -168,7 +165,7 @@ export const TableJournalEntry = ({
                           No data available
                         </p>
                         <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs mx-auto">
-                          There are no journal entries found. Try creating a new
+                          There are no receivables found. Try creating a new
                           entry or adjusting your search filters.
                         </p>
                       </div>
@@ -211,7 +208,7 @@ export const TableJournalEntry = ({
                               </button>
                             )}
                             {hasAccess.delete &&
-                              row.status !== JournalStatus.POSTED && (
+                              (row.paid_amount ?? 0) === 0 && (
                                 <button
                                   onClick={() => handleDelete(row)}
                                   title="Delete"
@@ -221,17 +218,15 @@ export const TableJournalEntry = ({
                                 </button>
                               )}
                           </div>
-                        ) : col.value === "date" ? (
+                        ) : ["date", "due_date"].includes(col.value) ? (
                           <span className="text-gray-600 dark:text-zinc-400 whitespace-nowrap">
-                            {new Date(row.date).toLocaleDateString("id-ID", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {fmtDate(get(row, col.value))}
                           </span>
-                        ) : col.value === "amount" ? (
+                        ) : ["total_amount", "paid_amount"].includes(
+                            col.value,
+                          ) ? (
                           <span className="font-mono text-gray-800 dark:text-zinc-200">
-                            {formatAmount(row.total_debit)}
+                            {formatAmount(get(row, col.value))}
                           </span>
                         ) : col.value === "entry_no" ? (
                           <span className="font-mono text-xs font-bold text-gray-500 dark:text-zinc-400">
@@ -243,7 +238,7 @@ export const TableJournalEntry = ({
                               STATUS_BADGE[row.status] ?? ""
                             }`}
                           >
-                            {row.status}
+                            {AR_AP_STATUS_LABEL[row.status]}
                           </span>
                         ) : (
                           get(row, col.value)
@@ -349,7 +344,7 @@ export const TableJournalEntry = ({
       </div>
 
       {showModalUpdate && selectedData && (
-        <UpdateJournalEntryModal
+        <UpdateAccountReceivableModal
           isOpen={showModalUpdate}
           initialData={selectedData}
           onClose={() => setShowModalUpdate(false)}
@@ -361,7 +356,7 @@ export const TableJournalEntry = ({
       )}
 
       {showModalView && selectedData && (
-        <ViewJournalEntryModal
+        <ViewAccountReceivableModal
           isOpen={showModalView}
           initialData={selectedData}
           onClose={() => setShowModalView(false)}

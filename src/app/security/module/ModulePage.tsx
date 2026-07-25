@@ -266,7 +266,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="h-7.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 pr-10 outline-none text-gray-700 dark:text-zinc-200 relative transition-all shadow-sm"
                 >
-                  <span>Select Columns</span>
+                  <span>Columns</span>
                   <svg
                     className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 fill-current pointer-events-none transition-transform duration-200 ${
                       isDropdownOpen

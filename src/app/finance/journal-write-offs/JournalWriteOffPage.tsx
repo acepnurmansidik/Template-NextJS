@@ -1,47 +1,46 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
-  BodyJournalEntryResponseApiDaum,
-  JournalEntryApiDaum,
-  JournalStatus,
-} from "@/types/journalEntry";
-import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
-import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
-
-const columns = [
-  { title: "Entry No", value: "entry_no", classname: "w-[16%]" },
-  { title: "Date", value: "date", classname: "w-[12%]" },
-  { title: "Description", value: "description", classname: "w-[28%]" },
-  { title: "Reference", value: "reference", classname: "w-[14%]" },
-  { title: "Amount", value: "amount", classname: "w-[14%] text-right" },
-  { title: "Status", value: "status", classname: "w-[8%]" },
-  { title: "Action", value: "action", classname: "w-[8%]" },
-];
+  BodyJournalWriteOffResponseApiDaum,
+  JournalWriteOffApiDaum,
+  WriteOffStatus,
+} from "@/types/journalWriteOff";
+import CreateJournalWriteOffModal from "@/components/atoms/modals/create/CreateJournalWriteOffModal";
+import { TableJournalWriteOff } from "@/components/atoms/table/tableJournalWriteOff";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const STATUS_FILTERS: { label: string; value: string }[] = [
-  { label: "All", value: "" },
-  { label: "Draft", value: JournalStatus.DRAFT },
-  { label: "Posted", value: JournalStatus.POSTED },
+const columns = [
+  { title: "Entry No", value: "entry_no", classname: "w-[12%]" },
+  { title: "Date", value: "date", classname: "w-[12%]" },
+  { title: "Type", value: "type", classname: "w-[12%]" },
+  { title: "Amount", value: "amount", classname: "w-[12%] text-right" },
+  { title: "Status", value: "status", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[12%]" },
 ];
 
-export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
+const STATUS_FILTERS: { label: string; value: string }[] = [
+  { label: "All", value: "" },
+  { label: "Draft", value: WriteOffStatus.DRAFT },
+  { label: "Posted", value: WriteOffStatus.POSTED },
+];
+
+export const JournalWriteOffPage = ({ title, subtitle }: DataProps) => {
   const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
-  const [data, setData] = useState<JournalEntryApiDaum[]>([]);
+  const [data, setData] = useState<JournalWriteOffApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -65,8 +64,8 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyJournalEntryResponseApiDaum>(
-        "/journal-entry",
+      const result = await apiGet<BodyJournalWriteOffResponseApiDaum>(
+        "/journal-write-off",
         { page, limit, search, status },
         false,
       );
@@ -176,7 +175,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
             </div>
           </div>
 
-          <TableJournalEntry
+          <TableJournalWriteOff
             columns={columns}
             hasAccess={hasAccess}
             data={data}
@@ -193,7 +192,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
       </div>
 
       {isModalCreateOpen && (
-        <CreateJournalEntryModal
+        <CreateJournalWriteOffModal
           isOpen={isModalCreateOpen}
           onClose={() => setIsModalCreateOpen(false)}
           onSuccess={() => {

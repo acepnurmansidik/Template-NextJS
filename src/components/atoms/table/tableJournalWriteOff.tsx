@@ -3,22 +3,40 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import {
   formatAmount,
-  JournalEntryApiDaum,
-  JournalStatus,
-  SingleJournalEntryResponseApiDaum,
-} from "@/types/journalEntry";
-import UpdateJournalEntryModal from "../modals/update/UpdateJournalEntryModal";
-import ViewJournalEntryModal from "../modals/view/ViewJournalEntryModal";
-import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
+  JournalWriteOffApiDaum,
+  WriteOffStatus,
+  WriteOffType,
+  WRITE_OFF_TYPE_LABEL,
+  SingleJournalWriteOffResponseApiDaum,
+} from "@/types/journalWriteOff";
+import UpdateJournalWriteOffModal from "../modals/update/UpdateJournalWriteOffModal";
+import ViewJournalWriteOffModal from "../modals/view/ViewJournalWriteOffModal";
 import { get } from "lodash";
+
+const STATUS_BADGE: Record<WriteOffStatus, string> = {
+  [WriteOffStatus.DRAFT]:
+    "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
+  [WriteOffStatus.POSTED]:
+    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
+};
+
+const fmtDate = (d?: string) =>
+  d
+    ? new Date(d).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
+  data: JournalWriteOffApiDaum[];
   columns: { title: string; value: string; classname: string }[];
-  data: JournalEntryApiDaum[];
   page: number;
   limit: number;
   totalData: number;
@@ -29,17 +47,10 @@ interface DataProps {
   onRefresh?: () => void;
 }
 
-const STATUS_BADGE: Record<JournalStatus, string> = {
-  [JournalStatus.DRAFT]:
-    "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
-  [JournalStatus.POSTED]:
-    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
-};
-
-export const TableJournalEntry = ({
+export const TableJournalWriteOff = ({
   hasAccess,
-  columns,
   data,
+  columns,
   page,
   limit,
   totalData,
@@ -49,29 +60,28 @@ export const TableJournalEntry = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
-  const [selectedData, setSelectedData] = useState<JournalEntryApiDaum | null>(
-    null,
-  );
+  const [selectedData, setSelectedData] =
+    useState<JournalWriteOffApiDaum | null>(null);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
   const [showModalView, setShowModalView] = useState(false);
 
-  const handleModalView = (row: JournalEntryApiDaum) => {
+  const handleModalView = (row: JournalWriteOffApiDaum) => {
     setSelectedData(row);
     setShowModalView(true);
   };
 
-  const handleModalUpdate = (row: JournalEntryApiDaum) => {
+  const handleModalUpdate = (row: JournalWriteOffApiDaum) => {
     setSelectedData(row);
     setShowModalUpdate(true);
   };
 
-  const handleDelete = async (row: JournalEntryApiDaum) => {
+  const handleDelete = async (row: JournalWriteOffApiDaum) => {
     try {
-      if (row.status === JournalStatus.POSTED) {
+      if (row.status === WriteOffStatus.POSTED) {
         Swal.fire({
           icon: "info",
           title: "Posted entry",
-          text: "Posted journal entries cannot be deleted.",
+          text: "Posted write off entries cannot be deleted.",
           confirmButtonColor: "#2563eb",
         });
         return;
@@ -88,8 +98,8 @@ export const TableJournalEntry = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleJournalEntryResponseApiDaum>(
-        `/journal-entry/${row._id}`,
+      const result = await apiDelete<SingleJournalWriteOffResponseApiDaum>(
+        `/journal-write-off/${row._id}`,
         {},
         false,
       );
@@ -119,10 +129,6 @@ export const TableJournalEntry = ({
     }
   };
 
-  function fmtDate(arg0: any): import("react").ReactNode {
-    throw new Error("Function not implemented.");
-  }
-
   return (
     <div className="grid grid-cols-1 items-center">
       <div className="overflow-hidden">
@@ -144,7 +150,7 @@ export const TableJournalEntry = ({
             <tbody>
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
+                  <td colSpan={columns.length} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="p-4 rounded-full bg-gray-50 dark:bg-zinc-700/30 text-gray-400 dark:text-zinc-500">
                         <svg
@@ -168,8 +174,8 @@ export const TableJournalEntry = ({
                           No data available
                         </p>
                         <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs mx-auto">
-                          There are no journal entries found. Try creating a new
-                          entry or adjusting your search filters.
+                          There are no write off entries found. Try creating a
+                          new entry or adjusting your search filters.
                         </p>
                       </div>
                     </div>
@@ -191,11 +197,10 @@ export const TableJournalEntry = ({
                         className={`py-3 px-3 text-gray-700 dark:text-zinc-300 ${col.classname ?? ""}`}
                       >
                         {col.value === "action" ? (
-                          <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                          <div className="flex items-center text-gray-500 dark:text-zinc-400">
                             {hasAccess.view && (
                               <button
                                 onClick={() => handleModalView(row)}
-                                title="View"
                                 className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
                               >
                                 <FiEye size={15} />
@@ -204,14 +209,13 @@ export const TableJournalEntry = ({
                             {hasAccess.update && (
                               <button
                                 onClick={() => handleModalUpdate(row)}
-                                title="Edit"
                                 className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
                               >
                                 <FiEdit2 size={15} />
                               </button>
                             )}
                             {hasAccess.delete &&
-                              row.status !== JournalStatus.POSTED && (
+                              row.status !== WriteOffStatus.POSTED && (
                                 <button
                                   onClick={() => handleDelete(row)}
                                   title="Delete"
@@ -223,11 +227,15 @@ export const TableJournalEntry = ({
                           </div>
                         ) : col.value === "date" ? (
                           <span className="text-gray-600 dark:text-zinc-400 whitespace-nowrap">
-                            {new Date(row.date).toLocaleDateString("id-ID", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {fmtDate(row.date)}
+                          </span>
+                        ) : col.value === "type" ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
+                            {
+                              WRITE_OFF_TYPE_LABEL[
+                                row.write_off_type ?? WriteOffType.OTHER
+                              ]
+                            }
                           </span>
                         ) : col.value === "amount" ? (
                           <span className="font-mono text-gray-800 dark:text-zinc-200">
@@ -349,7 +357,7 @@ export const TableJournalEntry = ({
       </div>
 
       {showModalUpdate && selectedData && (
-        <UpdateJournalEntryModal
+        <UpdateJournalWriteOffModal
           isOpen={showModalUpdate}
           initialData={selectedData}
           onClose={() => setShowModalUpdate(false)}
@@ -361,7 +369,7 @@ export const TableJournalEntry = ({
       )}
 
       {showModalView && selectedData && (
-        <ViewJournalEntryModal
+        <ViewJournalWriteOffModal
           isOpen={showModalView}
           initialData={selectedData}
           onClose={() => setShowModalView(false)}
