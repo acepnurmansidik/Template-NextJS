@@ -1,23 +1,65 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { IoNotificationsOutline } from "react-icons/io5";
+import { formatDistanceToNow } from "date-fns";
+import useSocket from "@/hooks/useSocket";
+
+// Bentuk data notifikasi yang diterima dari server via socket.
+interface NotificationItem {
+  id: string;
+  message: string;
+  createdAt: string; // ISO string
+  read: boolean;
+}
 
 const Notification = () => {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const [openNotif, setOpenNotif] = useState(false);
-  const [initiateDataNotifications, setInitiateDataNotifications] = useState<
-    any[]
-  >([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  // Sambungkan ke socket singleton. `on` untuk subscribe event.
+  const { isConnected, on } = useSocket();
+
+  /* Dengarkan event notifikasi dari server */
+  useEffect(() => {
+    // Notifikasi baru masuk satu per satu -> taruh di paling atas.
+    const offNew = on<NotificationItem>("notification", (data) => {
+      setNotifications((prev) => [data, ...prev]);
+    });
+
+    // Snapshot daftar notifikasi awal (mis. saat pertama connect).
+    const offList = on<NotificationItem[]>("notification:list", (data) => {
+      setNotifications(data);
+    });
+
+    return () => {
+      offNew();
+      offList();
+    };
+  }, [on]);
 
   /* Close dropdown on outside click */
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
         setOpenNotif(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Jumlah notifikasi yang belum dibaca untuk badge.
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Tandai semua sudah dibaca (lokal). Sesuaikan bila server perlu di-emit.
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
 
   return (
     <div className="relative" ref={notifRef}>
@@ -33,28 +75,40 @@ const Notification = () => {
           className="text-gray-700 dark:text-zinc-200"
         />
 
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
-          {initiateDataNotifications.length > 99
-            ? "99+"
-            : initiateDataNotifications.length}
-        </span>
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </div>
 
       {/* Notif dropdown: Menggunakan shadow-xl, tanpa border tambahan, background menyesuaikan dark mode */}
       {openNotif && (
         <div className="absolute top-12 right-0 w-72 bg-white dark:bg-zinc-800 rounded-md shadow-xl p-3 z-50 animate-fadeIn transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-              Notifications
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                Notifications
+              </h2>
+              {/* Indikator status koneksi socket */}
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-gray-400"
+                }`}
+                title={isConnected ? "Connected" : "Disconnected"}
+              />
+            </div>
 
-            <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+            <button
+              onClick={markAllAsRead}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+            >
               Mark as read
             </button>
           </div>
 
           <div className="max-h-60 overflow-y-auto space-y-2">
-            {initiateDataNotifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <div className="p-2 rounded-md flex justify-center items-center gap-2 flex-col">
                 <p className="text-gray-700 dark:text-zinc-400">
                   <svg
@@ -78,22 +132,26 @@ const Notification = () => {
                 </span>
               </div>
             ) : (
-              Array(5)
-                .fill(null)
-                .map((_, i) => (
-                  // Item List Notifikasi: Menggunakan bg alternatif tipis untuk dark mode tanpa border
-                  <div
-                    key={i}
-                    className="p-2 rounded-md bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer transition-colors duration-200"
-                  >
-                    <p className="text-sm text-gray-700 dark:text-zinc-300">
-                      Pesan notifikasi ke-{i + 1}
-                    </p>
-                    <span className="text-[10px] text-gray-400 dark:text-zinc-500">
-                      2 minutes ago
-                    </span>
-                  </div>
-                ))
+              notifications.map((notif) => (
+                // Item List Notifikasi: highlight tipis bila belum dibaca.
+                <div
+                  key={notif.id}
+                  className={`p-2 rounded-md cursor-pointer transition-colors duration-200 ${
+                    notif.read
+                      ? "bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700/50"
+                      : "bg-blue-50 dark:bg-zinc-700/60 hover:bg-blue-100 dark:hover:bg-zinc-700"
+                  }`}
+                >
+                  <p className="text-sm text-gray-700 dark:text-zinc-300">
+                    {notif.message}
+                  </p>
+                  <span className="text-[10px] text-gray-400 dark:text-zinc-500">
+                    {formatDistanceToNow(new Date(notif.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+              ))
             )}
           </div>
         </div>
