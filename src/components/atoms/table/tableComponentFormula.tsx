@@ -1,6 +1,5 @@
 "use client";
 
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -13,6 +12,7 @@ import { apiDelete } from "@/utils/api";
 import { getComponentRate, formatRate } from "@/utils/formula";
 import UpdateComponentFormulaModal from "../modals/update/UpdateComponentFormulaModal";
 import ViewComponentFormulaModal from "../modals/view/ViewComponentFormulaModal";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
@@ -65,7 +65,7 @@ export const TableComponentFormula = ({
   const [selectedData, setSelectedData] =
     useState<ComponentFormulaApiDaum | null>(null);
 
-  const handleDeleteData = async (id: string) => {
+  const handleDelete = async (data: ComponentFormulaApiDaum) => {
     try {
       const confirmation = await Swal.fire({
         title: "Are you sure?",
@@ -82,7 +82,7 @@ export const TableComponentFormula = ({
 
       setIsLoading(true);
       const result = await apiDelete<SingleComponentFormulaResponseApiDaum>(
-        `/component-formula/${id}`,
+        `/component-formula/${data._id}`,
         {},
         false,
       );
@@ -226,29 +226,32 @@ export const TableComponentFormula = ({
                               className="h-[1.1rem] w-[1.1rem] cursor-pointer accent-blue-600"
                             />
                           ) : col.value === "action" ? (
-                            <div className="flex items-center text-gray-500 dark:text-zinc-400">
+                            <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
                               {hasAccess.view && (
                                 <button
                                   onClick={() => handleModalView(row)}
-                                  className="cursor-pointer me-3 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+                                  title="View"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
                                 >
-                                  <FaEye size={18} />
+                                  <FiEye size={15} />
                                 </button>
                               )}
                               {hasAccess.update && (
                                 <button
                                   onClick={() => handleModalUpdate(row)}
-                                  className="cursor-pointer text-blue-700 dark:text-blue-400 me-3 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                                  title="Edit"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
                                 >
-                                  <FaEdit size={18} />
+                                  <FiEdit2 size={15} />
                                 </button>
                               )}
                               {hasAccess.delete && (
                                 <button
-                                  onClick={() => handleDeleteData(row._id)}
-                                  className="text-red-500 duration-300 dark:text-red-400 cursor-pointer hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                  onClick={() => handleDelete(row)}
+                                  title="Delete"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 cursor-pointer"
                                 >
-                                  <FaTrash size={16} />
+                                  <FiTrash2 size={15} />
                                 </button>
                               )}
                             </div>
