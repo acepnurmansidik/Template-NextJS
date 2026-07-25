@@ -21,12 +21,26 @@ export const getSocket = (): Socket => {
 
   socket = io(SOCKET_URL, {
     transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
     autoConnect: true,
+    // --- Auto-reconnect untuk putus koneksi yang tidak disengaja ---
+    reconnection: true,
+    reconnectionAttempts: Infinity, // terus coba, jangan menyerah
+    reconnectionDelay: 1000, // jeda awal 1s
+    reconnectionDelayMax: 5000, // jeda maksimum 5s (exponential backoff)
+    randomizationFactor: 0.5, // acak jeda supaya tidak "thundering herd"
+    timeout: 20000, // batas waktu satu upaya koneksi
     // Kirim token untuk otentikasi di server (io.use middleware).
     auth: accessToken ? { token: accessToken } : undefined,
+  });
+
+  // Bila SERVER yang memutus paksa (io server disconnect), Socket.IO TIDAK
+  // otomatis reconnect. Sambungkan ulang manual untuk kasus ini.
+  socket.on("disconnect", (reason) => {
+    if (reason === "io server disconnect") {
+      socket?.connect();
+    }
+    // reason lain (mis. "transport close"/"ping timeout") ditangani otomatis
+    // oleh mekanisme reconnection bawaan Socket.IO.
   });
 
   return socket;
