@@ -12,10 +12,9 @@ import {
   BuildingPayload,
   BuildingType,
   BUILDING_TYPE_LABEL,
-  ListResponse,
-  SingleResponse,
 } from "@/types/facility";
 import NumberInput from "@/components/atoms/shared/NumberInput";
+import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
   isOpen: boolean;

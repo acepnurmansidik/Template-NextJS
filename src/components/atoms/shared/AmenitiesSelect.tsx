@@ -3,13 +3,10 @@
 // React-select multiple untuk memilih amenities (fasilitas) — opsi diambil dari
 // ReffParameter dengan type "amenities". Nilai yang disimpan = array of id.
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse } from "@/types/api";
 import Select from "react-select";
 import { apiGet } from "@/utils/api";
-import {
-  AMENITY_REF_TYPE,
-  RefParamApiDaum,
-  RefParamListResponse,
-} from "@/types/refParam";
+import { AMENITY_REF_TYPE, RefParamApiDaum } from "@/types/refParam";
 
 interface DataProps {
   value: string[];
@@ -29,7 +26,7 @@ export default function AmenitiesSelect({
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiGet<RefParamListResponse>(
+        const res = await apiGet<ListResponse<RefParamApiDaum>>(
           "/ref-parameter",
           { type: AMENITY_REF_TYPE, limit: 1000 },
           false,

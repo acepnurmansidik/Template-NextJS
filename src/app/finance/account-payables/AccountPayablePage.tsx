@@ -1,18 +1,14 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
+import { ListResponse } from "@/types/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  ArApApiDaum,
-  ArApStatus,
-  AR_AP_STATUS_LABEL,
-  BodyArApResponseApiDaum,
-} from "@/types/arAp";
+import { AccountPayableApiDaum, AccountPayableStatus, AP_STATUS_LABEL } from "@/types/accountPayable";
 import CreateAccountPayableModal from "@/components/atoms/modals/create/CreateAccountPayableModal";
 import { TableAccountPayable } from "@/components/atoms/table/tableAccountPayable";
 
@@ -34,13 +30,13 @@ const columns = [
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All", value: "" },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.DRAFT], value: ArApStatus.DRAFT },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.OPEN], value: ArApStatus.OPEN },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.PARTIAL], value: ArApStatus.PARTIAL },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.PAID], value: ArApStatus.PAID },
+  { label: AP_STATUS_LABEL[AccountPayableStatus.DRAFT], value: AccountPayableStatus.DRAFT },
+  { label: AP_STATUS_LABEL[AccountPayableStatus.OPEN], value: AccountPayableStatus.OPEN },
+  { label: AP_STATUS_LABEL[AccountPayableStatus.PARTIAL], value: AccountPayableStatus.PARTIAL },
+  { label: AP_STATUS_LABEL[AccountPayableStatus.PAID], value: AccountPayableStatus.PAID },
   {
-    label: AR_AP_STATUS_LABEL[ArApStatus.WRITE_OFF],
-    value: ArApStatus.WRITE_OFF,
+    label: AP_STATUS_LABEL[AccountPayableStatus.WRITE_OFF],
+    value: AccountPayableStatus.WRITE_OFF,
   },
 ];
 
@@ -49,7 +45,7 @@ export const AccountPayablePage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
-  const [data, setData] = useState<ArApApiDaum[]>([]);
+  const [data, setData] = useState<AccountPayableApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -73,7 +69,7 @@ export const AccountPayablePage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyArApResponseApiDaum>(
+      const result = await apiGet<ListResponse<AccountPayableApiDaum>>(
         "/account-payable",
         { page, limit, search, status },
         false,

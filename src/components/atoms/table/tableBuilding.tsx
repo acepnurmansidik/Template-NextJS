@@ -12,11 +12,11 @@ import {
   BUILDING_TYPE_LABEL,
   BuildingType,
   refName,
-  SingleResponse,
 } from "@/types/facility";
 import UpdateBuildingModal from "../modals/update/UpdateBuildingModal";
 import ViewBuildingModal from "../modals/view/ViewBuildingModal";
 import LayoutBuildingModal from "../modals/LayoutBuildingModal";
+import { SingleResponse } from "@/types/api";
 
 interface DataProps {
   columns: { title: string; value: string; classname: string }[];

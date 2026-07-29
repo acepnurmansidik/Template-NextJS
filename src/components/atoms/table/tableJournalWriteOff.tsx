@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
@@ -11,7 +12,6 @@ import {
   WriteOffStatus,
   WriteOffType,
   WRITE_OFF_TYPE_LABEL,
-  SingleJournalWriteOffResponseApiDaum,
 } from "@/types/journalWriteOff";
 import UpdateJournalWriteOffModal from "../modals/update/UpdateJournalWriteOffModal";
 import ViewJournalWriteOffModal from "../modals/view/ViewJournalWriteOffModal";
@@ -98,7 +98,7 @@ export const TableJournalWriteOff = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleJournalWriteOffResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<JournalWriteOffApiDaum>>(
         `/journal-write-off/${row._id}`,
         {},
         false,

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import { BranchApiDaum, SingleResponse } from "@/types/facility";
+import { BranchApiDaum } from "@/types/facility";
 import UpdateBranchModal from "../modals/update/UpdateBranchModal";
 import ViewBranchModal from "../modals/view/ViewBranchModal";
 

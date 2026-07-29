@@ -16,9 +16,10 @@ import { CiImport } from "react-icons/ci";
 import { TableRole } from "@/components/atoms/table/tableRole";
 import CreateRoleModal from "@/components/atoms/modals/create/CreateRoleModal";
 import { usePathname } from "next/navigation";
-import { BodyRoleResponseAPI, RoleApiDaum } from "@/types/role";
+import { RoleApiDaum } from "@/types/role";
 import { apiGet } from "@/utils/api";
 import { useAppSelector } from "@/store/hooks";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   // { title: "Mark All", value: "*" },
@@ -79,7 +80,7 @@ export const RolePage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyRoleResponseAPI>(
+      const result = await apiGet<ListResponse<RoleApiDaum>>(
         "/role",
         { limit, page, search },
         false,

@@ -52,22 +52,3 @@ export interface ComponentFormulaApiDaum {
   created_at?: string;
   updated_at?: string;
 }
-
-export interface BodyComponentFormulaResponseApiDaum {
-  success: boolean;
-  message: string;
-  // Envelope component-formula tidak selalu menyertakan `code`.
-  code?: number;
-  data: ComponentFormulaApiDaum[];
-  // Total seluruh record (server-side), bukan panjang halaman ini.
-  page_size?: number;
-  current_page?: number;
-}
-
-// Envelope untuk single-object (create/update/delete) — `data` bukan array.
-export interface SingleComponentFormulaResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data?: ComponentFormulaApiDaum;
-}

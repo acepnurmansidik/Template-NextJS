@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -9,12 +10,9 @@ import { apiGet, apiPost } from "@/utils/api";
 import {
   ComponentFormulaForm,
   RateType,
-  SingleComponentFormulaResponseApiDaum,
+  ComponentFormulaApiDaum,
 } from "@/types/componentFormula";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import AccountsSelect, {
@@ -72,7 +70,7 @@ export default function CreateComponentFormulaModal({
   const fetchAccounts = useCallback(async () => {
     try {
       setIsLoadingAccounts(true);
-      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+      const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
         "/chart-of-account",
         { page: 1, limit: 1000, search: "", is_header: false },
         false,
@@ -138,7 +136,7 @@ export default function CreateComponentFormulaModal({
         name: formData.name.trim(),
       };
 
-      const result = await apiPost<SingleComponentFormulaResponseApiDaum>(
+      const result = await apiPost<SingleResponse<ComponentFormulaApiDaum>>(
         "/component-formula",
         payload,
         false,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
@@ -11,7 +12,6 @@ import {
   ROOM_STATUS_LABEL,
   RoomStatus,
   RoomUnitApiDaum,
-  SingleResponse,
 } from "@/types/facility";
 import UpdateRoomUnitModal from "../modals/update/UpdateRoomUnitModal";
 import ViewRoomUnitModal from "../modals/view/ViewRoomUnitModal";
@@ -189,8 +189,8 @@ export const TableRoomUnit = ({
                           No data available
                         </p>
                         <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs mx-auto">
-                          There are no room units found. Try creating a new entry
-                          or adjusting your search filters.
+                          There are no room units found. Try creating a new
+                          entry or adjusting your search filters.
                         </p>
                       </div>
                     </div>

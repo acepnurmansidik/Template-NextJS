@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -11,7 +12,6 @@ import {
   BuildingPayload,
   BuildingType,
   BUILDING_TYPE_LABEL,
-  SingleResponse,
 } from "@/types/facility";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 

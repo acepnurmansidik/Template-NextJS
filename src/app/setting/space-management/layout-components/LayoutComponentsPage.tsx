@@ -9,10 +9,8 @@ import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import CreateLayoutComponentModal from "@/components/atoms/modals/create/CreateLayoutComponentModal";
 import { TableLayoutComponent } from "@/components/atoms/table/tableLayoutComponent";
-import {
-  LayoutComponentApiDaum,
-  LayoutComponentListResponse,
-} from "@/types/LayoutComponent";
+import { LayoutComponentApiDaum } from "@/types/LayoutComponent";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -54,7 +52,7 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<LayoutComponentListResponse>(
+      const result = await apiGet<ListResponse<LayoutComponentApiDaum>>(
         "/layout-component",
         { page, limit, search },
         false,

@@ -1,13 +1,10 @@
 "use client";
 
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { ListResponse } from "@/types/api";
 import { get } from "lodash";
 import { useState } from "react";
-import {
-  BodyModuleResponseAPI,
-  ModuleApiDaum,
-  ModuleResponseAPI,
-} from "@/types/module";
+import { ModuleApiDaum, ModuleResponseAPI } from "@/types/module";
 import ViewModuleModal from "../modals/view/ViewModuleModal";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoLogoWhatsapp } from "react-icons/io";
@@ -99,7 +96,7 @@ export const TableModule = ({
 
       // 3. Jika user setuju, jalankan proses loading dan hit API
       setIsLoading(true);
-      const result = await apiDelete<BodyModuleResponseAPI>(
+      const result = await apiDelete<ListResponse<ModuleApiDaum>>(
         `/module/${id}`,
         {},
         false,

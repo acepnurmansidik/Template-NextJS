@@ -2,18 +2,13 @@
 
 import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import {
-  AR_AP_STATUS_LABEL,
-  ArApApiDaum,
-  ArApStatus,
-  formatAmount,
-} from "@/types/arAp";
-import { STATUS_BADGE } from "@/utils/utils";
+import { AP_STATUS_LABEL, AccountPayableApiDaum } from "@/types/accountPayable";
+import { formatAmount, STATUS_BADGE } from "@/utils/utils";
 
 interface DataProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: ArApApiDaum;
+  initialData: AccountPayableApiDaum;
 }
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
@@ -79,7 +74,7 @@ export default function ViewAccountPayableModal({
                 STATUS_BADGE[initialData.status]
               }`}
             >
-              {AR_AP_STATUS_LABEL[initialData.status]}
+              {AP_STATUS_LABEL[initialData.status]}
             </span>
           </div>
 

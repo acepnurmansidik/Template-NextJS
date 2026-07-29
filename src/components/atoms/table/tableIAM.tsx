@@ -1,9 +1,10 @@
 "use client";
 
 import { get } from "lodash";
+import { ListResponse } from "@/types/api";
 import { useState } from "react";
 import Swal from "sweetalert2";
-import { BodyUsersResponseApiDaum, UserApiDaum } from "@/types/users";
+import { UserApiDaum } from "@/types/users";
 import { apiDelete } from "@/utils/api";
 import axios from "axios";
 import UpdateUserIAMModal from "../modals/update/UpdateUserIAMModal";
@@ -71,7 +72,7 @@ export const TableIAM = ({
 
       // 3. Jika user setuju, jalankan proses loading dan hit API
       setIsLoading(true);
-      const result = await apiDelete<BodyUsersResponseApiDaum>(
+      const result = await apiDelete<ListResponse<UserApiDaum>>(
         `/users/${id}`,
         {},
         false,

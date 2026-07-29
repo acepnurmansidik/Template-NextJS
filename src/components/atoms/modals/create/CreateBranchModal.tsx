@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { BranchPayload, SingleResponse, BranchApiDaum } from "@/types/facility";
+import { BranchPayload, BranchApiDaum } from "@/types/facility";
 import LocationPicker, {
   LatLng,
   PickedAddress,

@@ -24,16 +24,6 @@ export interface RoleMenuDetail {
   actions: Record<string, boolean>;
 }
 
-// API RESPONSE ====================================
-export interface BodyRoleResponseAPI {
-  success: boolean;
-  message: string;
-  data: RoleApiDaum[];
-  // Total seluruh record (bukan panjang halaman saat ini) & halaman aktif.
-  page_size?: number;
-  current_page?: number;
-}
-
 // Dokumen Role (collection "roles"). Field has_access_module & path_access
 // dinormalisasi ke collection tersendiri, dan diasumsikan sudah di-populate
 // oleh backend saat response dikirim.

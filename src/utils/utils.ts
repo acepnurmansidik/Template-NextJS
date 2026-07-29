@@ -1,7 +1,6 @@
 // Format khusus untuk field "name" module: selalu UPPERCASE dan setiap
 // spasi (termasuk beruntun / tab) diubah menjadi underscore.
 
-import { ArApStatus } from "@/types/arAp";
 import { AccountType, NormalBalance } from "@/types/chartOfAccount";
 
 // Contoh: "user access" -> "USER_ACCESS"
@@ -43,16 +42,15 @@ export const BALANCE_BADGE: Record<NormalBalance, string> = {
     "border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700",
 };
 
-export const STATUS_BADGE: Record<ArApStatus, string> = {
-  [ArApStatus.DRAFT]:
+// Badge warna status dokumen AR/AP (dipakai bersama; di-key oleh string status).
+export const STATUS_BADGE: Record<string, string> = {
+  DRAFT:
     "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
-  [ArApStatus.OPEN]:
-    "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
-  [ArApStatus.PARTIAL]:
+  OPEN: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
+  PARTIAL:
     "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700",
-  [ArApStatus.PAID]:
-    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
-  [ArApStatus.WRITE_OFF]:
+  PAID: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
+  WRITE_OFF:
     "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700",
 };
 
@@ -133,3 +131,15 @@ export const subActionDefaultOptions: ActionDefaultOption[] = [
   { value: "import", label: "import" },
   { value: "whatsapp", label: "whatsapp" },
 ];
+
+// Format angka ke tampilan mata uang (tanpa simbol) — 1500000 → "1.500.000".
+export const formatAmount = (n: number): string =>
+  new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(
+    Number.isFinite(n) ? n : 0,
+  );
+
+// Jumlahkan nominal seluruh baris (round 2 desimal).
+export const sumAmount = (lines: { amount: number }[]): number => {
+  const total = lines.reduce((acc, l) => acc + (Number(l.amount) || 0), 0);
+  return Math.round(total * 100) / 100;
+};

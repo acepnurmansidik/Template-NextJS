@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { UploadImageResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiUploadCloud, FiX } from "react-icons/fi";
 import { apiPost } from "@/utils/api";
-import { imageUrl, UploadImageResponse } from "@/types/facility";
+import { imageUrl } from "@/types/facility";
 
 interface DataProps {
   // Endpoint upload, mis. "/building/upload".

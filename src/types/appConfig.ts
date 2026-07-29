@@ -32,15 +32,6 @@ export interface AppConfigApiDaum {
   updated_at?: string;
 }
 
-export interface BodyAppConfigResponseApiDaum {
-  success: boolean;
-  message: string;
-  data: AppConfigApiDaum[];
-  // Total seluruh record (bukan panjang halaman saat ini) & halaman aktif.
-  page_size?: number;
-  current_page?: number;
-}
-
 // ============================ RELEASE LOG ============================
 // Mirror dari AppReleaseLogSchema di backend (collection app_release_logs).
 // Dipakai untuk menampilkan history version yang sudah dirilis (timeline).
@@ -53,7 +44,10 @@ export interface AppReleaseLogDaum {
   status_maintenance: boolean;
   // `released_by` di backend adalah ref User; bisa datang sebagai id string,
   // objek ter-populate, atau null.
-  released_by?: { _id: string; name?: string; username?: string } | string | null;
+  released_by?:
+    | { _id: string; name?: string; username?: string }
+    | string
+    | null;
   createdAt?: string;
 }
 

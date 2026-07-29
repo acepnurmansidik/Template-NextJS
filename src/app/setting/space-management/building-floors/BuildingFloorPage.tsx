@@ -8,13 +8,10 @@ import { usePathname } from "next/navigation";
 import Select from "react-select";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  BuildingApiDaum,
-  BuildingFloorApiDaum,
-  ListResponse,
-} from "@/types/facility";
+import { BuildingApiDaum, BuildingFloorApiDaum } from "@/types/facility";
 import CreateBuildingFloorModal from "@/components/atoms/modals/create/CreateBuildingFloorModal";
 import { TableBuildingFloor } from "@/components/atoms/table/tableBuildingFloor";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;

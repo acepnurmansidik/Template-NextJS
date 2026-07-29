@@ -8,12 +8,12 @@ import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
-  BodyJournalWriteOffResponseApiDaum,
   JournalWriteOffApiDaum,
   WriteOffStatus,
 } from "@/types/journalWriteOff";
 import CreateJournalWriteOffModal from "@/components/atoms/modals/create/CreateJournalWriteOffModal";
 import { TableJournalWriteOff } from "@/components/atoms/table/tableJournalWriteOff";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -64,7 +64,7 @@ export const JournalWriteOffPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyJournalWriteOffResponseApiDaum>(
+      const result = await apiGet<ListResponse<JournalWriteOffApiDaum>>(
         "/journal-write-off",
         { page, limit, search, status },
         false,

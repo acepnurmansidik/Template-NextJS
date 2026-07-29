@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -9,13 +10,11 @@ import { apiGet, apiPut } from "@/utils/api";
 import {
   ACCOUNT_TYPE_LABEL,
   AccountType,
-  BodyChartOfAccountResponseApiDaum,
   ChartOfAccountApiDaum,
   ChartOfAccountPayload,
   localSegment,
   normalBalanceForType,
   selectableParents,
-  SingleChartOfAccountResponseApiDaum,
 } from "@/types/chartOfAccount";
 
 type Option = { value: string; label: string };
@@ -65,7 +64,7 @@ export default function UpdateChartOfAccountModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -124,7 +123,7 @@ export default function UpdateChartOfAccountModal({
         ...(parentId ? {} : { type }),
       };
 
-      const result = await apiPut<SingleChartOfAccountResponseApiDaum>(
+      const result = await apiPut<SingleResponse<ChartOfAccountApiDaum>>(
         `/chart-of-account/${initialData._id}`,
         payload,
         false,
@@ -209,10 +208,7 @@ export default function UpdateChartOfAccountModal({
                   {fullCodePreview}
                 </span>
                 {codePrefix && (
-                  <>
-                    {" "}
-                    — mengubahnya ikut memperbarui kode seluruh sub-akun.
-                  </>
+                  <> — mengubahnya ikut memperbarui kode seluruh sub-akun.</>
                 )}
               </p>
             </div>

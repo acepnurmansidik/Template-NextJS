@@ -1,27 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
-import {
-  AR_AP_STATUS_LABEL,
-  ArApApiDaum,
-  ArApLineForm,
-  ArApPayload,
-  ArApStatus,
-  formatAmount,
-  SingleArApResponseApiDaum,
-  sumAmount,
-} from "@/types/arAp";
+  AP_STATUS_LABEL,
+  AccountPayableApiDaum,
+  AccountPayableLineForm,
+  AccountPayablePayload,
+  AccountPayableStatus,
+} from "@/types/accountPayable";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import { formatAmount, sumAmount } from "@/utils/utils";
 
 type Option = { value: string; label: string };
 
@@ -29,21 +25,25 @@ interface DataProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  initialData: ArApApiDaum;
+  initialData: AccountPayableApiDaum;
 }
 
 const STATUS_OPTIONS: Option[] = [
-  ArApStatus.DRAFT,
-  ArApStatus.OPEN,
-  ArApStatus.PARTIAL,
-  ArApStatus.PAID,
-].map((s) => ({ value: s, label: AR_AP_STATUS_LABEL[s] }));
+  AccountPayableStatus.DRAFT,
+  AccountPayableStatus.OPEN,
+  AccountPayableStatus.PARTIAL,
+  AccountPayableStatus.PAID,
+].map((s) => ({ value: s, label: AP_STATUS_LABEL[s] }));
 
 const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
-const emptyLine: ArApLineForm = { account_id: "", description: "", amount: 0 };
+const emptyLine: AccountPayableLineForm = {
+  account_id: "",
+  description: "",
+  amount: 0,
+};
 
 export default function UpdateAccountPayableModal({
   isOpen,
@@ -59,9 +59,11 @@ export default function UpdateAccountPayableModal({
   const [partyName, setPartyName] = useState(initialData.party_name ?? "");
   const [reference, setReference] = useState(initialData.reference ?? "");
   const [description, setDescription] = useState(initialData.description ?? "");
-  const [status, setStatus] = useState<ArApStatus>(initialData.status);
+  const [status, setStatus] = useState<AccountPayableStatus>(
+    initialData.status,
+  );
   const [paidAmount, setPaidAmount] = useState(initialData.paid_amount ?? 0);
-  const [lines, setLines] = useState<ArApLineForm[]>(
+  const [lines, setLines] = useState<AccountPayableLineForm[]>(
     initialData.lines.map((l) => ({
       account_id: l.account_id,
       description: l.description ?? "",
@@ -81,7 +83,7 @@ export default function UpdateAccountPayableModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -107,19 +109,19 @@ export default function UpdateAccountPayableModal({
   const addLine = () => setLines((prev) => [...prev, { ...emptyLine }]);
   const removeLine = (index: number) =>
     setLines((prev) => prev.filter((_, i) => i !== index));
-  const patchLine = (index: number, patch: Partial<ArApLineForm>) =>
+  const patchLine = (index: number, patch: Partial<AccountPayableLineForm>) =>
     setLines((prev) =>
       prev.map((l, i) => (i === index ? { ...l, ...patch } : l)),
     );
 
   // Status WRITE_OFF (dari proses write-off) tetap ditampilkan walau tak bisa dipilih manual.
   const statusOptions =
-    status === ArApStatus.WRITE_OFF
+    status === AccountPayableStatus.WRITE_OFF
       ? [
           ...STATUS_OPTIONS,
           {
-            value: ArApStatus.WRITE_OFF,
-            label: AR_AP_STATUS_LABEL[ArApStatus.WRITE_OFF],
+            value: AccountPayableStatus.WRITE_OFF,
+            label: AP_STATUS_LABEL[AccountPayableStatus.WRITE_OFF],
           },
         ]
       : STATUS_OPTIONS;
@@ -155,7 +157,7 @@ export default function UpdateAccountPayableModal({
 
     setIsLoading(true);
     try {
-      const payload: ArApPayload = {
+      const payload: AccountPayablePayload = {
         date,
         due_date: dueDate || undefined,
         party_name: partyName.trim(),
@@ -170,7 +172,7 @@ export default function UpdateAccountPayableModal({
         })),
       };
 
-      const result = await apiPut<SingleArApResponseApiDaum>(
+      const result = await apiPut<SingleResponse<AccountPayableApiDaum>>(
         `/account-payable/${initialData._id}`,
         payload,
         false,
@@ -281,7 +283,10 @@ export default function UpdateAccountPayableModal({
                 options={statusOptions}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus((opt?.value as ArApStatus) ?? ArApStatus.DRAFT)
+                  setStatus(
+                    (opt?.value as AccountPayableStatus) ??
+                      AccountPayableStatus.DRAFT,
+                  )
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null

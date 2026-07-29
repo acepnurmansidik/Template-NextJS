@@ -8,13 +8,11 @@ import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import {
-  AppConfigApiDaum,
-  BodyAppConfigResponseApiDaum,
-} from "@/types/appConfig";
+import { AppConfigApiDaum } from "@/types/appConfig";
 import { apiGet } from "@/utils/api";
 import CreateAppConfigModal from "@/components/atoms/modals/create/CreateAppConfigModal";
 import { TableAppConfig } from "@/components/atoms/table/tableAppConfig";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   // { title: "Mark All", value: "*" },
@@ -67,7 +65,7 @@ export const AppConfigPage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyAppConfigResponseApiDaum>(
+      const result = await apiGet<ListResponse<AppConfigApiDaum>>(
         "/app-configs",
         { page, limit, search },
         false,

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { RefParamPayload, RefParamSingleResponse } from "@/types/refParam";
+import { RefParamPayload, RefParamApiDaum } from "@/types/refParam";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 
 interface DataProps {
@@ -58,7 +59,7 @@ export default function CreateReferenceParameterModal({
         description: description.trim(),
         icon_id: iconId,
       };
-      const result = await apiPost<RefParamSingleResponse>(
+      const result = await apiPost<SingleResponse<RefParamApiDaum>>(
         "/ref-parameter",
         payload,
         false,

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { BodyIAMResponseApiDaum, IAMApiDaum } from "@/types/IAM";
+import type { IAMApiDaum } from "@/types/IAM";
 import { apiGet, type QueryParams } from "@/utils/api";
+import { SingleResponse } from "@/types/api";
 
 interface IAMState {
   // /users/iam mengembalikan satu objek user, jadi bukan array.
@@ -18,12 +19,12 @@ const initialState: IAMState = {
 // Ambil data current user (IAM) dari API: GET /users/iam (satu objek user).
 // Params dinamis & opsional.
 export const fetchUsers = createAsyncThunk<
-  BodyIAMResponseApiDaum,
+  SingleResponse<IAMApiDaum>,
   QueryParams | void,
   { rejectValue: string }
 >("iam/fetchUsers", async (params, { rejectWithValue }) => {
   try {
-    return await apiGet<BodyIAMResponseApiDaum>(
+    return await apiGet<SingleResponse<IAMApiDaum>>(
       "/users/iam",
       params ?? undefined,
       false,

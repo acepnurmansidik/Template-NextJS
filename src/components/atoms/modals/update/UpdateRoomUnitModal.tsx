@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -15,7 +16,6 @@ import {
   RoomUnitApiDaum,
   RoomUnitPayload,
   RoomUnitType,
-  SingleResponse,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import NumberInput from "@/components/atoms/shared/NumberInput";

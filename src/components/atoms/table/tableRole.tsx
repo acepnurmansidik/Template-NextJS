@@ -1,8 +1,9 @@
 "use client";
 
 import { get } from "lodash";
+import { ListResponse } from "@/types/api";
 import { useState } from "react";
-import { BodyRoleResponseAPI, RoleApiDaum } from "@/types/role";
+import { RoleApiDaum } from "@/types/role";
 import UpdateRoleModal from "../modals/update/UpdateRoleModal";
 import ViewRoleModal from "../modals/view/ViewRoleModal";
 import Swal from "sweetalert2";
@@ -91,7 +92,7 @@ export const TableRole = ({
 
       // 3. Jika user setuju, jalankan proses loading dan hit API
       setIsLoading(true);
-      const result = await apiDelete<BodyRoleResponseAPI>(
+      const result = await apiDelete<ListResponse<RoleApiDaum>>(
         `/role/${id}`,
         {},
         false,

@@ -6,13 +6,11 @@ import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import {
-  ComponentFormulaApiDaum,
-  BodyComponentFormulaResponseApiDaum,
-} from "@/types/componentFormula";
+import { ComponentFormulaApiDaum } from "@/types/componentFormula";
 import { apiGet } from "@/utils/api";
 import CreateComponentFormulaModal from "@/components/atoms/modals/create/CreateComponentFormulaModal";
 import { TableComponentFormula } from "@/components/atoms/table/tableComponentFormula";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   { title: "Name", value: "name" },
@@ -66,7 +64,7 @@ export const ComponentFormulaPage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyComponentFormulaResponseApiDaum>(
+      const result = await apiGet<ListResponse<ComponentFormulaApiDaum>>(
         "/component-formula",
         { page, limit, search },
         false,

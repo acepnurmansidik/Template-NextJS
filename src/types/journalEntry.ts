@@ -54,22 +54,6 @@ export interface JournalEntryPayload {
   }[];
 }
 
-export interface BodyJournalEntryResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data: JournalEntryApiDaum[];
-  page_size?: number;
-  current_page?: number;
-}
-
-export interface SingleJournalEntryResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data?: JournalEntryApiDaum;
-}
-
 // Format angka ke tampilan mata uang (tanpa simbol) — mis. 1500000 → "1.500.000".
 export const formatAmount = (n: number): string =>
   new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(

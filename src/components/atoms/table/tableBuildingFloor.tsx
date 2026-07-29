@@ -5,15 +5,11 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import {
-  BuildingFloorApiDaum,
-  refImagePath,
-  refName,
-  SingleResponse,
-} from "@/types/facility";
+import { BuildingFloorApiDaum, refImagePath, refName } from "@/types/facility";
 import UpdateBuildingFloorModal from "../modals/update/UpdateBuildingFloorModal";
 import ViewBuildingFloorModal from "../modals/view/ViewBuildingFloorModal";
 import { formatCurrencyPure } from "@/utils/formatter";
+import { SingleResponse } from "@/types/api";
 
 interface DataProps {
   columns: { title: string; value: string; classname: string }[];

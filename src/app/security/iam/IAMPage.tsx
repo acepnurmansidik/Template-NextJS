@@ -10,9 +10,10 @@ import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
 import { TableIAM } from "@/components/atoms/table/tableIAM";
 import { useAppSelector } from "@/store/hooks";
-import { BodyUsersResponseApiDaum, UserApiDaum } from "@/types/users";
+import { UserApiDaum } from "@/types/users";
 import { apiGet } from "@/utils/api";
 import CreateUserIAMModal from "@/components/atoms/modals/create/CreateUserIAMModal";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   // { title: "Mark All", value: "*" },
@@ -64,7 +65,7 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyUsersResponseApiDaum>(
+      const result = await apiGet<ListResponse<UserApiDaum>>(
         "/users",
         { page, limit, search },
         false,

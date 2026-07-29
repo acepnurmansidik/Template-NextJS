@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import {
   CalcType,
   CalculatedFormulaApiDaum,
   ExpressionToken,
-  SingleCalculatedFormulaResponseApiDaum,
   isPopulatedComponent,
 } from "@/types/calculatedFormula";
 import { apiDelete } from "@/utils/api";
@@ -104,7 +104,7 @@ export const TableCalculatedFormula = ({
       if (!confirmation.isConfirmed) return;
 
       setIsLoading(true);
-      const result = await apiDelete<SingleCalculatedFormulaResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<CalculatedFormulaApiDaum>>(
         `/calculated-formula/${data._id}`,
         {},
         false,

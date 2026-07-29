@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -9,12 +10,10 @@ import { apiGet, apiPost } from "@/utils/api";
 import {
   ACCOUNT_TYPE_LABEL,
   AccountType,
-  BodyChartOfAccountResponseApiDaum,
   ChartOfAccountApiDaum,
   ChartOfAccountPayload,
   normalBalanceForType,
   selectableParents,
-  SingleChartOfAccountResponseApiDaum,
 } from "@/types/chartOfAccount";
 
 type Option = { value: string; label: string };
@@ -63,7 +62,7 @@ export default function CreateChartOfAccountModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -124,7 +123,7 @@ export default function CreateChartOfAccountModal({
         ...(parentId ? {} : { type }),
       };
 
-      const result = await apiPost<SingleChartOfAccountResponseApiDaum>(
+      const result = await apiPost<SingleResponse<ChartOfAccountApiDaum>>(
         "/chart-of-account",
         payload,
         false,

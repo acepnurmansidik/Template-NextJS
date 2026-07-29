@@ -1,20 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import { apiDelete, apiGet, apiPost } from "@/utils/api";
-import {
-  BuildingApiDaum,
-  BuildingFloorApiDaum,
-  BUILDING_TYPE_LABEL,
-  BuildingType,
-  refImagePath,
-  refName,
-  SingleResponse,
-} from "@/types/facility";
+import { BuildingApiDaum, BuildingFloorApiDaum, BUILDING_TYPE_LABEL, BuildingType, refImagePath, refName } from "@/types/facility";
 import UpdateBuildingFloorModal from "../update/UpdateBuildingFloorModal";
 
 interface DataProps {

@@ -1,10 +1,11 @@
 // SSR
 import axios from "axios";
+import { ListResponse, SingleResponse } from "@/types/api";
+import { ModuleApiDaum } from "@/types/module";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { API_BASE_URL } from "./utils/api";
-import type { BodyIAMResponseApiDaum } from "./types/IAM";
-import { BodyModuleResponseAPI } from "./types/module";
+import type { IAMApiDaum } from "./types/IAM";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -60,7 +61,7 @@ export async function proxy(request: NextRequest) {
   const allPaths = new Set<string>();
   try {
     const [resultIAM, resultModules] = await Promise.all([
-      axios.get<BodyIAMResponseApiDaum>(`${API_BASE_URL}/users/iam`, {
+      axios.get<SingleResponse<IAMApiDaum>>(`${API_BASE_URL}/users/iam`, {
         headers: {
           "Content-Type": "application/json",
           // Teruskan cookie request agar backend tahu current user.
@@ -69,15 +70,18 @@ export async function proxy(request: NextRequest) {
         // Middleware jalan di Edge runtime -> paksa adapter fetch.
         adapter: "fetch",
       }),
-      axios.get<BodyModuleResponseAPI>(`${API_BASE_URL}/module?limit=100000`, {
-        headers: {
-          "Content-Type": "application/json",
-          // Teruskan cookie request agar backend tahu current user.
-          cookie: request.headers.get("cookie") ?? "",
+      axios.get<ListResponse<ModuleApiDaum>>(
+        `${API_BASE_URL}/module?limit=100000`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            // Teruskan cookie request agar backend tahu current user.
+            cookie: request.headers.get("cookie") ?? "",
+          },
+          // Middleware jalan di Edge runtime -> paksa adapter fetch.
+          adapter: "fetch",
         },
-        // Middleware jalan di Edge runtime -> paksa adapter fetch.
-        adapter: "fetch",
-      }),
+      ),
     ]);
 
     const modulePaths = resultModules.data.data.flatMap((item) =>

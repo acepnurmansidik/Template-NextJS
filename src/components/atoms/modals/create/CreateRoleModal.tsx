@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse } from "@/types/api";
 import AsyncSelect from "react-select/async";
 import { FaPlus, FaTrash, FaGripVertical } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -27,11 +28,11 @@ type Option = { value: string; label: string; data: any };
 
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { BodyRoleResponseAPI, RoleFormData } from "@/types/role";
+import { RoleFormData, RoleApiDaum } from "@/types/role";
 import {
-  BodyModuleResponseAPI,
   MenuDetailResponseAPI,
   PermissionResponseAPI,
+  ModuleApiDaum,
 } from "@/types/module";
 import { apiGet, apiPost } from "@/utils/api";
 
@@ -115,7 +116,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
     () =>
       debounce(
         (inputValue: string, callback: (options: Option[]) => void) => {
-          apiGet<BodyModuleResponseAPI>(
+          apiGet<ListResponse<ModuleApiDaum>>(
             "/module",
             { page: 1, limit: 5, search: inputValue },
             false,
@@ -150,7 +151,7 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const result = await apiPost<BodyRoleResponseAPI>(
+      const result = await apiPost<ListResponse<RoleApiDaum>>(
         "/role",
         formData,
         false,

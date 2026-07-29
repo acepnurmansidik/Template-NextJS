@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ListResponse } from "@/types/api";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions, formatModuleName } from "@/utils/utils";
 import {
-  BodyModuleResponseAPI,
   MenuDetail,
   ModuleApiDaum,
   ModuleFormData,
@@ -99,7 +99,7 @@ export default function UpdateModuleModal({
         })),
       };
 
-      const result = await apiPut<BodyModuleResponseAPI>(
+      const result = await apiPut<ListResponse<ModuleApiDaum>>(
         `/module/${initialData._id}`,
         payload,
         false,

@@ -7,12 +7,10 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import CreateChartOfAccountModal from "@/components/atoms/modals/create/CreateChartOfAccountModal";
 import { TableChartOfAccount } from "@/components/atoms/table/tableChartOfAccount";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -39,7 +37,7 @@ export const ChartOfAccountPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+      const result = await await apiGet<ListResponse<ChartOfAccountApiDaum>>(
         "/chart-of-account",
         { search },
         false,
@@ -87,7 +85,10 @@ export const ChartOfAccountPage = ({ title, subtitle }: DataProps) => {
                 onClick={() => openCreate(null)}
                 className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
               >
-                <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
+                <FaPlus
+                  size={10}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
                 <span>Create New</span>
               </button>
             )}

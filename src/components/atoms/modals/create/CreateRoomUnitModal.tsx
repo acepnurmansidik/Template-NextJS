@@ -9,18 +9,17 @@ import { apiGet, apiPost } from "@/utils/api";
 import {
   BuildingApiDaum,
   BuildingFloorApiDaum,
-  ListResponse,
   RoomStatus,
   ROOM_STATUS_LABEL,
   ROOM_UNIT_TYPES,
   RoomUnitApiDaum,
   RoomUnitPayload,
   RoomUnitType,
-  SingleResponse,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
+import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
   isOpen: boolean;

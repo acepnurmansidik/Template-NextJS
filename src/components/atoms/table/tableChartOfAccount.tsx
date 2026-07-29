@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import axios from "axios";
 import Swal from "sweetalert2";
 import {
@@ -15,7 +16,6 @@ import {
   buildTree,
   ChartOfAccountApiDaum,
   ChartOfAccountNode,
-  SingleChartOfAccountResponseApiDaum,
 } from "@/types/chartOfAccount";
 import UpdateChartOfAccountModal from "../modals/update/UpdateChartOfAccountModal";
 import ViewChartOfAccountModal from "../modals/view/ViewChartOfAccountModal";
@@ -116,7 +116,7 @@ export const TableChartOfAccount = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleChartOfAccountResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<ChartOfAccountApiDaum>>(
         `/chart-of-account/${row._id}`,
         {},
         false,

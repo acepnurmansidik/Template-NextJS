@@ -11,9 +11,10 @@ import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
 import { apiGet } from "@/utils/api";
-import { BodyModuleResponseAPI, ModuleApiDaum } from "@/types/module";
+import { ModuleApiDaum } from "@/types/module";
 import { useAppSelector } from "@/store/hooks";
 import Loading from "@/components/atoms/shared/Loading";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   // { title: "Mark All", value: "*" },
@@ -83,7 +84,7 @@ export const ModulePage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyModuleResponseAPI>(
+      const result = await apiGet<ListResponse<ModuleApiDaum>>(
         "/module",
         { page, limit, search },
         false,

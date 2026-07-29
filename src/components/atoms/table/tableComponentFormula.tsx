@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import {
-  ComponentFormulaApiDaum,
-  RateType,
-  SingleComponentFormulaResponseApiDaum,
-} from "@/types/componentFormula";
+import { ComponentFormulaApiDaum, RateType } from "@/types/componentFormula";
 import { apiDelete } from "@/utils/api";
 import { getComponentRate, formatRate } from "@/utils/formula";
 import UpdateComponentFormulaModal from "../modals/update/UpdateComponentFormulaModal";
@@ -81,7 +78,7 @@ export const TableComponentFormula = ({
       if (!confirmation.isConfirmed) return;
 
       setIsLoading(true);
-      const result = await apiDelete<SingleComponentFormulaResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<ComponentFormulaApiDaum>>(
         `/component-formula/${data._id}`,
         {},
         false,

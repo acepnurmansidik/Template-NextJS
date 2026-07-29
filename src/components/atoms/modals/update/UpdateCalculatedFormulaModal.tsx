@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
@@ -12,16 +13,9 @@ import {
   CalculatedFormulaApiDaum,
   CalculatedFormulaForm,
   PopulatedComponent,
-  SingleCalculatedFormulaResponseApiDaum,
 } from "@/types/calculatedFormula";
-import {
-  BodyComponentFormulaResponseApiDaum,
-  refId,
-} from "@/types/componentFormula";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { refId, ComponentFormulaApiDaum } from "@/types/componentFormula";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import { evaluateExpression, RoundMode, ROUND_MODES } from "@/utils/formula";
 import AccountsSelect, {
   AccountOption,
@@ -79,7 +73,7 @@ export default function UpdateCalculatedFormulaModal({
   const fetchComponents = useCallback(async () => {
     try {
       setIsLoadingComponents(true);
-      const result = await apiGet<BodyComponentFormulaResponseApiDaum>(
+      const result = await apiGet<ListResponse<ComponentFormulaApiDaum>>(
         "/component-formula",
         { page: 1, limit: 1000, search: "" },
         false,
@@ -95,7 +89,7 @@ export default function UpdateCalculatedFormulaModal({
   const fetchAccounts = useCallback(async () => {
     try {
       setIsLoadingAccounts(true);
-      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+      const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
         "/chart-of-account",
         { page: 1, limit: 1000, search: "", is_header: false },
         false,
@@ -248,7 +242,7 @@ export default function UpdateCalculatedFormulaModal({
 
     setIsLoading(true);
     try {
-      const result = await apiPut<SingleCalculatedFormulaResponseApiDaum>(
+      const result = await apiPut<SingleResponse<CalculatedFormulaApiDaum>>(
         `/calculated-formula/${initialData._id}`,
         payload,
         false,

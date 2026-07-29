@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -9,7 +10,6 @@ import { apiPut } from "@/utils/api";
 import {
   LayoutComponentApiDaum,
   LayoutComponentPayload,
-  LayoutComponentSingleResponse,
   LAYOUT_COMPONENT_CATEGORIES,
 } from "@/types/LayoutComponent";
 import { refImagePath } from "@/types/facility";
@@ -80,7 +80,7 @@ export default function UpdateLayoutComponentModal({
         image_id: imageId,
       };
 
-      const result = await apiPut<LayoutComponentSingleResponse>(
+      const result = await apiPut<SingleResponse<LayoutComponentApiDaum>>(
         `/layout-component/${initialData._id}`,
         payload,
         false,

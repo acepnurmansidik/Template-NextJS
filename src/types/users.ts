@@ -23,12 +23,3 @@ export interface UserApiDaum {
   name: string;
   device_token: string;
 }
-
-export interface BodyUsersResponseApiDaum {
-  success: boolean;
-  message: string;
-  data: UserApiDaum[];
-  // Total seluruh record (bukan panjang halaman saat ini) & halaman aktif.
-  page_size?: number;
-  current_page?: number;
-}

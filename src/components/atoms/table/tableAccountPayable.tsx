@@ -1,19 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import {
-  AR_AP_STATUS_LABEL,
-  ArApApiDaum,
-  formatAmount,
-  SingleArApResponseApiDaum,
-} from "@/types/arAp";
+import { AP_STATUS_LABEL, AccountPayableApiDaum } from "@/types/accountPayable";
 import UpdateAccountPayableModal from "../modals/update/UpdateAccountPayableModal";
 import ViewAccountPayableModal from "../modals/view/ViewAccountPayableModal";
-import { STATUS_BADGE } from "@/utils/utils";
+import { formatAmount, STATUS_BADGE } from "@/utils/utils";
 import { get } from "lodash";
 
 const fmtDate = (d?: string) =>
@@ -28,7 +24,7 @@ const fmtDate = (d?: string) =>
 interface DataProps {
   hasAccess: Record<string, boolean>;
   columns: { title: string; value: string; classname: string }[];
-  data: ArApApiDaum[];
+  data: AccountPayableApiDaum[];
   page: number;
   limit: number;
   totalData: number;
@@ -52,21 +48,22 @@ export const TableAccountPayable = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
-  const [selectedData, setSelectedData] = useState<ArApApiDaum | null>(null);
+  const [selectedData, setSelectedData] =
+    useState<AccountPayableApiDaum | null>(null);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
   const [showModalView, setShowModalView] = useState(false);
 
-  const handleModalView = (row: ArApApiDaum) => {
+  const handleModalView = (row: AccountPayableApiDaum) => {
     setSelectedData(row);
     setShowModalView(true);
   };
 
-  const handleModalUpdate = (row: ArApApiDaum) => {
+  const handleModalUpdate = (row: AccountPayableApiDaum) => {
     setSelectedData(row);
     setShowModalUpdate(true);
   };
 
-  const handleDelete = async (row: ArApApiDaum) => {
+  const handleDelete = async (row: AccountPayableApiDaum) => {
     try {
       if ((row.paid_amount ?? 0) > 0) {
         Swal.fire({
@@ -89,7 +86,7 @@ export const TableAccountPayable = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleArApResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<AccountPayableApiDaum>>(
         `/account-payable/${row._id}`,
         {},
         false,
@@ -238,7 +235,7 @@ export const TableAccountPayable = ({
                               STATUS_BADGE[row.status] ?? ""
                             }`}
                           >
-                            {AR_AP_STATUS_LABEL[row.status]}
+                            {AP_STATUS_LABEL[row.status]}
                           </span>
                         ) : (
                           get(row, col.value)

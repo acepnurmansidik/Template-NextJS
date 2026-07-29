@@ -1,20 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
   JournalEntryApiDaum,
   JournalEntryPayload,
   JournalLineForm,
   JournalStatus,
-  SingleJournalEntryResponseApiDaum,
   sumLines,
 } from "@/types/journalEntry";
 import JournalEntryFormBody from "@/components/atoms/shared/JournalEntryFormBody";
@@ -60,7 +57,7 @@ export default function UpdateJournalEntryModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -126,7 +123,7 @@ export default function UpdateJournalEntryModal({
         })),
       };
 
-      const result = await apiPut<SingleJournalEntryResponseApiDaum>(
+      const result = await apiPut<SingleResponse<JournalEntryApiDaum>>(
         `/journal-entry/${initialData._id}`,
         payload,
         false,

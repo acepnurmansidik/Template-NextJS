@@ -163,22 +163,6 @@ export interface CalculatedFormulaApiDaum {
   updated_at?: string;
 }
 
-export interface BodyCalculatedFormulaResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data: CalculatedFormulaApiDaum[];
-  page_size?: number;
-  current_page?: number;
-}
-
-export interface SingleCalculatedFormulaResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data?: CalculatedFormulaApiDaum;
-}
-
 // Helper: cek apakah nilai adalah komponen ter-populate (object) atau id.
 export const isPopulatedComponent = (
   value: PopulatedComponent | string | undefined,

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse } from "@/types/api";
+import { RoleApiDaum } from "@/types/role";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { BodyRoleResponseAPI } from "@/types/role";
+
 import { apiGet, apiPost } from "@/utils/api";
-import { BodyUsersResponseApiDaum, UserFormDataDaum } from "@/types/users";
+import { UserFormDataDaum, UserApiDaum } from "@/types/users";
 import { debounce } from "lodash";
 import AsyncSelect from "react-select/async";
 
@@ -38,7 +40,7 @@ export default function CreateUserIAMModal({ isOpen, onClose }: DataProps) {
     () =>
       debounce(
         (inputValue: string, callback: (options: Option[]) => void) => {
-          apiGet<BodyRoleResponseAPI>(
+          apiGet<ListResponse<RoleApiDaum>>(
             "/role",
             { page: 1, limit: 5, search: inputValue },
             false,
@@ -72,7 +74,7 @@ export default function CreateUserIAMModal({ isOpen, onClose }: DataProps) {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const result = await apiPost<BodyUsersResponseApiDaum>(
+      const result = await apiPost<ListResponse<UserApiDaum>>(
         "/users",
         formData,
         false,

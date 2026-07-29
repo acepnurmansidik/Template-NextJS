@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
@@ -8,8 +9,8 @@ import axios from "axios";
 import { apiPost } from "@/utils/api";
 import {
   LayoutComponentPayload,
-  LayoutComponentSingleResponse,
   LAYOUT_COMPONENT_CATEGORIES,
+  LayoutComponentApiDaum,
 } from "@/types/LayoutComponent";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 
@@ -73,7 +74,7 @@ export default function CreateLayoutComponentModal({
         image_id: imageId,
       };
 
-      const result = await apiPost<LayoutComponentSingleResponse>(
+      const result = await apiPost<SingleResponse<LayoutComponentApiDaum>>(
         "/layout-component",
         payload,
         false,

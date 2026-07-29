@@ -18,8 +18,6 @@ import {
   ROOM_STATUS_LABEL,
   ROOM_UNIT_TYPES,
   RoomUnitType,
-  SingleResponse,
-  ListResponse,
 } from "@/types/facility";
 import {
   LayoutComponentGroup,
@@ -28,6 +26,7 @@ import {
 import type { CanvasItem } from "@/components/atoms/shared/LayoutCanvas";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
+import { ListResponse, SingleResponse } from "@/types/api";
 
 const LayoutCanvas = dynamic(
   () => import("@/components/atoms/shared/LayoutCanvas"),

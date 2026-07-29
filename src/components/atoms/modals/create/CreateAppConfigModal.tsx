@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ListResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import React from "react";
@@ -8,11 +9,7 @@ import Select from "react-select";
 import semver from "semver";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import {
-  AppConfigForm,
-  BodyAppConfigResponseApiDaum,
-  UpdateType,
-} from "@/types/appConfig";
+import { AppConfigForm, UpdateType, AppConfigApiDaum } from "@/types/appConfig";
 import QuillEditor from "@/components/atoms/shared/QuillEditor";
 
 type Option = { value: string; label: string };
@@ -90,7 +87,7 @@ export default function CreateAppConfigModal({
         latest_version: semver.valid(formData.latest_version) as string,
       };
 
-      const result = await apiPost<BodyAppConfigResponseApiDaum>(
+      const result = await apiPost<ListResponse<AppConfigApiDaum>>(
         "/app-configs",
         payload,
         false,

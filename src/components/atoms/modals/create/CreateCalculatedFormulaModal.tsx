@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
+import { ComponentFormulaApiDaum } from "@/types/componentFormula";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
@@ -11,13 +13,10 @@ import {
   CalcType,
   CalculatedFormulaForm,
   PopulatedComponent,
-  SingleCalculatedFormulaResponseApiDaum,
+  CalculatedFormulaApiDaum,
 } from "@/types/calculatedFormula";
-import { BodyComponentFormulaResponseApiDaum } from "@/types/componentFormula";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import { evaluateExpression, RoundMode, ROUND_MODES } from "@/utils/formula";
 import AccountsSelect, {
   AccountOption,
@@ -71,7 +70,7 @@ export default function CreateCalculatedFormulaModal({
   const fetchComponents = useCallback(async () => {
     try {
       setIsLoadingComponents(true);
-      const result = await apiGet<BodyComponentFormulaResponseApiDaum>(
+      const result = await apiGet<ListResponse<ComponentFormulaApiDaum>>(
         "/component-formula",
         { page: 1, limit: 1000, search: "" },
         false,
@@ -87,7 +86,7 @@ export default function CreateCalculatedFormulaModal({
   const fetchAccounts = useCallback(async () => {
     try {
       setIsLoadingAccounts(true);
-      const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+      const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
         "/chart-of-account",
         { page: 1, limit: 1000, search: "", is_header: false },
         false,
@@ -220,7 +219,7 @@ export default function CreateCalculatedFormulaModal({
 
     setIsLoading(true);
     try {
-      const result = await apiPost<SingleCalculatedFormulaResponseApiDaum>(
+      const result = await apiPost<SingleResponse<CalculatedFormulaApiDaum>>(
         "/calculated-formula",
         payload,
         false,

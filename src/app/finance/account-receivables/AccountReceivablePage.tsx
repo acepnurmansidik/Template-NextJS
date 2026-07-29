@@ -7,14 +7,10 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  ArApApiDaum,
-  ArApStatus,
-  AR_AP_STATUS_LABEL,
-  BodyArApResponseApiDaum,
-} from "@/types/arAp";
+import { AccountReceivableApiDaum, AccountReceivableStatus, AR_STATUS_LABEL } from "@/types/accountReceivable";
 import CreateAccountReceivableModal from "@/components/atoms/modals/create/CreateAccountReceivableModal";
 import { TableAccountReceivable } from "@/components/atoms/table/tableAccountReceivable";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -34,13 +30,13 @@ const columns = [
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All", value: "" },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.DRAFT], value: ArApStatus.DRAFT },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.OPEN], value: ArApStatus.OPEN },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.PARTIAL], value: ArApStatus.PARTIAL },
-  { label: AR_AP_STATUS_LABEL[ArApStatus.PAID], value: ArApStatus.PAID },
+  { label: AR_STATUS_LABEL[AccountReceivableStatus.DRAFT], value: AccountReceivableStatus.DRAFT },
+  { label: AR_STATUS_LABEL[AccountReceivableStatus.OPEN], value: AccountReceivableStatus.OPEN },
+  { label: AR_STATUS_LABEL[AccountReceivableStatus.PARTIAL], value: AccountReceivableStatus.PARTIAL },
+  { label: AR_STATUS_LABEL[AccountReceivableStatus.PAID], value: AccountReceivableStatus.PAID },
   {
-    label: AR_AP_STATUS_LABEL[ArApStatus.WRITE_OFF],
-    value: ArApStatus.WRITE_OFF,
+    label: AR_STATUS_LABEL[AccountReceivableStatus.WRITE_OFF],
+    value: AccountReceivableStatus.WRITE_OFF,
   },
 ];
 
@@ -49,7 +45,7 @@ export const AccountReceivablePage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
-  const [data, setData] = useState<ArApApiDaum[]>([]);
+  const [data, setData] = useState<AccountReceivableApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -73,7 +69,7 @@ export const AccountReceivablePage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyArApResponseApiDaum>(
+      const result = await apiGet<ListResponse<AccountReceivableApiDaum>>(
         "/account-receivable",
         { page, limit, search, status },
         false,

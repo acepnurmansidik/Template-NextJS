@@ -1,26 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
-import {
-  AR_AP_STATUS_LABEL,
-  ArApLineForm,
-  ArApPayload,
-  ArApStatus,
-  formatAmount,
-  SingleArApResponseApiDaum,
-  sumAmount,
-} from "@/types/arAp";
+  AR_STATUS_LABEL,
+  AccountReceivableLineForm,
+  AccountReceivablePayload,
+  AccountReceivableStatus,
+  AccountReceivableApiDaum,
+} from "@/types/accountReceivable";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import { formatAmount, sumAmount } from "@/utils/utils";
 
 type Option = { value: string; label: string };
 
@@ -32,18 +29,22 @@ interface DataProps {
 
 // WRITE_OFF di-set otomatis lewat proses write-off, bukan dipilih manual.
 const STATUS_OPTIONS: Option[] = [
-  ArApStatus.DRAFT,
-  ArApStatus.OPEN,
-  ArApStatus.PARTIAL,
-  ArApStatus.PAID,
-].map((s) => ({ value: s, label: AR_AP_STATUS_LABEL[s] }));
+  AccountReceivableStatus.DRAFT,
+  AccountReceivableStatus.OPEN,
+  AccountReceivableStatus.PARTIAL,
+  AccountReceivableStatus.PAID,
+].map((s) => ({ value: s, label: AR_STATUS_LABEL[s] }));
 
 const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
-const emptyLine: ArApLineForm = { account_id: "", description: "", amount: 0 };
+const emptyLine: AccountReceivableLineForm = {
+  account_id: "",
+  description: "",
+  amount: 0,
+};
 
 export default function CreateAccountReceivableModal({
   isOpen,
@@ -56,9 +57,13 @@ export default function CreateAccountReceivableModal({
   const [partyName, setPartyName] = useState("");
   const [reference, setReference] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<ArApStatus>(ArApStatus.DRAFT);
+  const [status, setStatus] = useState<AccountReceivableStatus>(
+    AccountReceivableStatus.DRAFT,
+  );
   const [paidAmount, setPaidAmount] = useState(0);
-  const [lines, setLines] = useState<ArApLineForm[]>([{ ...emptyLine }]);
+  const [lines, setLines] = useState<AccountReceivableLineForm[]>([
+    { ...emptyLine },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -72,7 +77,7 @@ export default function CreateAccountReceivableModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -98,7 +103,10 @@ export default function CreateAccountReceivableModal({
   const addLine = () => setLines((prev) => [...prev, { ...emptyLine }]);
   const removeLine = (index: number) =>
     setLines((prev) => prev.filter((_, i) => i !== index));
-  const patchLine = (index: number, patch: Partial<ArApLineForm>) =>
+  const patchLine = (
+    index: number,
+    patch: Partial<AccountReceivableLineForm>,
+  ) =>
     setLines((prev) =>
       prev.map((l, i) => (i === index ? { ...l, ...patch } : l)),
     );
@@ -143,7 +151,7 @@ export default function CreateAccountReceivableModal({
 
     setIsLoading(true);
     try {
-      const payload: ArApPayload = {
+      const payload: AccountReceivablePayload = {
         date,
         due_date: dueDate || undefined,
         party_name: partyName.trim(),
@@ -158,7 +166,7 @@ export default function CreateAccountReceivableModal({
         })),
       };
 
-      const result = await apiPost<SingleArApResponseApiDaum>(
+      const result = await apiPost<SingleResponse<AccountReceivableApiDaum>>(
         "/account-receivable",
         payload,
         false,
@@ -264,7 +272,10 @@ export default function CreateAccountReceivableModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus((opt?.value as ArApStatus) ?? ArApStatus.DRAFT)
+                  setStatus(
+                    (opt?.value as AccountReceivableStatus) ??
+                      AccountReceivableStatus.DRAFT,
+                  )
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { apiDelete } from "@/utils/api";
@@ -8,7 +9,6 @@ import {
   formatAmount,
   JournalEntryApiDaum,
   JournalStatus,
-  SingleJournalEntryResponseApiDaum,
 } from "@/types/journalEntry";
 import UpdateJournalEntryModal from "../modals/update/UpdateJournalEntryModal";
 import ViewJournalEntryModal from "../modals/view/ViewJournalEntryModal";
@@ -88,7 +88,7 @@ export const TableJournalEntry = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleJournalEntryResponseApiDaum>(
+      const result = await apiDelete<SingleResponse<JournalEntryApiDaum>>(
         `/journal-entry/${row._id}`,
         {},
         false,

@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
-import {
-  RefParamApiDaum,
-  RefParamPayload,
-  RefParamSingleResponse,
-} from "@/types/refParam";
+import { RefParamApiDaum, RefParamPayload } from "@/types/refParam";
 import { refImagePath } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 
@@ -66,7 +63,7 @@ export default function UpdateReferenceParameterModal({
         description: description.trim(),
         icon_id: iconId,
       };
-      const result = await apiPut<RefParamSingleResponse>(
+      const result = await apiPut<SingleResponse<RefParamApiDaum>>(
         `/ref-parameter/${initialData._id}`,
         payload,
         false,

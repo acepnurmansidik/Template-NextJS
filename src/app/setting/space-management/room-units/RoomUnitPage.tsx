@@ -8,13 +8,13 @@ import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
-  ListResponse,
   RoomStatus,
   ROOM_STATUS_LABEL,
   RoomUnitApiDaum,
 } from "@/types/facility";
 import CreateRoomUnitModal from "@/components/atoms/modals/create/CreateRoomUnitModal";
 import { TableRoomUnit } from "@/components/atoms/table/tableRoomUnit";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -34,7 +34,10 @@ const columns = [
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All", value: "" },
-  { label: ROOM_STATUS_LABEL[RoomStatus.AVAILABLE], value: RoomStatus.AVAILABLE },
+  {
+    label: ROOM_STATUS_LABEL[RoomStatus.AVAILABLE],
+    value: RoomStatus.AVAILABLE,
+  },
   { label: ROOM_STATUS_LABEL[RoomStatus.OCCUPIED], value: RoomStatus.OCCUPIED },
   {
     label: ROOM_STATUS_LABEL[RoomStatus.UNDER_MAINTENANCE],
@@ -129,7 +132,10 @@ export const RoomUnitPage = ({ title, subtitle }: DataProps) => {
                 onClick={() => setIsModalCreateOpen(true)}
                 className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
               >
-                <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
+                <FaPlus
+                  size={10}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
                 <span>Create New</span>
               </button>
             )}

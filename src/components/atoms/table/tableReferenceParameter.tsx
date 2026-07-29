@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import { RefParamApiDaum, RefParamSingleResponse } from "@/types/refParam";
+import { RefParamApiDaum } from "@/types/refParam";
 import { imageUrl, refImagePath } from "@/types/facility";
 import UpdateReferenceParameterModal from "../modals/update/UpdateReferenceParameterModal";
 
@@ -55,7 +56,7 @@ export const TableReferenceParameter = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<RefParamSingleResponse>(
+      const result = await apiDelete<SingleResponse<RefParamApiDaum>>(
         `/ref-parameter/${row._id}`,
         {},
         false,

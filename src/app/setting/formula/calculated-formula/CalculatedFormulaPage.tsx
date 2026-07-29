@@ -6,13 +6,11 @@ import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import {
-  CalculatedFormulaApiDaum,
-  BodyCalculatedFormulaResponseApiDaum,
-} from "@/types/calculatedFormula";
+import { CalculatedFormulaApiDaum } from "@/types/calculatedFormula";
 import { apiGet } from "@/utils/api";
 import CreateCalculatedFormulaModal from "@/components/atoms/modals/create/CreateCalculatedFormulaModal";
 import { TableCalculatedFormula } from "@/components/atoms/table/tableCalculatedFormula";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   { title: "Name", value: "name" },
@@ -63,7 +61,7 @@ export const CalculatedFormulaPage = ({ title, subtitle }: DataProps) => {
   const fetchingData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiGet<BodyCalculatedFormulaResponseApiDaum>(
+      const result = await apiGet<ListResponse<CalculatedFormulaApiDaum>>(
         "/calculated-formula",
         { page, limit, search },
         false,

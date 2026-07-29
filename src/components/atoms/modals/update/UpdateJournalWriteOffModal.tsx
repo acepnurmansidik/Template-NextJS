@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
   formatAmount,
   JournalWriteOffApiDaum,
@@ -22,7 +20,6 @@ import {
   WRITE_OFF_SOURCE_LABEL,
   WRITE_OFF_SOURCE_PATH,
   WRITE_OFF_TYPE_LABEL,
-  SingleJournalWriteOffResponseApiDaum,
   sumLines,
 } from "@/types/journalWriteOff";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
@@ -165,7 +162,7 @@ export default function UpdateJournalWriteOffModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -193,7 +190,9 @@ export default function UpdateJournalWriteOffModal({
   const removeLine = (index: number) =>
     setLines((prev) => prev.filter((_, i) => i !== index));
   const patchLine = (index: number, patch: Partial<WriteOffLineForm>) =>
-    setLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+    setLines((prev) =>
+      prev.map((l, i) => (i === index ? { ...l, ...patch } : l)),
+    );
 
   const selectedStatus =
     STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
@@ -252,7 +251,7 @@ export default function UpdateJournalWriteOffModal({
         })),
       };
 
-      const result = await apiPut<SingleJournalWriteOffResponseApiDaum>(
+      const result = await apiPut<SingleResponse<JournalWriteOffApiDaum>>(
         `/journal-write-off/${initialData._id}`,
         payload,
         false,
@@ -264,7 +263,8 @@ export default function UpdateJournalWriteOffModal({
         await Swal.fire({
           icon: "success",
           title: "Updated successfully",
-          text: result.message || "Your write off has been updated successfully.",
+          text:
+            result.message || "Your write off has been updated successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
@@ -361,7 +361,9 @@ export default function UpdateJournalWriteOffModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus((opt?.value as WriteOffStatus) ?? WriteOffStatus.DRAFT)
+                  setStatus(
+                    (opt?.value as WriteOffStatus) ?? WriteOffStatus.DRAFT,
+                  )
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -380,7 +382,8 @@ export default function UpdateJournalWriteOffModal({
                 value={selectedSourceType}
                 onChange={(opt) => {
                   setSourceType(
-                    (opt?.value as WriteOffSourceType) ?? WriteOffSourceType.NONE,
+                    (opt?.value as WriteOffSourceType) ??
+                      WriteOffSourceType.NONE,
                   );
                   setSourceId("");
                 }}
@@ -451,7 +454,9 @@ export default function UpdateJournalWriteOffModal({
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60">
                   <tr className="text-[11px] uppercase tracking-widest text-zinc-500">
                     <th className="py-2.5 px-3 font-bold w-[36%]">Account</th>
-                    <th className="py-2.5 px-3 font-bold w-[28%]">Description</th>
+                    <th className="py-2.5 px-3 font-bold w-[28%]">
+                      Description
+                    </th>
                     <th className="py-2.5 px-3 font-bold w-[15%] text-right">
                       Debit
                     </th>

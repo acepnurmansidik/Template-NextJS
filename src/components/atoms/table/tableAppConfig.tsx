@@ -1,13 +1,10 @@
 "use client";
 
 import { get } from "lodash";
+import { ListResponse } from "@/types/api";
 import { useState } from "react";
 import Swal from "sweetalert2";
-import {
-  AppConfigApiDaum,
-  BodyAppConfigResponseApiDaum,
-  UpdateType,
-} from "@/types/appConfig";
+import { AppConfigApiDaum, UpdateType } from "@/types/appConfig";
 import { apiDelete } from "@/utils/api";
 import axios from "axios";
 import UpdateAppConfigModal from "../modals/update/UpdateAppConfigModal";
@@ -88,7 +85,7 @@ export const TableAppConfig = ({
       }
 
       setIsLoading(true);
-      const result = await apiDelete<BodyAppConfigResponseApiDaum>(
+      const result = await apiDelete<ListResponse<AppConfigApiDaum>>(
         `/app-configs/${data._id}`,
         {},
         false,

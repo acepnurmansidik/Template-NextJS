@@ -1,20 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
-import {
-  BodyChartOfAccountResponseApiDaum,
-  ChartOfAccountApiDaum,
-} from "@/types/chartOfAccount";
+import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
   JournalEntryPayload,
   JournalLineForm,
   JournalStatus,
-  SingleJournalEntryResponseApiDaum,
   sumLines,
+  JournalEntryApiDaum,
 } from "@/types/journalEntry";
 import JournalEntryFormBody from "@/components/atoms/shared/JournalEntryFormBody";
 
@@ -56,7 +54,7 @@ export default function CreateJournalEntryModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<BodyChartOfAccountResponseApiDaum>(
+        const result = await apiGet<ListResponse<ChartOfAccountApiDaum>>(
           "/chart-of-account",
           {},
           false,
@@ -78,7 +76,11 @@ export default function CreateJournalEntryModal({
 
   const handleSubmit = async () => {
     if (!date) {
-      Swal.fire({ icon: "warning", title: "Date is required", confirmButtonColor: "#2563eb" });
+      Swal.fire({
+        icon: "warning",
+        title: "Date is required",
+        confirmButtonColor: "#2563eb",
+      });
       return;
     }
     const filled = lines.filter(
@@ -126,7 +128,7 @@ export default function CreateJournalEntryModal({
         })),
       };
 
-      const result = await apiPost<SingleJournalEntryResponseApiDaum>(
+      const result = await apiPost<SingleResponse<JournalEntryApiDaum>>(
         "/journal-entry",
         payload,
         false,

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ListResponse } from "@/types/api";
+import { RoleApiDaum } from "@/types/role";
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { BodyRoleResponseAPI } from "@/types/role";
+
 import { apiGet } from "@/utils/api";
 import { UserApiDaum, UserFormDataDaum } from "@/types/users";
 import { debounce } from "lodash";
@@ -42,7 +44,7 @@ export default function ViewUserIAMModal({
     () =>
       debounce(
         (inputValue: string, callback: (options: Option[]) => void) => {
-          apiGet<BodyRoleResponseAPI>(
+          apiGet<ListResponse<RoleApiDaum>>(
             "/role",
             { page: 1, limit: 5, search: inputValue },
             false,

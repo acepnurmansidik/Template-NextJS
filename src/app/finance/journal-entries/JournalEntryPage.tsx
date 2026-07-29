@@ -7,13 +7,10 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  BodyJournalEntryResponseApiDaum,
-  JournalEntryApiDaum,
-  JournalStatus,
-} from "@/types/journalEntry";
+import { JournalEntryApiDaum, JournalStatus } from "@/types/journalEntry";
 import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
 import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
+import { ListResponse } from "@/types/api";
 
 const columns = [
   { title: "Entry No", value: "entry_no", classname: "w-[16%]" },
@@ -65,7 +62,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<BodyJournalEntryResponseApiDaum>(
+      const result = await apiGet<ListResponse<JournalEntryApiDaum>>(
         "/journal-entry",
         { page, limit, search, status },
         false,

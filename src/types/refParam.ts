@@ -1,7 +1,7 @@
-import { ImageRef } from "./facility";
-
 // Reference Parameter (master data referensi item). Mirror model ReffParameter
 // & endpoint /ref-parameter.
+
+import { ImageRef } from "./api";
 
 export interface RefParamApiDaum {
   _id: string;
@@ -19,20 +19,6 @@ export interface RefParamPayload {
   type: string;
   description: string;
   icon_id?: string | null;
-}
-
-export interface RefParamListResponse {
-  success: boolean;
-  message: string;
-  data: RefParamApiDaum[];
-  page_size?: number;
-  current_page?: number;
-}
-
-export interface RefParamSingleResponse {
-  success: boolean;
-  message: string;
-  data?: RefParamApiDaum;
 }
 
 export interface RefParamTypesResponse {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ListResponse } from "@/types/api";
 import AsyncSelect from "react-select/async";
 import Swal from "sweetalert2";
 
@@ -9,11 +10,7 @@ type Option = { value: string; label: string; data: any };
 import { IoClose } from "react-icons/io5";
 import React from "react";
 import { RoleApiDaum, RoleFormData } from "@/types/role";
-import {
-  BodyModuleResponseAPI,
-  MenuDetailResponseAPI,
-  PermissionResponseAPI,
-} from "@/types/module";
+import { MenuDetailResponseAPI, PermissionResponseAPI, ModuleApiDaum } from "@/types/module";
 import { apiGet, apiPut } from "@/utils/api";
 
 interface DataProps {
@@ -46,7 +43,7 @@ export default function ViewRoleModal({
   useEffect(() => {
     const fetchModuleOptions = async () => {
       try {
-        const result = await apiGet<BodyModuleResponseAPI>(
+        const result = await apiGet<ListResponse<ModuleApiDaum>>(
           "/module",
           { page: 1, limit: 5 },
           false,
@@ -69,7 +66,7 @@ export default function ViewRoleModal({
   // Dipakai AsyncSelect saat user mengetik.
   const loadModuleOptions = async (inputValue: string): Promise<Option[]> => {
     try {
-      const result = await apiGet<BodyModuleResponseAPI>(
+      const result = await apiGet<ListResponse<ModuleApiDaum>>(
         "/module",
         { page: 1, limit: 10, search: inputValue },
         false,

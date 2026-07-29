@@ -23,10 +23,3 @@ export interface IAMApiDaum {
   auth_id: AuthResponseAPI;
   role_id: RoleResponseAPI;
 }
-
-export interface BodyIAMResponseApiDaum {
-  success: boolean;
-  message: string;
-  // /users/iam mengembalikan satu objek user (bukan array).
-  data: IAMApiDaum;
-}

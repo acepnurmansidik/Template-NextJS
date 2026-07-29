@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import {
-  LayoutComponentApiDaum,
-  LayoutComponentSingleResponse,
-} from "@/types/LayoutComponent";
+import { LayoutComponentApiDaum } from "@/types/LayoutComponent";
 import { imageUrl, refImagePath } from "@/types/facility";
 import UpdateLayoutComponentModal from "../modals/update/UpdateLayoutComponentModal";
 import ViewLayoutComponentModal from "../modals/view/ViewLayoutComponentModal";
@@ -59,7 +57,7 @@ export const TableLayoutComponent = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<LayoutComponentSingleResponse>(
+      const result = await apiDelete<SingleResponse<LayoutComponentApiDaum>>(
         `/layout-component/${row._id}`,
         {},
         false,

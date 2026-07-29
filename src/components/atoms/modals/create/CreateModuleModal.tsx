@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ListResponse } from "@/types/api";
 import CreatableSelect from "react-select/creatable";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { actionDefaultOptions, formatModuleName } from "@/utils/utils";
 import {
-  BodyModuleResponseAPI,
   MenuDetail,
   ModuleFormData,
   PermissionDataItem,
+  ModuleApiDaum,
 } from "@/types/module";
 import { IoClose } from "react-icons/io5";
 import React from "react";
@@ -57,7 +58,7 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
         })),
       };
 
-      const result = await apiPost<BodyModuleResponseAPI>(
+      const result = await apiPost<ListResponse<ModuleApiDaum>>(
         "/module",
         payload,
         false,

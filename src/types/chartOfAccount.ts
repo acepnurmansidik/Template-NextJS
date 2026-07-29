@@ -98,22 +98,6 @@ export interface ChartOfAccountPayload {
   description?: string;
 }
 
-export interface BodyChartOfAccountResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data: ChartOfAccountApiDaum[];
-  page_size?: number;
-  current_page?: number;
-}
-
-export interface SingleChartOfAccountResponseApiDaum {
-  success: boolean;
-  message: string;
-  code?: number;
-  data?: ChartOfAccountApiDaum;
-}
-
 // Susun daftar flat (terurut by path dari server) menjadi pohon berjenjang.
 export const buildTree = (
   items: ChartOfAccountApiDaum[],
@@ -138,7 +122,9 @@ export const buildTree = (
 
   // Urutkan tiap level berdasarkan kode akun.
   const sortRec = (nodes: ChartOfAccountNode[]) => {
-    nodes.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+    nodes.sort((a, b) =>
+      a.code.localeCompare(b.code, undefined, { numeric: true }),
+    );
     nodes.forEach((n) => sortRec(n.children));
   };
   sortRec(roots);

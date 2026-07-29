@@ -1,4 +1,4 @@
-import { ImageRef } from "./facility";
+import { ImageRef } from "./api";
 
 // Kategori komponen layout. Model backend saat ini hanya mendukung "SHAPES".
 export const LAYOUT_COMPONENT_CATEGORIES = ["SHAPES"] as const;
@@ -18,20 +18,6 @@ export interface LayoutComponentPayload {
   name: string;
   category: string;
   image_id?: string | null;
-}
-
-export interface LayoutComponentListResponse {
-  success: boolean;
-  message: string;
-  data: LayoutComponentApiDaum[];
-  page_size?: number;
-  current_page?: number;
-}
-
-export interface LayoutComponentSingleResponse {
-  success: boolean;
-  message: string;
-  data?: LayoutComponentApiDaum;
 }
 
 // Satu grup komponen (hasil endpoint /layout-component/grouped).

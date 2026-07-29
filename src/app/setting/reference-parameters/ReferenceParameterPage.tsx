@@ -7,13 +7,10 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  RefParamApiDaum,
-  RefParamListResponse,
-  RefParamTypesResponse,
-} from "@/types/refParam";
+import { RefParamApiDaum, RefParamTypesResponse } from "@/types/refParam";
 import CreateReferenceParameterModal from "@/components/atoms/modals/create/CreateReferenceParameterModal";
 import { TableReferenceParameter } from "@/components/atoms/table/tableReferenceParameter";
+import { ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -71,7 +68,7 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<RefParamListResponse>(
+      const result = await apiGet<ListResponse<RefParamApiDaum>>(
         "/ref-parameter",
         { page, limit, search, type },
         false,
@@ -132,7 +129,10 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
                 onClick={() => setIsModalCreateOpen(true)}
                 className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
               >
-                <FaPlus size={10} className="text-gray-500 dark:text-zinc-400" />
+                <FaPlus
+                  size={10}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
                 <span>Create New</span>
               </button>
             )}
