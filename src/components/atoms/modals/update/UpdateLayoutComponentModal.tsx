@@ -7,23 +7,17 @@ import Select from "react-select";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
 import {
-  amenityIds,
-  refImagePath,
-  RoomStatus,
-  ROOM_STATUS_LABEL,
-  ROOM_UNIT_TYPES,
-  RoomUnitApiDaum,
-  RoomUnitPayload,
-  RoomUnitType,
-  SingleResponse,
-} from "@/types/facility";
+  LayoutComponentApiDaum,
+  LayoutComponentPayload,
+  LayoutComponentSingleResponse,
+  LAYOUT_COMPONENT_CATEGORIES,
+} from "@/types/LayoutComponent";
+import { refImagePath } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
-import NumberInput from "@/components/atoms/shared/NumberInput";
-import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
 
 interface DataProps {
   isOpen: boolean;
-  initialData: RoomUnitApiDaum;
+  initialData: LayoutComponentApiDaum;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -35,44 +29,30 @@ const inputCls =
 const labelCls =
   "block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5";
 
-const TYPE_OPTIONS: Option[] = ROOM_UNIT_TYPES.map((t) => ({
-  value: t,
-  label: t.replace(/_/g, " "),
-}));
-const STATUS_OPTIONS: Option[] = Object.values(RoomStatus).map((s) => ({
-  value: s,
-  label: ROOM_STATUS_LABEL[s],
+const CATEGORY_OPTIONS: Option[] = LAYOUT_COMPONENT_CATEGORIES.map((c) => ({
+  value: c,
+  label: c.charAt(0) + c.slice(1).toLowerCase(),
 }));
 
 const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
-export default function UpdateRoomUnitModal({
+export default function UpdateLayoutComponentModal({
   isOpen,
   initialData,
   onClose,
   onSuccess,
 }: DataProps) {
   const [name, setName] = useState(initialData.name);
-  const [unitType, setUnitType] = useState<RoomUnitType>(
-    initialData.unit_type ?? "bedroom",
-  );
-  const [status, setStatus] = useState<RoomStatus>(
-    (initialData.status as RoomStatus) ?? RoomStatus.AVAILABLE,
-  );
-  const [capacity, setCapacity] = useState(initialData.capacity ?? 0);
-  const [area, setArea] = useState(initialData.area_sqm ?? 0);
-  const [amenities, setAmenities] = useState<string[]>(
-    amenityIds(initialData.amenities),
+  const [category, setCategory] = useState<string>(
+    initialData.category ?? LAYOUT_COMPONENT_CATEGORIES[0],
   );
   const [imageId, setImageId] = useState<string | null>(
     typeof initialData.image_id === "object" && initialData.image_id
       ? initialData.image_id._id
       : ((initialData.image_id as string) ?? null),
   );
-  const [notes, setNotes] = useState(initialData.notes ?? "");
-  const [isActive, setIsActive] = useState(initialData.is_active);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -84,24 +64,24 @@ export default function UpdateRoomUnitModal({
   }, [onClose]);
 
   const handleSubmit = async () => {
+    if (!name.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Component name is required",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      const payload: Omit<RoomUnitPayload, "floor_id"> & {
-        is_active: boolean;
-      } = {
+      const payload: LayoutComponentPayload = {
         name: name.trim(),
-        unit_type: unitType,
-        status,
-        capacity: capacity,
-        area_sqm: area,
-        amenities,
+        category,
         image_id: imageId,
-        notes: notes.trim(),
-        is_active: isActive,
       };
 
-      const result = await apiPut<SingleResponse<RoomUnitApiDaum>>(
-        `/room-unit/${initialData._id}`,
+      const result = await apiPut<LayoutComponentSingleResponse>(
+        `/layout-component/${initialData._id}`,
         payload,
         false,
         false,
@@ -137,20 +117,15 @@ export default function UpdateRoomUnitModal({
 
   if (!isOpen) return null;
 
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === unitType) ?? null;
-  const selectedStatus = STATUS_OPTIONS.find((o) => o.value === status) ?? null;
+  const selectedCategory =
+    CATEGORY_OPTIONS.find((o) => o.value === category) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
-        <div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-            Update Room Unit
-          </h2>
-          <p className="text-xs text-zinc-400 mt-0.5 font-mono">
-            {initialData.code}
-          </p>
-        </div>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          Update Layout Component
+        </h2>
         <button
           onClick={onClose}
           className="text-zinc-400 hover:text-zinc-900 flex items-center duration-300 justify-center dark:hover:text-zinc-100 text-sm font-medium hover:bg-zinc-300/20 rounded-md hover:cursor-pointer h-9 w-9"
@@ -163,22 +138,25 @@ export default function UpdateRoomUnitModal({
         <div className="max-w-full px-5 mx-auto space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="group">
-              <label className={labelCls}>Name</label>
+              <label className={labelCls}>
+                Component Name<span className="text-red-500">*</span>
+              </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={inputCls}
               />
             </div>
+
             <div className="group">
-              <label className={labelCls}>Unit Type</label>
+              <label className={labelCls}>Category</label>
               <Select
-                instanceId="room-type-update"
+                instanceId="layout-category-update"
                 classNamePrefix="rs"
-                options={TYPE_OPTIONS}
-                value={selectedType}
+                options={CATEGORY_OPTIONS}
+                value={selectedCategory}
                 onChange={(opt) =>
-                  setUnitType((opt?.value as RoomUnitType) ?? "bedroom")
+                  setCategory(opt?.value ?? LAYOUT_COMPONENT_CATEGORIES[0])
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -186,76 +164,14 @@ export default function UpdateRoomUnitModal({
                 styles={selectStyles}
               />
             </div>
-            <div className="group">
-              <label className={labelCls}>Status</label>
-              <Select
-                instanceId="room-status-update"
-                classNamePrefix="rs"
-                options={STATUS_OPTIONS}
-                value={selectedStatus}
-                onChange={(opt) =>
-                  setStatus((opt?.value as RoomStatus) ?? RoomStatus.AVAILABLE)
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
-              />
-            </div>
-            <div className="group">
-              <label className="flex items-center gap-3 cursor-pointer select-none mt-7">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
-                />
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  Active
-                </span>
-              </label>
-            </div>
-            <div className="group">
-              <label className={labelCls}>Capacity</label>
-              <NumberInput
-                integer
-                value={capacity}
-                onChange={setCapacity}
-                className={inputCls}
-              />
-            </div>
-            <div className="group">
-              <label className={labelCls}>Area (m²)</label>
-              <NumberInput
-                value={area}
-                onChange={setArea}
-                className={inputCls}
-              />
-            </div>
-            <div className="group md:col-span-2">
-              <label className={labelCls}>Amenities</label>
-              <AmenitiesSelect
-                instanceId="amenities-update-room"
-                value={amenities}
-                onChange={setAmenities}
-              />
-            </div>
+
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/room-unit/upload"
+                endpoint="/layout-component/upload"
                 value={imageId}
                 imagePath={refImagePath(initialData.image_id)}
                 onChange={(id) => setImageId(id)}
-                label="Room Photo"
-              />
-            </div>
-            <div className="group md:col-span-2">
-              <label className={labelCls}>Notes</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                className={`${inputCls} resize-none`}
+                label="Component Image"
               />
             </div>
           </div>

@@ -216,6 +216,42 @@ export const ROOM_UNIT_TYPES = [
 
 export type RoomUnitType = (typeof ROOM_UNIT_TYPES)[number];
 
+// Referensi komponen master di dalam room.component (bisa id atau populate).
+export type ComponentRef =
+  | string
+  | {
+      _id: string;
+      name?: string;
+      category?: string;
+      image_id?: ImageRef | string | null;
+    }
+  | null;
+
+// Penempatan komponen pada kanvas denah (base space). snake_case = mirror model.
+export interface RoomComponent {
+  component_id?: ComponentRef;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scale_x: number;
+  scale_y: number;
+  rotation: number;
+  color: string;
+  opacity: number;
+}
+
+// Amenity = referensi ke ReffParameter (id atau objek populate).
+export type AmenityRef =
+  | string
+  | { _id: string; value?: string; type?: string; key?: number };
+
+// Ekstrak id dari daftar amenity (baik string id maupun objek populate).
+export const amenityIds = (list?: AmenityRef[]): string[] =>
+  (list ?? [])
+    .map((a) => (a && typeof a === "object" ? a._id : a))
+    .filter((x): x is string => Boolean(x));
+
 export interface RoomUnitApiDaum {
   _id: string;
   branch_id: BranchRef;
@@ -230,8 +266,9 @@ export interface RoomUnitApiDaum {
   status: RoomStatus;
   capacity?: number;
   area_sqm?: number;
-  amenities?: string[];
+  amenities?: AmenityRef[];
   image_id?: ImageRef | string | null;
+  component?: RoomComponent;
   is_active: boolean;
   notes?: string;
   created_at?: string;

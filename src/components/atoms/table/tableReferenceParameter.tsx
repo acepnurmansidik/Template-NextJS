@@ -3,25 +3,16 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
-import { HiOutlinePuzzlePiece } from "react-icons/hi2";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
-import {
-  BuildingApiDaum,
-  BUILDING_TYPE_BADGE,
-  BUILDING_TYPE_LABEL,
-  BuildingType,
-  refName,
-  SingleResponse,
-} from "@/types/facility";
-import UpdateBuildingModal from "../modals/update/UpdateBuildingModal";
-import ViewBuildingModal from "../modals/view/ViewBuildingModal";
-import LayoutBuildingModal from "../modals/LayoutBuildingModal";
+import { RefParamApiDaum, RefParamSingleResponse } from "@/types/refParam";
+import { imageUrl, refImagePath } from "@/types/facility";
+import UpdateReferenceParameterModal from "../modals/update/UpdateReferenceParameterModal";
 
 interface DataProps {
   columns: { title: string; value: string; classname: string }[];
   hasAccess: Record<string, boolean>;
-  data: BuildingApiDaum[];
+  data: RefParamApiDaum[];
   page: number;
   limit: number;
   totalData: number;
@@ -32,7 +23,7 @@ interface DataProps {
   onRefresh?: () => void;
 }
 
-export const TableBuilding = ({
+export const TableReferenceParameter = ({
   hasAccess,
   columns,
   data,
@@ -45,18 +36,16 @@ export const TableBuilding = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
-  const [selectedData, setSelectedData] = useState<BuildingApiDaum | null>(
+  const [selectedData, setSelectedData] = useState<RefParamApiDaum | null>(
     null,
   );
-  const [showModalLayout, setShowModalLayout] = useState(false);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
-  const [showModalView, setShowModalView] = useState(false);
 
-  const handleDelete = async (row: BuildingApiDaum) => {
+  const handleDelete = async (row: RefParamApiDaum) => {
     try {
       const confirmation = await Swal.fire({
         title: "Are you sure?",
-        text: "Building beserta lantai & ruangan di dalamnya akan ikut dihapus.",
+        text: "You won't be able to revert this data!",
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#dc2626",
@@ -66,8 +55,8 @@ export const TableBuilding = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleResponse<BuildingApiDaum>>(
-        `/building/${row._id}`,
+      const result = await apiDelete<RefParamSingleResponse>(
+        `/ref-parameter/${row._id}`,
         {},
         false,
       );
@@ -97,49 +86,39 @@ export const TableBuilding = ({
     }
   };
 
-  const renderCell = (row: BuildingApiDaum, value: string) => {
+  const renderCell = (row: RefParamApiDaum, value: string) => {
     switch (value) {
-      case "code":
-        return (
-          <span className="font-mono text-xs font-bold text-gray-500 dark:text-zinc-400">
-            {row.code}
-          </span>
+      case "icon": {
+        const src = refImagePath(row.icon_id);
+        return src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl(src)}
+            alt={row.value}
+            className="h-9 w-9 object-contain rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-1"
+          />
+        ) : (
+          <div className="h-9 w-9 rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-[8px] text-zinc-400">
+            N/A
+          </div>
         );
-      case "name":
+      }
+      case "value":
         return (
           <span className="font-medium text-gray-800 dark:text-zinc-200">
-            {row.name}
+            {row.value}
           </span>
         );
-      case "branch":
-        return refName(row.branch_id);
-      case "building_type":
+      case "type":
         return (
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-              BUILDING_TYPE_BADGE[row.building_type as BuildingType] ?? ""
-            }`}
-          >
-            {BUILDING_TYPE_LABEL[row.building_type as BuildingType] ??
-              row.building_type}
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-sky-300 bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-700">
+            {row.type}
           </span>
         );
-      case "total_floors":
+      case "description":
         return (
-          <span className="font-mono text-gray-800 dark:text-zinc-200">
-            {row.total_floors}
-          </span>
-        );
-      case "status":
-        return (
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-              row.is_active
-                ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700"
-                : "border-zinc-300 bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600"
-            }`}
-          >
-            {row.is_active ? "Active" : "Inactive"}
+          <span className="text-gray-600 dark:text-zinc-400">
+            {row.description || "—"}
           </span>
         );
       default:
@@ -192,8 +171,8 @@ export const TableBuilding = ({
                           No data available
                         </p>
                         <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs mx-auto">
-                          There are no buildings found. Try creating a new entry
-                          or adjusting your search filters.
+                          There are no reference items found. Try creating a new
+                          entry or adjusting your filters.
                         </p>
                       </div>
                     </div>
@@ -216,18 +195,6 @@ export const TableBuilding = ({
                       >
                         {col.value === "action" ? (
                           <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
-                            {hasAccess.view && (
-                              <button
-                                onClick={() => {
-                                  setSelectedData(row);
-                                  setShowModalView(true);
-                                }}
-                                title="View floors"
-                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
-                              >
-                                <FiEye size={15} />
-                              </button>
-                            )}
                             {hasAccess.update && (
                               <button
                                 onClick={() => {
@@ -238,18 +205,6 @@ export const TableBuilding = ({
                                 className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
                               >
                                 <FiEdit2 size={15} />
-                              </button>
-                            )}
-                            {hasAccess.layout && (
-                              <button
-                                onClick={() => {
-                                  setSelectedData(row);
-                                  setShowModalLayout(true);
-                                }}
-                                title="Edit"
-                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 cursor-pointer"
-                              >
-                                <HiOutlinePuzzlePiece size={19} />
                               </button>
                             )}
                             {hasAccess.delete && (
@@ -366,7 +321,7 @@ export const TableBuilding = ({
       </div>
 
       {showModalUpdate && selectedData && (
-        <UpdateBuildingModal
+        <UpdateReferenceParameterModal
           isOpen={showModalUpdate}
           initialData={selectedData}
           onClose={() => setShowModalUpdate(false)}
@@ -374,23 +329,6 @@ export const TableBuilding = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
-        />
-      )}
-
-      {showModalView && selectedData && (
-        <ViewBuildingModal
-          isOpen={showModalView}
-          buildingId={selectedData._id}
-          onClose={() => setShowModalView(false)}
-          onRefresh={onRefresh}
-        />
-      )}
-
-      {showModalLayout && selectedData && (
-        <LayoutBuildingModal
-          isOpen={showModalLayout}
-          buildingId={selectedData._id}
-          onClose={() => setShowModalLayout(false)}
         />
       )}
     </div>

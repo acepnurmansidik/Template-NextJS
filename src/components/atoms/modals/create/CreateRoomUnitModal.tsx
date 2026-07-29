@@ -20,6 +20,7 @@ import {
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import NumberInput from "@/components/atoms/shared/NumberInput";
+import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
 
 interface DataProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export default function CreateRoomUnitModal({
   const [status, setStatus] = useState<RoomStatus>(RoomStatus.AVAILABLE);
   const [capacity, setCapacity] = useState(0);
   const [area, setArea] = useState(0);
-  const [amenities, setAmenities] = useState("");
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [imageId, setImageId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -141,10 +142,7 @@ export default function CreateRoomUnitModal({
         status,
         capacity: capacity,
         area_sqm: area,
-        amenities: amenities
-          .split(",")
-          .map((a) => a.trim())
-          .filter(Boolean),
+        amenities,
         image_id: imageId,
         notes: notes.trim(),
       };
@@ -314,11 +312,10 @@ export default function CreateRoomUnitModal({
 
             <div className="group md:col-span-2">
               <label className={labelCls}>Amenities</label>
-              <input
+              <AmenitiesSelect
+                instanceId="amenities-create-room"
                 value={amenities}
-                onChange={(e) => setAmenities(e.target.value)}
-                placeholder="Pisahkan dengan koma, mis. ac, wifi, tv"
-                className={inputCls}
+                onChange={setAmenities}
               />
             </div>
 

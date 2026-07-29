@@ -2,19 +2,12 @@
 
 import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import {
-  imageUrl,
-  refImagePath,
-  refName,
-  ROOM_STATUS_BADGE,
-  ROOM_STATUS_LABEL,
-  RoomStatus,
-  RoomUnitApiDaum,
-} from "@/types/facility";
+import { LayoutComponentApiDaum } from "@/types/LayoutComponent";
+import { imageUrl, refImagePath } from "@/types/facility";
 
 interface DataProps {
   isOpen: boolean;
-  initialData: RoomUnitApiDaum;
+  initialData: LayoutComponentApiDaum;
   onClose: () => void;
 }
 
@@ -27,7 +20,7 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
-export default function ViewRoomUnitModal({
+export default function ViewLayoutComponentModal({
   isOpen,
   initialData,
   onClose,
@@ -43,29 +36,18 @@ export default function ViewRoomUnitModal({
   if (!isOpen) return null;
 
   const c = initialData;
-  const floor =
-    c.floor_id && typeof c.floor_id === "object"
-      ? (c.floor_id.name ?? c.floor_id.code)
-      : "—";
-  const photo = refImagePath(c.image_id);
+  const image = refImagePath(c.image_id);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
-            {c.code}
+            {c.category}
           </span>
           <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
             {c.name}
           </h2>
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-              ROOM_STATUS_BADGE[c.status as RoomStatus] ?? ""
-            }`}
-          >
-            {ROOM_STATUS_LABEL[c.status as RoomStatus] ?? c.status}
-          </span>
         </div>
         <button
           onClick={onClose}
@@ -76,46 +58,24 @@ export default function ViewRoomUnitModal({
       </div>
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1">
-            {photo ? (
+            {image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={imageUrl(photo)}
+                src={imageUrl(image)}
                 alt={c.name}
-                className="w-full h-48 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700"
+                className="w-full h-48 object-contain rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3"
               />
             ) : (
               <div className="w-full h-48 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-xs text-zinc-400">
-                No photo
+                No image
               </div>
             )}
           </div>
           <div className="md:col-span-2 grid grid-cols-2 gap-6">
-            <Field label="Building" value={refName(c.building_id)} />
-            <Field label="Floor" value={floor} />
-            <Field label="Unit Type" value={c.unit_type?.replace(/_/g, " ")} />
-            <Field
-              label="Capacity"
-              value={c.capacity ? String(c.capacity) : "—"}
-            />
-            <Field
-              label="Area"
-              value={c.area_sqm ? `${c.area_sqm} m²` : "—"}
-            />
-            <Field label="Slug" value={c.slug} />
-            <div className="col-span-2">
-              <Field
-                label="Amenities"
-                value={(c.amenities ?? [])
-                  .map((a) => (a && typeof a === "object" ? a.value : a))
-                  .filter(Boolean)
-                  .join(", ")}
-              />
-            </div>
-            <div className="col-span-2">
-              <Field label="Notes" value={c.notes} />
-            </div>
+            <Field label="Name" value={c.name} />
+            <Field label="Category" value={c.category} />
           </div>
         </div>
       </div>

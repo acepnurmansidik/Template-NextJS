@@ -13,7 +13,7 @@ import {
 } from "@/types/facility";
 import UpdateBuildingFloorModal from "../modals/update/UpdateBuildingFloorModal";
 import ViewBuildingFloorModal from "../modals/view/ViewBuildingFloorModal";
-import { HiOutlinePuzzlePiece } from "react-icons/hi2";
+import { formatCurrencyPure } from "@/utils/formatter";
 
 interface DataProps {
   columns: { title: string; value: string; classname: string }[];
@@ -46,7 +46,7 @@ export const TableBuildingFloor = ({
     null,
   );
   const [showModalUpdate, setShowModalUpdate] = useState(false);
-  const [showModalLayout, setShowModalLayout] = useState(false);
+
   const [showModalView, setShowModalView] = useState(false);
 
   const handleDelete = async (row: BuildingFloorApiDaum) => {
@@ -250,18 +250,7 @@ export const TableBuildingFloor = ({
                                 <FiEdit2 size={15} />
                               </button>
                             )}
-                            {hasAccess.layout && (
-                              <button
-                                onClick={() => {
-                                  setSelectedData(row);
-                                  setShowModalLayout(true);
-                                }}
-                                title="Edit"
-                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 cursor-pointer"
-                              >
-                                <HiOutlinePuzzlePiece size={15} />
-                              </button>
-                            )}
+
                             {hasAccess.delete && (
                               <button
                                 onClick={() => handleDelete(row)}
@@ -272,6 +261,8 @@ export const TableBuildingFloor = ({
                               </button>
                             )}
                           </div>
+                        ) : col.value === "floor_area_sqm" ? (
+                          `${formatCurrencyPure(Number(row.floor_area_sqm))} m²`
                         ) : (
                           renderCell(row, col.value)
                         )}
