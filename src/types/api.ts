@@ -28,3 +28,9 @@ export interface ImageRef {
   _id: string;
   path: string;
 }
+
+export interface Column {
+  title: string;
+  value: string;
+  classname: string;
+}

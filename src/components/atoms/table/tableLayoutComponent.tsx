@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
@@ -12,7 +12,7 @@ import UpdateLayoutComponentModal from "../modals/update/UpdateLayoutComponentMo
 import ViewLayoutComponentModal from "../modals/view/ViewLayoutComponentModal";
 
 interface DataProps {
-  columns: { title: string; value: string; classname: string }[];
+  columns: Column[];
   hasAccess: Record<string, boolean>;
   data: LayoutComponentApiDaum[];
   page: number;

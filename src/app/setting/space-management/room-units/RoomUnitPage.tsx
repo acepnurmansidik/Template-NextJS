@@ -14,14 +14,14 @@ import {
 } from "@/types/facility";
 import CreateRoomUnitModal from "@/components/atoms/modals/create/CreateRoomUnitModal";
 import { TableRoomUnit } from "@/components/atoms/table/tableRoomUnit";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Code", value: "code", classname: "w-[16%]" },
   { title: "Name", value: "name", classname: "w-[16%]" },
   { title: "Building", value: "building", classname: "w-[16%]" },

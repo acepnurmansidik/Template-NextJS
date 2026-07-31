@@ -10,12 +10,20 @@ import { apiGet } from "@/utils/api";
 import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import CreateChartOfAccountModal from "@/components/atoms/modals/create/CreateChartOfAccountModal";
 import { TableChartOfAccount } from "@/components/atoms/table/tableChartOfAccount";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
+
+const columns: Column[] = [
+  { title: "Account Name", value: "name", classname: "w-[40%]" },
+  { title: "Type", value: "type", classname: "w-[12%]" },
+  { title: "Normal Balance", value: "normal_balance", classname: "w-[12%]" },
+  { title: "Level", value: "level", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[12%]" },
+];
 
 export const ChartOfAccountPage = ({ title, subtitle }: DataProps) => {
   const currentUser = useAppSelector((state) => state.iam.data);
@@ -120,6 +128,7 @@ export const ChartOfAccountPage = ({ title, subtitle }: DataProps) => {
           </div>
 
           <TableChartOfAccount
+            columns={columns}
             hasAccess={hasAccess}
             data={accounts}
             searchActive={!!search.trim()}

@@ -1,7 +1,6 @@
 "use client";
 
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 import { get } from "lodash";
 import { useState } from "react";
 import { ModuleApiDaum, ModuleResponseAPI } from "@/types/module";
@@ -16,7 +15,7 @@ import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
-  columns: { title: string; value: string }[];
+  columns: Column[];
   data: ModuleApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
@@ -150,7 +149,7 @@ export const TableModule = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className="py-2 px-3 font-bold cursor-pointer select-none"
+                      className={`py-2 px-3 font-bold select-none ${col.classname}`}
                     >
                       {col.value === "*" ? (
                         <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { get } from "lodash";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import { AppConfigApiDaum, UpdateType } from "@/types/appConfig";
@@ -13,7 +13,7 @@ import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
-  columns: { title: string; value: string }[];
+  columns: Column[];
   data: AppConfigApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
@@ -144,9 +144,7 @@ export const TableAppConfig = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className={`py-2 px-3 font-bold cursor-pointer select-none ${
-                        col.value === "action" ? "w-[10%]" : "w-[22%]"
-                      }`}
+                      className={`py-2 px-3 font-bold select-none ${col.classname}`}
                     >
                       {col.value === "*" ? (
                         <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
@@ -11,7 +11,7 @@ import { imageUrl, refImagePath } from "@/types/facility";
 import UpdateReferenceParameterModal from "../modals/update/UpdateReferenceParameterModal";
 
 interface DataProps {
-  columns: { title: string; value: string; classname: string }[];
+  columns: Column[];
   hasAccess: Record<string, boolean>;
   data: RefParamApiDaum[];
   page: number;
@@ -37,10 +37,10 @@ export const TableReferenceParameter = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
+  const [showModalUpdate, setShowModalUpdate] = useState(false);
   const [selectedData, setSelectedData] = useState<RefParamApiDaum | null>(
     null,
   );
-  const [showModalUpdate, setShowModalUpdate] = useState(false);
 
   const handleDelete = async (row: RefParamApiDaum) => {
     try {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 import axios from "axios";
 import Swal from "sweetalert2";
 import {
@@ -20,14 +20,6 @@ import {
 import UpdateChartOfAccountModal from "../modals/update/UpdateChartOfAccountModal";
 import ViewChartOfAccountModal from "../modals/view/ViewChartOfAccountModal";
 import { BALANCE_BADGE, TYPE_BADGE } from "@/utils/utils";
-
-const columns = [
-  { title: "Account Name", value: "name" },
-  { title: "Type", value: "type" },
-  { title: "Normal Balance", value: "normal_balance" },
-  { title: "Level", value: "level" },
-  { title: "Action", value: "action" },
-];
 
 // Ratakan pohon menjadi daftar baris yang TERLIHAT saja (node ikut tampil bila
 // seluruh leluhurnya sedang expanded), sambil menjaga urutan & kedalaman.
@@ -51,6 +43,7 @@ const flattenVisible = (
 interface DataProps {
   hasAccess: Record<string, boolean>;
   data: ChartOfAccountApiDaum[];
+  columns: Column[];
   // TRUE saat search aktif → semua node otomatis dibuka agar hasil terlihat.
   searchActive?: boolean;
   onRefresh?: () => void;
@@ -58,6 +51,7 @@ interface DataProps {
 }
 
 export const TableChartOfAccount = ({
+  columns,
   hasAccess,
   data,
   searchActive,
@@ -172,13 +166,7 @@ export const TableChartOfAccount = ({
                 {columns.map((col, index) => (
                   <th
                     key={index}
-                    className={`py-2 px-3 font-bold select-none ${
-                      col.value === "action"
-                        ? "w-[12%]"
-                        : col.value === "name"
-                          ? "w-[40%]"
-                          : "w-[12%]"
-                    }`}
+                    className={`py-2 px-3 font-bold select-none ${col.classname}`}
                   >
                     {col.title}
                   </th>

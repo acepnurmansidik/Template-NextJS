@@ -10,14 +10,14 @@ import { apiGet } from "@/utils/api";
 import CreateLayoutComponentModal from "@/components/atoms/modals/create/CreateLayoutComponentModal";
 import { TableLayoutComponent } from "@/components/atoms/table/tableLayoutComponent";
 import { LayoutComponentApiDaum } from "@/types/LayoutComponent";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Image", value: "image", classname: "w-[12%]" },
   { title: "Name", value: "name", classname: "w-[46%]" },
   { title: "Category", value: "category", classname: "w-[24%]" },

@@ -11,7 +11,7 @@ import { apiGet } from "@/utils/api";
 import { BuildingApiDaum, BuildingFloorApiDaum } from "@/types/facility";
 import CreateBuildingFloorModal from "@/components/atoms/modals/create/CreateBuildingFloorModal";
 import { TableBuildingFloor } from "@/components/atoms/table/tableBuildingFloor";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
@@ -20,7 +20,7 @@ interface DataProps {
 
 type Option = { value: string; label: string };
 
-const columns = [
+const columns: Column[] = [
   { title: "Code", value: "code", classname: "w-[16%]" },
   { title: "Name", value: "name", classname: "w-[14%]" },
   { title: "Building", value: "building", classname: "w-[16%]" },

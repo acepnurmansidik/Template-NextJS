@@ -19,13 +19,13 @@ import { usePathname } from "next/navigation";
 import { RoleApiDaum } from "@/types/role";
 import { apiGet } from "@/utils/api";
 import { useAppSelector } from "@/store/hooks";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
-  // { title: "Mark All", value: "*" },
-  { title: "Name", value: "name" },
-  { title: "Access", value: "has_access_module" },
-  { title: "Action", value: "action" },
+const columns: Column[] = [
+  // { title: "Mark All", value: "*",classname:"w-[12%]" },
+  { title: "Name", value: "name", classname: "w-[12%]" },
+  { title: "Access", value: "has_access_module", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { apiDelete } from "@/utils/api";
@@ -17,7 +17,7 @@ import { get } from "lodash";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
-  columns: { title: string; value: string; classname: string }[];
+  columns: Column[];
   data: JournalEntryApiDaum[];
   page: number;
   limit: number;

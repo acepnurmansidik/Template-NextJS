@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
 import {
@@ -23,7 +23,7 @@ import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
-  columns: { title: string; value: string }[];
+  columns: Column[];
   data: CalculatedFormulaApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
@@ -161,24 +161,32 @@ export const TableCalculatedFormula = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className={`py-2 px-3 font-bold cursor-pointer select-none ${
-                        col.value === "action"
-                          ? "w-[10%]"
-                          : col.value === "components"
-                            ? "w-[38%]"
-                            : "w-[18%]"
-                      }`}
+                      className={`py-2 px-3 font-bold select-none ${col.classname}`}
                     >
                       {col.value === "*" ? (
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedNames.length === data.length &&
-                            data.length > 0
-                          }
-                          onChange={handleSelectAll}
-                          className="h-[1.1rem] w-[1.1rem] cursor-pointer accent-blue-600"
-                        />
+                        <>
+                          <style jsx>{`
+                            input[type="checkbox"].custom-checkbox:checked::after {
+                              content: "✓";
+                              position: absolute;
+                              color: white;
+                              font-size: 13px;
+                              font-weight: bold;
+                              top: -2px;
+                              left: 2px;
+                            }
+                          `}</style>
+
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedNames.length === data.length &&
+                              data.length > 0
+                            }
+                            onChange={handleSelectAll}
+                            className="custom-checkbox h-[1.1rem] w-[1.1rem] cursor-pointer appearance-none rounded-md border border-gray-400 dark:border-zinc-500 checked:bg-blue-600 checked:border-blue-600 dark:checked:bg-blue-500 relative transition-all hover:border-blue-500 hover:shadow-md"
+                          />
+                        </>
                       ) : (
                         col.title
                       )}

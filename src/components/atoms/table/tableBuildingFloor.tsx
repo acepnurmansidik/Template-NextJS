@@ -9,10 +9,10 @@ import { BuildingFloorApiDaum, refImagePath, refName } from "@/types/facility";
 import UpdateBuildingFloorModal from "../modals/update/UpdateBuildingFloorModal";
 import ViewBuildingFloorModal from "../modals/view/ViewBuildingFloorModal";
 import { formatCurrencyPure } from "@/utils/formatter";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 
 interface DataProps {
-  columns: { title: string; value: string; classname: string }[];
+  columns: Column[];
   hasAccess: Record<string, boolean>;
   data: BuildingFloorApiDaum[];
   page: number;
@@ -38,12 +38,11 @@ export const TableBuildingFloor = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
+  const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
   const [selectedData, setSelectedData] = useState<BuildingFloorApiDaum | null>(
     null,
   );
-  const [showModalUpdate, setShowModalUpdate] = useState(false);
-
-  const [showModalView, setShowModalView] = useState(false);
 
   const handleDelete = async (row: BuildingFloorApiDaum) => {
     try {

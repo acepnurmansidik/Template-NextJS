@@ -10,14 +10,14 @@ import { apiGet } from "@/utils/api";
 import { BuildingApiDaum } from "@/types/facility";
 import CreateBuildingModal from "@/components/atoms/modals/create/CreateBuildingModal";
 import { TableBuilding } from "@/components/atoms/table/tableBuilding";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Code", value: "code", classname: "w-[12%]" },
   { title: "Name", value: "name", classname: "w-[22%]" },
   { title: "Branch", value: "branch", classname: "w-[18%]" },

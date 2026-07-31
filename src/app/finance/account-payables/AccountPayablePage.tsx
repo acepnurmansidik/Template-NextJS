@@ -1,14 +1,18 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import { AccountPayableApiDaum, AccountPayableStatus, AP_STATUS_LABEL } from "@/types/accountPayable";
+import {
+  AccountPayableApiDaum,
+  AccountPayableStatus,
+  AP_STATUS_LABEL,
+} from "@/types/accountPayable";
 import CreateAccountPayableModal from "@/components/atoms/modals/create/CreateAccountPayableModal";
 import { TableAccountPayable } from "@/components/atoms/table/tableAccountPayable";
 
@@ -17,7 +21,7 @@ interface DataProps {
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Bill No", value: "entry_no", classname: "w-[12%]" },
   { title: "Date", value: "date", classname: "w-[12%]" },
   { title: "Due", value: "due_date", classname: "w-[12%]" },
@@ -30,10 +34,22 @@ const columns = [
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All", value: "" },
-  { label: AP_STATUS_LABEL[AccountPayableStatus.DRAFT], value: AccountPayableStatus.DRAFT },
-  { label: AP_STATUS_LABEL[AccountPayableStatus.OPEN], value: AccountPayableStatus.OPEN },
-  { label: AP_STATUS_LABEL[AccountPayableStatus.PARTIAL], value: AccountPayableStatus.PARTIAL },
-  { label: AP_STATUS_LABEL[AccountPayableStatus.PAID], value: AccountPayableStatus.PAID },
+  {
+    label: AP_STATUS_LABEL[AccountPayableStatus.DRAFT],
+    value: AccountPayableStatus.DRAFT,
+  },
+  {
+    label: AP_STATUS_LABEL[AccountPayableStatus.OPEN],
+    value: AccountPayableStatus.OPEN,
+  },
+  {
+    label: AP_STATUS_LABEL[AccountPayableStatus.PARTIAL],
+    value: AccountPayableStatus.PARTIAL,
+  },
+  {
+    label: AP_STATUS_LABEL[AccountPayableStatus.PAID],
+    value: AccountPayableStatus.PAID,
+  },
   {
     label: AP_STATUS_LABEL[AccountPayableStatus.WRITE_OFF],
     value: AccountPayableStatus.WRITE_OFF,

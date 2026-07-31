@@ -14,13 +14,13 @@ import { apiGet } from "@/utils/api";
 import { ModuleApiDaum } from "@/types/module";
 import { useAppSelector } from "@/store/hooks";
 import Loading from "@/components/atoms/shared/Loading";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
-  // { title: "Mark All", value: "*" },
-  { title: "Code", value: "name" },
-  { title: "Title", value: "title" },
-  { title: "Action", value: "action" },
+const columns: Column[] = [
+  // { title: "Mark All", value: "*", classname: "w-[1%]" },
+  { title: "Code", value: "name", classname: "w-[12%]" },
+  { title: "Title", value: "title", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

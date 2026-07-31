@@ -16,10 +16,10 @@ import {
 import UpdateBuildingModal from "../modals/update/UpdateBuildingModal";
 import ViewBuildingModal from "../modals/view/ViewBuildingModal";
 import LayoutBuildingModal from "../modals/LayoutBuildingModal";
-import { SingleResponse } from "@/types/api";
+import { Column, SingleResponse } from "@/types/api";
 
 interface DataProps {
-  columns: { title: string; value: string; classname: string }[];
+  columns: Column[];
   hasAccess: Record<string, boolean>;
   data: BuildingApiDaum[];
   page: number;

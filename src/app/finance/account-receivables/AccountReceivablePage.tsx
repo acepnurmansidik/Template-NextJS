@@ -7,17 +7,21 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import { AccountReceivableApiDaum, AccountReceivableStatus, AR_STATUS_LABEL } from "@/types/accountReceivable";
+import {
+  AccountReceivableApiDaum,
+  AccountReceivableStatus,
+  AR_STATUS_LABEL,
+} from "@/types/accountReceivable";
 import CreateAccountReceivableModal from "@/components/atoms/modals/create/CreateAccountReceivableModal";
 import { TableAccountReceivable } from "@/components/atoms/table/tableAccountReceivable";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Invoice No", value: "entry_no", classname: "w-[12%]" },
   { title: "Date", value: "date", classname: "w-[12%]" },
   { title: "Due", value: "due_date", classname: "w-[12%]" },
@@ -30,10 +34,22 @@ const columns = [
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All", value: "" },
-  { label: AR_STATUS_LABEL[AccountReceivableStatus.DRAFT], value: AccountReceivableStatus.DRAFT },
-  { label: AR_STATUS_LABEL[AccountReceivableStatus.OPEN], value: AccountReceivableStatus.OPEN },
-  { label: AR_STATUS_LABEL[AccountReceivableStatus.PARTIAL], value: AccountReceivableStatus.PARTIAL },
-  { label: AR_STATUS_LABEL[AccountReceivableStatus.PAID], value: AccountReceivableStatus.PAID },
+  {
+    label: AR_STATUS_LABEL[AccountReceivableStatus.DRAFT],
+    value: AccountReceivableStatus.DRAFT,
+  },
+  {
+    label: AR_STATUS_LABEL[AccountReceivableStatus.OPEN],
+    value: AccountReceivableStatus.OPEN,
+  },
+  {
+    label: AR_STATUS_LABEL[AccountReceivableStatus.PARTIAL],
+    value: AccountReceivableStatus.PARTIAL,
+  },
+  {
+    label: AR_STATUS_LABEL[AccountReceivableStatus.PAID],
+    value: AccountReceivableStatus.PAID,
+  },
   {
     label: AR_STATUS_LABEL[AccountReceivableStatus.WRITE_OFF],
     value: AccountReceivableStatus.WRITE_OFF,

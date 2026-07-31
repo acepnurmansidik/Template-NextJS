@@ -10,15 +10,15 @@ import { ComponentFormulaApiDaum } from "@/types/componentFormula";
 import { apiGet } from "@/utils/api";
 import CreateComponentFormulaModal from "@/components/atoms/modals/create/CreateComponentFormulaModal";
 import { TableComponentFormula } from "@/components/atoms/table/tableComponentFormula";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
-  { title: "Name", value: "name" },
-  { title: "Rate Type", value: "rate_type" },
-  { title: "Rate", value: "rate" },
-  { title: "Decimal", value: "decimal_place" },
-  { title: "Used By", value: "used_by" },
-  { title: "Action", value: "action" },
+const columns: Column[] = [
+  { title: "Name", value: "name", classname: "w-[12%]" },
+  { title: "Rate Type", value: "rate_type", classname: "w-[12%]" },
+  { title: "Rate", value: "rate", classname: "w-[12%]" },
+  { title: "Decimal", value: "decimal_place", classname: "w-[12%]" },
+  { title: "Used By", value: "used_by", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

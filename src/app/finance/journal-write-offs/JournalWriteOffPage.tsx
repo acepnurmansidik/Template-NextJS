@@ -13,14 +13,14 @@ import {
 } from "@/types/journalWriteOff";
 import CreateJournalWriteOffModal from "@/components/atoms/modals/create/CreateJournalWriteOffModal";
 import { TableJournalWriteOff } from "@/components/atoms/table/tableJournalWriteOff";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Entry No", value: "entry_no", classname: "w-[12%]" },
   { title: "Date", value: "date", classname: "w-[12%]" },
   { title: "Type", value: "type", classname: "w-[12%]" },

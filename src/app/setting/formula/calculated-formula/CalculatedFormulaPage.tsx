@@ -10,14 +10,14 @@ import { CalculatedFormulaApiDaum } from "@/types/calculatedFormula";
 import { apiGet } from "@/utils/api";
 import CreateCalculatedFormulaModal from "@/components/atoms/modals/create/CreateCalculatedFormulaModal";
 import { TableCalculatedFormula } from "@/components/atoms/table/tableCalculatedFormula";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
-  { title: "Name", value: "name" },
-  { title: "Formula", value: "components" },
-  { title: "Result", value: "result" },
-  { title: "Decimal", value: "decimal_place" },
-  { title: "Action", value: "action" },
+const columns: Column[] = [
+  { title: "Name", value: "name", classname: "w-[12%]" },
+  { title: "Formula", value: "components", classname: "w-[38%]" },
+  { title: "Result", value: "result", classname: "w-[12%]" },
+  { title: "Decimal", value: "decimal_place", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

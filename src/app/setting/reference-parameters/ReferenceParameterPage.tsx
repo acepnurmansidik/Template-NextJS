@@ -10,14 +10,14 @@ import { apiGet } from "@/utils/api";
 import { RefParamApiDaum, RefParamTypesResponse } from "@/types/refParam";
 import CreateReferenceParameterModal from "@/components/atoms/modals/create/CreateReferenceParameterModal";
 import { TableReferenceParameter } from "@/components/atoms/table/tableReferenceParameter";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
 interface DataProps {
   title: string;
   subtitle: string;
 }
 
-const columns = [
+const columns: Column[] = [
   { title: "Icon", value: "icon", classname: "w-[10%]" },
   { title: "Value", value: "value", classname: "w-[24%]" },
   { title: "Type", value: "type", classname: "w-[18%]" },

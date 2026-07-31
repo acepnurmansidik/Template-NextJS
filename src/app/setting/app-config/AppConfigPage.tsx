@@ -12,15 +12,15 @@ import { AppConfigApiDaum } from "@/types/appConfig";
 import { apiGet } from "@/utils/api";
 import CreateAppConfigModal from "@/components/atoms/modals/create/CreateAppConfigModal";
 import { TableAppConfig } from "@/components/atoms/table/tableAppConfig";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
+const columns: Column[] = [
   // { title: "Mark All", value: "*" },
-  { title: "Platform", value: "platform" },
-  { title: "Version", value: "latest_version" },
-  { title: "Update Type", value: "update_type" },
-  { title: "Status", value: "status_maintenance" },
-  { title: "Action", value: "action" },
+  { title: "Platform", value: "platform", classname: "w-[12%]" },
+  { title: "Version", value: "latest_version", classname: "w-[12%]" },
+  { title: "Update Type", value: "update_type", classname: "w-[12%]" },
+  { title: "Status", value: "status_maintenance", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

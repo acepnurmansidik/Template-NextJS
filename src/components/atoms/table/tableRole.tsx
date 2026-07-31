@@ -1,7 +1,7 @@
 "use client";
 
 import { get } from "lodash";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 import { useState } from "react";
 import { RoleApiDaum } from "@/types/role";
 import UpdateRoleModal from "../modals/update/UpdateRoleModal";
@@ -13,7 +13,7 @@ import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DataProps {
   hasAccess: Record<string, boolean>;
-  columns: { title: string; value: string }[];
+  columns: Column[];
   data: RoleApiDaum[];
   visibleColumns: string[];
   selectedNames: string[];
@@ -146,7 +146,7 @@ export const TableRole = ({
                   .map((col, index) => (
                     <th
                       key={index}
-                      className={`py-2 px-3 font-bold cursor-pointer select-none ${col.value === "name" ? "w-[20%]" : col.value === "has_access_module" ? "w-[50%]" : "w-[10%]"}`}
+                      className={`py-2 px-3 font-bold select-none ${col.classname}`}
                     >
                       {col.value === "*" ? (
                         <>

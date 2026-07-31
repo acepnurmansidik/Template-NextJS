@@ -13,14 +13,14 @@ import { useAppSelector } from "@/store/hooks";
 import { UserApiDaum } from "@/types/users";
 import { apiGet } from "@/utils/api";
 import CreateUserIAMModal from "@/components/atoms/modals/create/CreateUserIAMModal";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
+const columns: Column[] = [
   // { title: "Mark All", value: "*" },
-  { title: "Name", value: "name" },
-  { title: "Email", value: "email" },
-  { title: "Role Name", value: "role_name" },
-  { title: "Action", value: "action" },
+  { title: "Name", value: "name", classname: "w-[12%]" },
+  { title: "Email", value: "email", classname: "w-[12%]" },
+  { title: "Role Name", value: "role_name", classname: "w-[12%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
 interface DataProps {

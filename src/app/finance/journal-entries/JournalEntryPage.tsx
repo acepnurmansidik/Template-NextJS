@@ -10,9 +10,9 @@ import { apiGet } from "@/utils/api";
 import { JournalEntryApiDaum, JournalStatus } from "@/types/journalEntry";
 import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
 import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
-import { ListResponse } from "@/types/api";
+import { Column, ListResponse } from "@/types/api";
 
-const columns = [
+const columns: Column[] = [
   { title: "Entry No", value: "entry_no", classname: "w-[16%]" },
   { title: "Date", value: "date", classname: "w-[12%]" },
   { title: "Description", value: "description", classname: "w-[28%]" },
