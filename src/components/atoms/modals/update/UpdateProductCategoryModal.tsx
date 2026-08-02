@@ -11,6 +11,7 @@ import { apiGet, apiPut } from "@/utils/api";
 import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
   accountId,
+  FormDataProductCategoryProps,
   ProductCategoryApiDaum,
   ProductCategoryPayload,
 } from "@/types/productCategory";
@@ -40,9 +41,14 @@ export default function UpdateProductCategoryModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [prefix, setPrefix] = useState(initialData.prefix);
-  const [isActive, setIsActive] = useState(initialData.is_active);
+  const [formData, setFormData] = useState<FormDataProductCategoryProps>(
+    () => ({
+      name: initialData.name,
+      prefix: initialData.prefix,
+      is_active: initialData.is_active,
+    }),
+  );
+  // State terpisah: tabel line accounts (dinamis add/remove) & daftar COA fetched.
   const [lines, setLines] = useState<LineForm[]>(
     (initialData.line_accounts ?? []).map((l) => ({
       title: l.title ?? "",
@@ -51,6 +57,19 @@ export default function UpdateProductCategoryModal({
   );
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      // Prefix selalu huruf besar (awalan kode produk).
+      if (name === "prefix") return { ...prev, prefix: value.toUpperCase() };
+      return { ...prev, [name]: value };
+    });
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -104,6 +123,8 @@ export default function UpdateProductCategoryModal({
     });
 
   const handleSubmit = async () => {
+    const { name, prefix, is_active } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -126,7 +147,7 @@ export default function UpdateProductCategoryModal({
       const payload: ProductCategoryPayload = {
         name: name.trim(),
         prefix: prefix.trim(),
-        is_active: isActive,
+        is_active,
         line_accounts: lines
           .filter((l) => l.account_id)
           .map((l) => ({ title: l.title.trim(), account_id: l.account_id })),
@@ -196,8 +217,9 @@ export default function UpdateProductCategoryModal({
                 Category Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -207,8 +229,9 @@ export default function UpdateProductCategoryModal({
                 Prefix<span className="text-red-500">*</span>
               </label>
               <input
-                value={prefix}
-                onChange={(e) => setPrefix(e.target.value.toUpperCase())}
+                value={formData.prefix}
+                name="prefix"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -217,8 +240,9 @@ export default function UpdateProductCategoryModal({
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">

@@ -11,6 +11,7 @@ import {
   BuildingFloorApiDaum,
   BuildingFloorPayload,
   FloorType,
+  FormDataBuildingFloorProps,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import NumberInput from "@/components/atoms/shared/NumberInput";
@@ -46,16 +47,28 @@ export default function CreateBuildingFloorModal({
   onSuccess,
   defaultBuildingId = null,
 }: DataProps) {
+  const [formData, setFormData] = useState<FormDataBuildingFloorProps>({
+    building_id: defaultBuildingId ?? "",
+    type: FloorType.FLOOR,
+    floor_area_sqm: 0,
+    max_capacity: 0,
+    notes: "",
+  });
+  // State terpisah — bukan field payload plain: daftar opsi building (fetched),
+  // planId (hasil upload gambar floor plan) & flag UI.
   const [buildings, setBuildings] = useState<BuildingApiDaum[]>([]);
-  const [buildingId, setBuildingId] = useState<string | null>(
-    defaultBuildingId,
-  );
-  const [type, setType] = useState<FloorType>(FloorType.FLOOR);
-  const [area, setArea] = useState(0);
-  const [capacity, setCapacity] = useState(0);
   const [planId, setPlanId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataBuildingFloorProps]: value,
+    }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -87,7 +100,9 @@ export default function CreateBuildingFloorModal({
   );
 
   const handleSubmit = async () => {
-    if (!buildingId) {
+    const { building_id, type, floor_area_sqm, max_capacity, notes } = formData;
+
+    if (!building_id) {
       Swal.fire({
         icon: "warning",
         title: "Building is required",
@@ -99,10 +114,10 @@ export default function CreateBuildingFloorModal({
     setIsLoading(true);
     try {
       const payload: BuildingFloorPayload = {
-        building_id: buildingId,
+        building_id,
         type,
-        floor_area_sqm: area,
-        max_capacity: capacity,
+        floor_area_sqm,
+        max_capacity,
         floor_plan_url_id: planId,
         notes: notes.trim(),
       };
@@ -145,8 +160,9 @@ export default function CreateBuildingFloorModal({
   if (!isOpen) return null;
 
   const selectedBuilding =
-    buildingOptions.find((o) => o.value === buildingId) ?? null;
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === type) ?? null;
+    buildingOptions.find((o) => o.value === formData.building_id) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.type) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -175,7 +191,12 @@ export default function CreateBuildingFloorModal({
                 placeholder="Select building…"
                 options={buildingOptions}
                 value={selectedBuilding}
-                onChange={(opt) => setBuildingId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    building_id: opt?.value ?? "",
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -194,7 +215,10 @@ export default function CreateBuildingFloorModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setType((opt?.value as FloorType) ?? FloorType.FLOOR)
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: (opt?.value as FloorType) ?? FloorType.FLOOR,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -206,8 +230,10 @@ export default function CreateBuildingFloorModal({
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
               <NumberInput
-                value={area}
-                onChange={setArea}
+                value={formData.floor_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, floor_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -216,8 +242,10 @@ export default function CreateBuildingFloorModal({
               <label className={labelCls}>Max Capacity</label>
               <NumberInput
                 integer
-                value={capacity}
-                onChange={setCapacity}
+                value={formData.max_capacity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, max_capacity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -234,8 +262,9 @@ export default function CreateBuildingFloorModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

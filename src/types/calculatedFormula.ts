@@ -4,6 +4,9 @@
 // (× ÷ sebelum + −) dan pengelompokan tanda kurung.
 
 import { RateType, AccountRef } from "./componentFormula";
+// Import type-only (dipakai hanya untuk hint) — hindari siklus runtime dgn
+// utils/formula yang juga mengimpor tipe dari file ini.
+import type { RoundMode as FormulaRoundMode } from "@/utils/formula";
 
 export enum FormulaOperator {
   ADD = "+",
@@ -127,6 +130,18 @@ export interface FormulaComponentApiDaum {
   accounts?: AccountRef[];
   created_at?: string;
   updated_at?: string;
+}
+
+// Field scalar header form. Susunan token ekspresi (`tokens`) & daftar komponen
+// PER_COMPONENT (`perComponents`) dinamis → tetap dikelola state terpisah.
+export interface FormDataCalculatedFormulaProps {
+  name: string;
+  calc_type: CalcType;
+  decimal_place: number;
+  rounding: FormulaRoundMode;
+  // Akun hasil akhir (multi-select) — id string.
+  accounts: string[];
+  account_assignment: AccountAssignment;
 }
 
 export interface CalculatedFormulaForm {

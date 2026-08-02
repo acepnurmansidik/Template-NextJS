@@ -12,6 +12,7 @@ import {
   AccountType,
   ChartOfAccountApiDaum,
   ChartOfAccountPayload,
+  FormDataChartOfAccountProps,
   normalBalanceForType,
   selectableParents,
 } from "@/types/chartOfAccount";
@@ -41,14 +42,29 @@ export default function CreateChartOfAccountModal({
   onSuccess,
   defaultParentId = null,
 }: DataProps) {
+  // State terpisah — accounts adalah opsi dropdown hasil fetch (bukan field
+  // payload), plus flag UI.
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [type, setType] = useState<AccountType>(AccountType.ASSET);
-  const [isHeader, setIsHeader] = useState(false);
-  const [parentId, setParentId] = useState<string | null>(defaultParentId);
-  const [description, setDescription] = useState("");
+  const [formData, setFormData] = useState<FormDataChartOfAccountProps>(() => ({
+    code: "",
+    name: "",
+    type: AccountType.ASSET,
+    is_header: false,
+    parent_id: defaultParentId,
+    description: "",
+  }));
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      return { ...prev, [name]: value };
+    });
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -83,18 +99,19 @@ export default function CreateChartOfAccountModal({
     [accounts],
   );
 
-  const selectedParent = accounts.find((a) => a._id === parentId) ?? null;
+  const selectedParent =
+    accounts.find((a) => a._id === formData.parent_id) ?? null;
   // Anak mewarisi type induk; type hanya bisa dipilih untuk akun root.
-  const effectiveType = selectedParent ? selectedParent.type : type;
+  const effectiveType = selectedParent ? selectedParent.type : formData.type;
   const normalBalance = normalBalanceForType(effectiveType);
 
   // Kode induk otomatis menjadi prefix terkunci (mis. "1000."). User hanya
   // mengetik segmen lokal; kode final = prefix + segmen.
   const codePrefix = selectedParent ? `${selectedParent.code}.` : "";
-  const fullCodePreview = `${codePrefix}${code || "…"}`;
+  const fullCodePreview = `${codePrefix}${formData.code || "…"}`;
 
   const handleSubmit = async () => {
-    if (!code.trim()) {
+    if (!formData.code.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Account code is required",
@@ -102,7 +119,7 @@ export default function CreateChartOfAccountModal({
       });
       return;
     }
-    if (!name.trim()) {
+    if (!formData.name.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Account name is required",
@@ -113,14 +130,15 @@ export default function CreateChartOfAccountModal({
 
     setIsLoading(true);
     try {
+      const { code, name, is_header, parent_id, description, type } = formData;
       const payload: ChartOfAccountPayload = {
         code: code.trim(),
         name: name.trim(),
-        is_header: isHeader,
-        parent_id: parentId,
+        is_header,
+        parent_id,
         description: description.trim(),
         // Type hanya relevan untuk akun root; anak mewarisi dari induk.
-        ...(parentId ? {} : { type }),
+        ...(parent_id ? {} : { type }),
       };
 
       const result = await apiPost<SingleResponse<ChartOfAccountApiDaum>>(
@@ -164,7 +182,7 @@ export default function CreateChartOfAccountModal({
   const selectedTypeOption =
     TYPE_OPTIONS.find((o) => o.value === effectiveType) ?? null;
   const selectedParentOption =
-    parentOptions.find((o) => o.value === parentId) ?? null;
+    parentOptions.find((o) => o.value === formData.parent_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -195,9 +213,14 @@ export default function CreateChartOfAccountModal({
                   </span>
                 )}
                 <input
-                  value={code}
+                  value={formData.code}
                   // Titik dilarang pada segmen — prefix induk sudah menyertakannya.
-                  onChange={(e) => setCode(e.target.value.replace(/\./g, ""))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      code: e.target.value.replace(/\./g, ""),
+                    }))
+                  }
                   placeholder={codePrefix ? "e.g. 123" : "e.g. 1000"}
                   className="flex-1 min-w-0 bg-white dark:bg-zinc-950 p-2.5 text-sm outline-none dark:text-zinc-100"
                 />
@@ -218,8 +241,9 @@ export default function CreateChartOfAccountModal({
                 Account Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 placeholder="e.g. Cash & Bank"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
@@ -237,7 +261,12 @@ export default function CreateChartOfAccountModal({
                 placeholder="— Root account —"
                 options={parentOptions}
                 value={selectedParentOption}
-                onChange={(opt) => setParentId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    parent_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -257,11 +286,14 @@ export default function CreateChartOfAccountModal({
               <Select
                 instanceId="coa-type-create"
                 classNamePrefix="rs"
-                isDisabled={!!parentId}
+                isDisabled={!!formData.parent_id}
                 options={TYPE_OPTIONS}
                 value={selectedTypeOption}
                 onChange={(opt) =>
-                  setType((opt?.value as AccountType) ?? AccountType.ASSET)
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: (opt?.value as AccountType) ?? AccountType.ASSET,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -269,7 +301,7 @@ export default function CreateChartOfAccountModal({
                 styles={selectStyles}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                {parentId
+                {formData.parent_id
                   ? "Diturunkan otomatis dari induk."
                   : `Saldo normal: ${normalBalance}.`}
               </p>
@@ -280,8 +312,9 @@ export default function CreateChartOfAccountModal({
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={isHeader}
-                  onChange={(e) => setIsHeader(e.target.checked)}
+                  name="is_header"
+                  checked={formData.is_header}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -300,8 +333,9 @@ export default function CreateChartOfAccountModal({
                 Description
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 rows={3}
                 placeholder="Optional note about this account"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 resize-none"

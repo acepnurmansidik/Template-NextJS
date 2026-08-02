@@ -98,6 +98,16 @@ export interface ChartOfAccountPayload {
   description?: string;
 }
 
+// Field form (code menyimpan segmen lokal saja; parent_id null = akun root).
+export interface FormDataChartOfAccountProps {
+  code: string;
+  name: string;
+  type: AccountType;
+  is_header: boolean;
+  parent_id: string | null;
+  description: string;
+}
+
 // Susun daftar flat (terurut by path dari server) menjadi pohon berjenjang.
 export const buildTree = (
   items: ChartOfAccountApiDaum[],

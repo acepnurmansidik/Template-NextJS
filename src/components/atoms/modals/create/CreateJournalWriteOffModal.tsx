@@ -21,6 +21,7 @@ import {
   WRITE_OFF_TYPE_LABEL,
   sumLines,
   JournalWriteOffApiDaum,
+  FormDataJournalWriteOffProps,
 } from "@/types/journalWriteOff";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 
@@ -123,18 +124,20 @@ export default function CreateJournalWriteOffModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // State terpisah — daftar baris debit/credit (dinamis) & daftar akun COA
+  // yang di-fetch untuk dropdown, tidak bisa jadi field scalar formData.
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [date, setDate] = useState(today());
-  const [writeOffType, setWriteOffType] = useState<WriteOffType>(
-    WriteOffType.RECEIVABLE,
+  const [formData, setFormData] = useState<FormDataJournalWriteOffProps>(
+    () => ({
+      date: today(),
+      write_off_type: WriteOffType.RECEIVABLE,
+      description: "",
+      reference: "",
+      status: WriteOffStatus.DRAFT,
+      source_type: WriteOffSourceType.NONE,
+      source_id: "",
+    }),
   );
-  const [description, setDescription] = useState("");
-  const [reference, setReference] = useState("");
-  const [status, setStatus] = useState<WriteOffStatus>(WriteOffStatus.DRAFT);
-  const [sourceType, setSourceType] = useState<WriteOffSourceType>(
-    WriteOffSourceType.NONE,
-  );
-  const [sourceId, setSourceId] = useState("");
   const [lines, setLines] = useState<WriteOffLineForm[]>([
     { ...emptyLine },
     { ...emptyLine },
@@ -148,6 +151,16 @@ export default function CreateJournalWriteOffModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataJournalWriteOffProps]: value,
+    }));
+  };
 
   useEffect(() => {
     (async () => {
@@ -185,14 +198,25 @@ export default function CreateJournalWriteOffModal({
     );
 
   const selectedStatus =
-    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ??
+    STATUS_OPTIONS[0];
   const selectedType =
-    TYPE_OPTIONS.find((o) => o.value === writeOffType) ?? TYPE_OPTIONS[0];
+    TYPE_OPTIONS.find((o) => o.value === formData.write_off_type) ??
+    TYPE_OPTIONS[0];
   const selectedSourceType =
-    SOURCE_TYPE_OPTIONS.find((o) => o.value === sourceType) ??
+    SOURCE_TYPE_OPTIONS.find((o) => o.value === formData.source_type) ??
     SOURCE_TYPE_OPTIONS[0];
 
   const handleSubmit = async () => {
+    const {
+      date,
+      write_off_type: writeOffType,
+      description,
+      reference,
+      status,
+      source_type: sourceType,
+      source_id: sourceId,
+    } = formData;
     if (!date) {
       Swal.fire({
         icon: "warning",
@@ -311,8 +335,9 @@ export default function CreateJournalWriteOffModal({
               </label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -325,9 +350,11 @@ export default function CreateJournalWriteOffModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setWriteOffType(
-                    (opt?.value as WriteOffType) ?? WriteOffType.OTHER,
-                  )
+                  setFormData((prev) => ({
+                    ...prev,
+                    write_off_type:
+                      (opt?.value as WriteOffType) ?? WriteOffType.OTHER,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -344,9 +371,11 @@ export default function CreateJournalWriteOffModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus(
-                    (opt?.value as WriteOffStatus) ?? WriteOffStatus.DRAFT,
-                  )
+                  setFormData((prev) => ({
+                    ...prev,
+                    status:
+                      (opt?.value as WriteOffStatus) ?? WriteOffStatus.DRAFT,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -362,13 +391,15 @@ export default function CreateJournalWriteOffModal({
                 classNamePrefix="rs"
                 options={SOURCE_TYPE_OPTIONS}
                 value={selectedSourceType}
-                onChange={(opt) => {
-                  setSourceType(
-                    (opt?.value as WriteOffSourceType) ??
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    source_type:
+                      (opt?.value as WriteOffSourceType) ??
                       WriteOffSourceType.NONE,
-                  );
-                  setSourceId("");
-                }}
+                    source_id: "",
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -378,13 +409,15 @@ export default function CreateJournalWriteOffModal({
 
             <div className="group md:col-span-2">
               <label className={labelCls}>Source Document</label>
-              {sourceType === WriteOffSourceType.NONE ? (
+              {formData.source_type === WriteOffSourceType.NONE ? (
                 <input disabled value="—" className={inputCls} />
               ) : (
                 <SourceDocSelect
-                  sourceType={sourceType}
-                  sourceId={sourceId}
-                  setSourceId={setSourceId}
+                  sourceType={formData.source_type}
+                  sourceId={formData.source_id}
+                  setSourceId={(v) =>
+                    setFormData((prev) => ({ ...prev, source_id: v }))
+                  }
                 />
               )}
               <p className="mt-1 text-[11px] text-zinc-400">
@@ -396,8 +429,9 @@ export default function CreateJournalWriteOffModal({
             <div className="group">
               <label className={labelCls}>Reference</label>
               <input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
                 placeholder="e.g. AR-202607-0001"
                 className={inputCls}
               />
@@ -406,8 +440,9 @@ export default function CreateJournalWriteOffModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Description / Reason</label>
               <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 placeholder="Reason for the write off"
                 className={inputCls}
               />

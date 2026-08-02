@@ -20,6 +20,13 @@ export interface LayoutComponentPayload {
   image_id?: string | null;
 }
 
+// State form (image_id = id hasil upload, dikelola oleh ImageUpload).
+export interface FormDataLayoutComponentProps {
+  name: string;
+  category: string;
+  image_id: string | null;
+}
+
 // Satu grup komponen (hasil endpoint /layout-component/grouped).
 export interface LayoutComponentGroup {
   category: string;

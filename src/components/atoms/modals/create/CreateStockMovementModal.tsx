@@ -10,6 +10,7 @@ import { ListResponse, SingleResponse } from "@/types/api";
 import {
   MovementType,
   MOVEMENT_TYPE_LABEL,
+  FormDataStockMovementProps,
   StockMovementApiDaum,
   StockMovementPayload,
 } from "@/types/stockMovement";
@@ -68,20 +69,28 @@ export default function CreateStockMovementModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // Daftar opsi dropdown di-fetch dari API — tetap terpisah dari formData.
   const [products, setProducts] = useState<SourceDaum[]>([]);
   const [warehouses, setWarehouses] = useState<SourceDaum[]>([]);
 
-  const [type, setType] = useState<MovementType>(MovementType.IN);
-  const [productId, setProductId] = useState<string | null>(null);
-  const [warehouseId, setWarehouseId] = useState<string | null>(null);
-  const [destinationWarehouseId, setDestinationWarehouseId] = useState<
-    string | null
-  >(null);
-  const [quantity, setQuantity] = useState(0);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [reference, setReference] = useState("");
-  const [note, setNote] = useState("");
+  const [formData, setFormData] = useState<FormDataStockMovementProps>(() => ({
+    type: MovementType.IN,
+    product_id: null,
+    warehouse_id: null,
+    destination_warehouse_id: null,
+    quantity: 0,
+    date: new Date().toISOString().slice(0, 10),
+    reference: "",
+    note: "",
+  }));
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -120,11 +129,24 @@ export default function CreateStockMovementModal({
     [warehouses],
   );
 
-  const selectedProductRow = products.find((p) => p._id === productId);
+  const selectedProductRow = products.find(
+    (p) => p._id === formData.product_id,
+  );
   const productUom = labelUom(selectedProductRow?.uom_id);
 
   const handleSubmit = async () => {
-    if (!productId || !warehouseId) {
+    const {
+      type,
+      product_id,
+      warehouse_id,
+      destination_warehouse_id,
+      quantity,
+      date,
+      reference,
+      note,
+    } = formData;
+
+    if (!product_id || !warehouse_id) {
       Swal.fire({
         icon: "warning",
         title: "Product & warehouse are required",
@@ -132,7 +154,7 @@ export default function CreateStockMovementModal({
       });
       return;
     }
-    if (type === MovementType.TRANSFER && !destinationWarehouseId) {
+    if (type === MovementType.TRANSFER && !destination_warehouse_id) {
       Swal.fire({
         icon: "warning",
         title: "Destination warehouse is required for transfer",
@@ -144,10 +166,10 @@ export default function CreateStockMovementModal({
     setIsLoading(true);
     try {
       const payload: StockMovementPayload = {
-        product_id: productId,
-        warehouse_id: warehouseId,
+        product_id,
+        warehouse_id,
         destination_warehouse_id:
-          type === MovementType.TRANSFER ? destinationWarehouseId : null,
+          type === MovementType.TRANSFER ? destination_warehouse_id : null,
         // UOM otomatis dari product terpilih.
         uom_id: productUom.id,
         type,
@@ -194,13 +216,16 @@ export default function CreateStockMovementModal({
 
   if (!isOpen) return null;
 
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === type) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.type) ?? null;
   const selectedProduct =
-    productOptions.find((o) => o.value === productId) ?? null;
+    productOptions.find((o) => o.value === formData.product_id) ?? null;
   const selectedWarehouse =
-    warehouseOptions.find((o) => o.value === warehouseId) ?? null;
+    warehouseOptions.find((o) => o.value === formData.warehouse_id) ?? null;
   const selectedDestination =
-    warehouseOptions.find((o) => o.value === destinationWarehouseId) ?? null;
+    warehouseOptions.find(
+      (o) => o.value === formData.destination_warehouse_id,
+    ) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -229,7 +254,10 @@ export default function CreateStockMovementModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setType((opt?.value as MovementType) ?? MovementType.IN)
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: (opt?.value as MovementType) ?? MovementType.IN,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -248,7 +276,12 @@ export default function CreateStockMovementModal({
                 placeholder="Select product…"
                 options={productOptions}
                 value={selectedProduct}
-                onChange={(opt) => setProductId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -266,7 +299,12 @@ export default function CreateStockMovementModal({
                 placeholder="Select warehouse…"
                 options={warehouseOptions}
                 value={selectedWarehouse}
-                onChange={(opt) => setWarehouseId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    warehouse_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -274,7 +312,7 @@ export default function CreateStockMovementModal({
               />
             </div>
 
-            {type === MovementType.TRANSFER && (
+            {formData.type === MovementType.TRANSFER && (
               <div className="group">
                 <label className={labelCls}>
                   Destination Warehouse
@@ -287,7 +325,10 @@ export default function CreateStockMovementModal({
                   options={warehouseOptions}
                   value={selectedDestination}
                   onChange={(opt) =>
-                    setDestinationWarehouseId(opt?.value ?? null)
+                    setFormData((prev) => ({
+                      ...prev,
+                      destination_warehouse_id: opt?.value ?? null,
+                    }))
                   }
                   menuPortalTarget={
                     typeof document !== "undefined" ? document.body : null
@@ -309,8 +350,10 @@ export default function CreateStockMovementModal({
                 Quantity<span className="text-red-500">*</span>
               </label>
               <CurrencyInput
-                value={quantity}
-                onChange={setQuantity}
+                value={formData.quantity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, quantity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -319,8 +362,9 @@ export default function CreateStockMovementModal({
               <label className={labelCls}>Date</label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -328,8 +372,9 @@ export default function CreateStockMovementModal({
             <div className="group">
               <label className={labelCls}>Reference</label>
               <input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
                 placeholder="e.g. PO-0001"
                 className={inputCls}
               />
@@ -338,8 +383,9 @@ export default function CreateStockMovementModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Note</label>
               <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
+                name="note"
+                value={formData.note}
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

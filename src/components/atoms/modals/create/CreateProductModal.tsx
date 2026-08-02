@@ -6,7 +6,11 @@ import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
-import { ProductApiDaum, ProductPayload } from "@/types/product";
+import {
+  FormDataProductProps,
+  ProductApiDaum,
+  ProductPayload,
+} from "@/types/product";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { ListResponse, SingleResponse } from "@/types/api";
 
@@ -38,23 +42,35 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
+const defaultValue: FormDataProductProps = {
+  product_category_id: null,
+  uom_id: null,
+  code: "",
+  name: "",
+  barcode: "",
+  description: "",
+  purchase_price: 0,
+  selling_price: 0,
+};
+
 export default function CreateProductModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
+  // FETCHED option lists — tetap state terpisah (hanya daftar option-nya).
   const [categories, setCategories] = useState<CategoryDaum[]>([]);
   const [uoms, setUoms] = useState<UomDaum[]>([]);
 
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [uomId, setUomId] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [barcode, setBarcode] = useState("");
-  const [description, setDescription] = useState("");
-  const [purchasePrice, setPurchasePrice] = useState(0);
-  const [sellingPrice, setSellingPrice] = useState(0);
+  const [formData, setFormData] = useState<FormDataProductProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -105,7 +121,18 @@ export default function CreateProductModal({
   );
 
   const handleSubmit = async () => {
-    if (!categoryId || !uomId || !name.trim()) {
+    const {
+      product_category_id,
+      uom_id,
+      code,
+      name,
+      description,
+      barcode,
+      purchase_price,
+      selling_price,
+    } = formData;
+
+    if (!product_category_id || !uom_id || !name.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Category, UOM & Name are required",
@@ -117,15 +144,15 @@ export default function CreateProductModal({
     setIsLoading(true);
     try {
       const payload: ProductPayload = {
-        product_category_id: categoryId,
-        uom_id: uomId,
+        product_category_id,
+        uom_id,
         // Kosongkan → backend auto-generate kode per kategori.
         code: code.trim() || undefined,
         name: name.trim(),
         description: description.trim(),
         barcode: barcode.trim(),
-        purchase_price: purchasePrice,
-        selling_price: sellingPrice,
+        purchase_price,
+        selling_price,
       };
 
       const result = await apiPost<SingleResponse<ProductApiDaum>>(
@@ -166,8 +193,10 @@ export default function CreateProductModal({
   if (!isOpen) return null;
 
   const selectedCategory =
-    categoryOptions.find((o) => o.value === categoryId) ?? null;
-  const selectedUom = uomOptions.find((o) => o.value === uomId) ?? null;
+    categoryOptions.find((o) => o.value === formData.product_category_id) ??
+    null;
+  const selectedUom =
+    uomOptions.find((o) => o.value === formData.uom_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -196,7 +225,12 @@ export default function CreateProductModal({
                 placeholder="Select category…"
                 options={categoryOptions}
                 value={selectedCategory}
-                onChange={(opt) => setCategoryId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_category_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -214,7 +248,12 @@ export default function CreateProductModal({
                 placeholder="Select unit of measure…"
                 options={uomOptions}
                 value={selectedUom}
-                onChange={(opt) => setUomId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    uom_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -225,8 +264,9 @@ export default function CreateProductModal({
             <div className="group">
               <label className={labelCls}>Code / SKU</label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 placeholder="Kosongkan untuk auto-generate"
                 className={inputCls}
               />
@@ -240,8 +280,9 @@ export default function CreateProductModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="Product name"
                 className={inputCls}
               />
@@ -250,8 +291,9 @@ export default function CreateProductModal({
             <div className="group">
               <label className={labelCls}>Barcode</label>
               <input
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
+                value={formData.barcode}
+                name="barcode"
+                onChange={handleChange}
                 placeholder="Barcode (optional)"
                 className={inputCls}
               />
@@ -260,8 +302,10 @@ export default function CreateProductModal({
             <div className="group">
               <label className={labelCls}>Purchase Price</label>
               <CurrencyInput
-                value={purchasePrice}
-                onChange={setPurchasePrice}
+                value={formData.purchase_price}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, purchase_price: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -269,8 +313,10 @@ export default function CreateProductModal({
             <div className="group">
               <label className={labelCls}>Selling Price</label>
               <CurrencyInput
-                value={sellingPrice}
-                onChange={setSellingPrice}
+                value={formData.selling_price}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, selling_price: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -278,8 +324,9 @@ export default function CreateProductModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                name="description"
+                onChange={handleChange}
                 rows={3}
                 className={`${inputCls} resize-none`}
               />

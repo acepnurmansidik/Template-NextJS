@@ -12,6 +12,7 @@ import {
   BuildingPayload,
   BuildingType,
   BUILDING_TYPE_LABEL,
+  FormDataBuildingProps,
 } from "@/types/facility";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 import { ListResponse, SingleResponse } from "@/types/api";
@@ -38,22 +39,53 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
+const defaultValue: FormDataBuildingProps = {
+  branch_id: "",
+  name: "",
+  building_type: BuildingType.OFFICE,
+  total_floors: 1,
+  building_area_sqm: 0,
+  land_area_sqm: 0,
+  address: {
+    street: "",
+    city: "",
+  },
+  notes: "",
+  is_active: true,
+};
+
 export default function CreateBuildingModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
+  const [formData, setFormData] = useState<FormDataBuildingProps>(defaultValue);
+  // State terpisah — bukan field payload plain: daftar opsi branch (fetched) & flag UI.
   const [branches, setBranches] = useState<BranchApiDaum[]>([]);
-  const [branchId, setBranchId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [type, setType] = useState<BuildingType>(BuildingType.OFFICE);
-  const [totalFloors, setTotalFloors] = useState(1);
-  const [buildingArea, setBuildingArea] = useState(0);
-  const [landArea, setLandArea] = useState(0);
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      // Update address (street, city)
+      if (["street", "city"].includes(name)) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+      // Field top-level biasa (name, notes)
+      return {
+        ...prev,
+        [name as keyof FormDataBuildingProps]: value,
+      };
+    });
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -85,7 +117,18 @@ export default function CreateBuildingModal({
   );
 
   const handleSubmit = async () => {
-    if (!branchId) {
+    const {
+      branch_id,
+      name,
+      building_type,
+      total_floors,
+      building_area_sqm,
+      land_area_sqm,
+      address,
+      notes,
+    } = formData;
+
+    if (!branch_id) {
       Swal.fire({
         icon: "warning",
         title: "Branch is required",
@@ -105,13 +148,16 @@ export default function CreateBuildingModal({
     setIsLoading(true);
     try {
       const payload: BuildingPayload = {
-        branch_id: branchId,
+        branch_id,
         name: name.trim(),
-        building_type: type,
-        total_floors: Math.max(totalFloors || 1, 1),
-        building_area_sqm: buildingArea,
-        land_area_sqm: landArea,
-        address: { street: street.trim(), city: city.trim() },
+        building_type,
+        total_floors: Math.max(total_floors || 1, 1),
+        building_area_sqm,
+        land_area_sqm,
+        address: {
+          street: (address.street ?? "").trim(),
+          city: (address.city ?? "").trim(),
+        },
         notes: notes.trim(),
       };
 
@@ -155,8 +201,9 @@ export default function CreateBuildingModal({
   if (!isOpen) return null;
 
   const selectedBranch =
-    branchOptions.find((o) => o.value === branchId) ?? null;
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === type) ?? null;
+    branchOptions.find((o) => o.value === formData.branch_id) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.building_type) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -185,7 +232,12 @@ export default function CreateBuildingModal({
                 placeholder="Select branch…"
                 options={branchOptions}
                 value={selectedBranch}
-                onChange={(opt) => setBranchId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    branch_id: opt?.value ?? "",
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -198,8 +250,9 @@ export default function CreateBuildingModal({
                 Building Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. ANGGREK"
                 className={inputCls}
               />
@@ -216,7 +269,11 @@ export default function CreateBuildingModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setType((opt?.value as BuildingType) ?? BuildingType.OFFICE)
+                  setFormData((prev) => ({
+                    ...prev,
+                    building_type:
+                      (opt?.value as BuildingType) ?? BuildingType.OFFICE,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -232,13 +289,15 @@ export default function CreateBuildingModal({
               <NumberInput
                 integer
                 min={1}
-                value={totalFloors}
-                onChange={setTotalFloors}
+                value={formData.total_floors}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, total_floors: v }))
+                }
                 className={inputCls}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                {totalFloors > 0
-                  ? `Otomatis membuat ${totalFloors} lantai: Floor 1 … Floor ${totalFloors}.`
+                {formData.total_floors > 0
+                  ? `Otomatis membuat ${formData.total_floors} lantai: Floor 1 … Floor ${formData.total_floors}.`
                   : "Minimal 1 lantai."}
               </p>
             </div>
@@ -246,8 +305,10 @@ export default function CreateBuildingModal({
             <div className="group">
               <label className={labelCls}>Building Area (m²)</label>
               <NumberInput
-                value={buildingArea}
-                onChange={setBuildingArea}
+                value={formData.building_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, building_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -255,8 +316,10 @@ export default function CreateBuildingModal({
             <div className="group">
               <label className={labelCls}>Land Area (m²)</label>
               <NumberInput
-                value={landArea}
-                onChange={setLandArea}
+                value={formData.land_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, land_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -264,8 +327,9 @@ export default function CreateBuildingModal({
             <div className="group">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street ?? ""}
+                name="street"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -273,8 +337,9 @@ export default function CreateBuildingModal({
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city ?? ""}
+                name="city"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -282,8 +347,9 @@ export default function CreateBuildingModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

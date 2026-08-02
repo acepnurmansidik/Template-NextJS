@@ -21,6 +21,13 @@ export interface RefParamPayload {
   icon_id?: string | null;
 }
 
+// Field teks form (icon/image upload dikelola state `iconId` terpisah).
+export interface FormDataRefParamProps {
+  value: string;
+  type: string;
+  description: string;
+}
+
 export interface RefParamTypesResponse {
   success: boolean;
   message: string;

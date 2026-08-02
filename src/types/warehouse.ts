@@ -26,3 +26,16 @@ export interface WarehousePayload {
   address?: WarehouseAddress;
   is_active?: boolean;
 }
+
+export interface FormDataWarehouseProps {
+  name: string;
+  code: string;
+  phone: string;
+  address: {
+    street: string;
+    city: string;
+    state_province: string;
+    postal_code: string;
+    country: string;
+  };
+}

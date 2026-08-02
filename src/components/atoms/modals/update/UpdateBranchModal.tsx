@@ -7,6 +7,7 @@ import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
 import { BranchApiDaum, BranchPayload } from "@/types/facility";
+import { FormDataBranchProps } from "@/types/branch";
 import LocationPicker, {
   LatLng,
   PickedAddress,
@@ -39,28 +40,27 @@ export default function UpdateBranchModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [description, setDescription] = useState(initialData.description ?? "");
-  const [managerName, setManagerName] = useState(
-    initialData.contact_info?.manager_name ?? "",
-  );
-  const [email, setEmail] = useState(initialData.contact_info?.email ?? "");
-  const [phone, setPhone] = useState(
-    initialData.contact_info?.phone?.[0] ?? "",
-  );
-  const [street, setStreet] = useState(initialData.address?.street ?? "");
-  const [city, setCity] = useState(initialData.address?.city ?? "");
-  const [stateProvince, setStateProvince] = useState(
-    initialData.address?.state_province ?? "",
-  );
-  const [postalCode, setPostalCode] = useState(
-    initialData.address?.postal_code ?? "",
-  );
-  const [country, setCountry] = useState(
-    initialData.address?.country ?? "Indonesia",
-  );
-  const [isActive, setIsActive] = useState(initialData.is_active);
-  const [notes, setNotes] = useState(initialData.notes ?? "");
+  const [formData, setFormData] = useState<FormDataBranchProps>(() => ({
+    name: initialData.name ?? "",
+    notes: initialData.notes ?? "",
+    description: initialData.description ?? "",
+    contact_info: {
+      phone: initialData.contact_info?.phone?.[0] ?? "",
+      email: initialData.contact_info?.email ?? "",
+      manager_name: initialData.contact_info?.manager_name ?? "",
+    },
+    address: {
+      street: initialData.address?.street ?? "",
+      city: initialData.address?.city ?? "",
+      state_province: initialData.address?.state_province ?? "",
+      postal_code: initialData.address?.postal_code ?? "",
+      country: initialData.address?.country ?? "Indonesia",
+    },
+    location: initialData.location ?? { type: "Point", coordinates: [0, 0] },
+    is_active: initialData.is_active,
+  }));
+  // State terpisah — memang tidak bisa disatukan ke dalam formData:
+  // coords (bentuk LatLng untuk map picker, beda dgn location GeoJSON) & flag UI.
   const [coords, setCoords] = useState<LatLng | null>(
     initialCoords(initialData),
   );
@@ -70,11 +70,17 @@ export default function UpdateBranchModal({
   // Klik peta → simpan koordinat & isi alamat otomatis (hasil reverse geocode).
   const handlePickLocation = (c: LatLng, addr: PickedAddress) => {
     setCoords(c);
-    if (addr.street) setStreet(addr.street);
-    if (addr.city) setCity(addr.city);
-    if (addr.state_province) setStateProvince(addr.state_province);
-    if (addr.postal_code) setPostalCode(addr.postal_code);
-    if (addr.country) setCountry(addr.country);
+    setFormData((prev) => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        ...(addr.street ? { street: addr.street } : {}),
+        ...(addr.city ? { city: addr.city } : {}),
+        ...(addr.state_province ? { state_province: addr.state_province } : {}),
+        ...(addr.postal_code ? { postal_code: addr.postal_code } : {}),
+        ...(addr.country ? { country: addr.country } : {}),
+      },
+    }));
   };
 
   useEffect(() => {
@@ -85,7 +91,56 @@ export default function UpdateBranchModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setFormData((prev: FormDataBranchProps) => {
+      // 0. Checkbox (is_active)
+      if (type === "checkbox") {
+        return { ...prev, [name]: checked };
+      }
+
+      // 1. Update contact_info
+      if (["phone", "email", "manager_name"].includes(name)) {
+        return {
+          ...prev,
+          contact_info: {
+            ...prev.contact_info,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 3. Update top-level field biasa (name, description, notes, dll)
+      return {
+        ...prev,
+        [name as keyof FormDataBranchProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, description, notes, contact_info, address, is_active } =
+      formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -100,16 +155,16 @@ export default function UpdateBranchModal({
         name: name.trim(),
         description: description.trim(),
         contact_info: {
-          phone: phone.trim() ? [phone.trim()] : [],
-          email: email.trim(),
-          manager_name: managerName.trim(),
+          phone: contact_info.phone.trim() ? [contact_info.phone.trim()] : [],
+          email: contact_info.email.trim(),
+          manager_name: contact_info.manager_name.trim(),
         },
         address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
+          street: (address.street ?? "").trim(),
+          city: (address.city ?? "").trim(),
+          state_province: (address.state_province ?? "").trim(),
+          postal_code: (address.postal_code ?? "").trim(),
+          country: (address.country ?? "").trim(),
         },
         ...(coords
           ? {
@@ -119,7 +174,7 @@ export default function UpdateBranchModal({
               },
             }
           : {}),
-        is_active: isActive,
+        is_active,
         notes: notes.trim(),
       };
 
@@ -187,32 +242,36 @@ export default function UpdateBranchModal({
                 Branch Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Manager Name</label>
               <input
-                value={managerName}
-                onChange={(e) => setManagerName(e.target.value)}
+                value={formData.contact_info.manager_name ?? ""}
+                name="manager_name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Email</label>
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.contact_info.email ?? ""}
+                name="email"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.contact_info.phone ?? ""}
+                name="phone"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -240,40 +299,45 @@ export default function UpdateBranchModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street ?? ""}
+                name="street"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city ?? ""}
+                name="city"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province ?? ""}
+                name="state_province"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code ?? ""}
+                name="postal_code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country ?? ""}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -281,8 +345,9 @@ export default function UpdateBranchModal({
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  name="is_active"
+                  checked={formData.is_active ?? false}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -293,8 +358,9 @@ export default function UpdateBranchModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description ?? ""}
+                name="description"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />
@@ -302,8 +368,9 @@ export default function UpdateBranchModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

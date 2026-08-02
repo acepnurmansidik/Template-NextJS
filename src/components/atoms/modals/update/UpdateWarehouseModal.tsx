@@ -6,7 +6,11 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
-import { WarehouseApiDaum, WarehousePayload } from "@/types/warehouse";
+import {
+  FormDataWarehouseProps,
+  WarehouseApiDaum,
+  WarehousePayload,
+} from "@/types/warehouse";
 
 interface DataProps {
   isOpen: boolean;
@@ -26,20 +30,19 @@ export default function UpdateWarehouseModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [code, setCode] = useState(initialData.code);
-  const [phone, setPhone] = useState(initialData.phone ?? "");
-  const [street, setStreet] = useState(initialData.address?.street ?? "");
-  const [city, setCity] = useState(initialData.address?.city ?? "");
-  const [stateProvince, setStateProvince] = useState(
-    initialData.address?.state_province ?? "",
-  );
-  const [postalCode, setPostalCode] = useState(
-    initialData.address?.postal_code ?? "",
-  );
-  const [country, setCountry] = useState(
-    initialData.address?.country ?? "Indonesia",
-  );
+  const [formData, setFormData] = useState<FormDataWarehouseProps>(() => ({
+    name: initialData.name,
+    code: initialData.code,
+    phone: initialData.phone ?? "",
+    address: {
+      street: initialData.address?.street ?? "",
+      city: initialData.address?.city ?? "",
+      state_province: initialData.address?.state_province ?? "",
+      postal_code: initialData.address?.postal_code ?? "",
+      country: initialData.address?.country ?? "Indonesia",
+    },
+  }));
+  // State terpisah — status field yang hanya diedit di form update (tidak ada di FormDataWarehouseProps).
   const [isActive, setIsActive] = useState(initialData.is_active);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +54,38 @@ export default function UpdateWarehouseModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataWarehouseProps) => {
+      // 1. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update top-level field biasa (name, code, phone)
+      return {
+        ...prev,
+        [name as keyof FormDataWarehouseProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, phone, address } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -75,11 +109,11 @@ export default function UpdateWarehouseModal({
         code: code.trim(),
         phone: phone.trim(),
         address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
+          street: address.street.trim(),
+          city: address.city.trim(),
+          state_province: address.state_province.trim(),
+          postal_code: address.postal_code.trim(),
+          country: address.country.trim(),
         },
         is_active: isActive,
       };
@@ -148,8 +182,9 @@ export default function UpdateWarehouseModal({
                 Warehouse Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -158,56 +193,63 @@ export default function UpdateWarehouseModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group md:col-span-2">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.phone}
+                name="phone"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street}
+                name="street"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city}
+                name="city"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province}
+                name="state_province"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code}
+                name="postal_code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>

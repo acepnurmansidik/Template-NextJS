@@ -42,6 +42,19 @@ export interface StockMovementPayload {
   note?: string;
 }
 
+// State form (id product/warehouse terpilih + field biasa).
+// Daftar opsi dropdown (products/warehouses) diambil terpisah dari API.
+export interface FormDataStockMovementProps {
+  type: MovementType;
+  product_id: string | null;
+  warehouse_id: string | null;
+  destination_warehouse_id: string | null;
+  quantity: number;
+  date: string;
+  reference: string;
+  note: string;
+}
+
 // Ambil label yang bisa ditampilkan dari sebuah Ref (populate object) —
 // prioritas name, lalu code, lalu em-dash bila hanya string id / kosong.
 export const refLabel = (r?: Ref | null): string =>

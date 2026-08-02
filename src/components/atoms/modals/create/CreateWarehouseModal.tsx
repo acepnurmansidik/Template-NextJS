@@ -6,7 +6,11 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { WarehousePayload, WarehouseApiDaum } from "@/types/warehouse";
+import {
+  FormDataWarehouseProps,
+  WarehousePayload,
+  WarehouseApiDaum,
+} from "@/types/warehouse";
 
 interface DataProps {
   isOpen: boolean;
@@ -19,19 +23,26 @@ const inputCls =
 const labelCls =
   "block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5";
 
+const defaultValue: FormDataWarehouseProps = {
+  name: "",
+  code: "",
+  phone: "",
+  address: {
+    street: "",
+    city: "",
+    state_province: "",
+    postal_code: "",
+    country: "Indonesia",
+  },
+};
+
 export default function CreateWarehouseModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [phone, setPhone] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [stateProvince, setStateProvince] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("Indonesia");
+  const [formData, setFormData] =
+    useState<FormDataWarehouseProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -42,7 +53,38 @@ export default function CreateWarehouseModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataWarehouseProps) => {
+      // 1. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update top-level field biasa (name, code, phone)
+      return {
+        ...prev,
+        [name as keyof FormDataWarehouseProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, phone, address } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -67,11 +109,11 @@ export default function CreateWarehouseModal({
         code: code.trim(),
         phone: phone.trim(),
         address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
+          street: address.street.trim(),
+          city: address.city.trim(),
+          state_province: address.state_province.trim(),
+          postal_code: address.postal_code.trim(),
+          country: address.country.trim(),
         },
       };
 
@@ -134,8 +176,9 @@ export default function CreateWarehouseModal({
                 Warehouse Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. Gudang Pusat"
                 className={inputCls}
               />
@@ -146,8 +189,9 @@ export default function CreateWarehouseModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 placeholder="e.g. WH-001"
                 className={inputCls}
               />
@@ -156,8 +200,9 @@ export default function CreateWarehouseModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.phone}
+                name="phone"
+                onChange={handleChange}
                 placeholder="e.g. 021-12345678"
                 className={inputCls}
               />
@@ -166,8 +211,9 @@ export default function CreateWarehouseModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street}
+                name="street"
+                onChange={handleChange}
                 placeholder="Jl. Gudang No. 1"
                 className={inputCls}
               />
@@ -176,8 +222,9 @@ export default function CreateWarehouseModal({
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city}
+                name="city"
+                onChange={handleChange}
                 placeholder="Jakarta"
                 className={inputCls}
               />
@@ -186,8 +233,9 @@ export default function CreateWarehouseModal({
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province}
+                name="state_province"
+                onChange={handleChange}
                 placeholder="DKI Jakarta"
                 className={inputCls}
               />
@@ -196,8 +244,9 @@ export default function CreateWarehouseModal({
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code}
+                name="postal_code"
+                onChange={handleChange}
                 placeholder="10110"
                 className={inputCls}
               />
@@ -206,8 +255,9 @@ export default function CreateWarehouseModal({
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>

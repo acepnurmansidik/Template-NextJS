@@ -14,6 +14,7 @@ import {
   AccountPayableLineForm,
   AccountPayablePayload,
   AccountPayableStatus,
+  FormDataAccountPayableProps,
 } from "@/types/accountPayable";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { ListResponse, SingleResponse } from "@/types/api";
@@ -57,19 +58,26 @@ export default function CreateAccountPayableModal({
   onSuccess,
 }: DataProps) {
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [date, setDate] = useState(today());
-  const [dueDate, setDueDate] = useState("");
-  const [partyName, setPartyName] = useState("");
-  const [reference, setReference] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<AccountPayableStatus>(
-    AccountPayableStatus.DRAFT,
-  );
-  const [paidAmount, setPaidAmount] = useState(0);
+  const [formData, setFormData] = useState<FormDataAccountPayableProps>(() => ({
+    date: today(),
+    due_date: "",
+    party_name: "",
+    reference: "",
+    description: "",
+    status: AccountPayableStatus.DRAFT,
+    paid_amount: 0,
+  }));
   const [lines, setLines] = useState<AccountPayableLineForm[]>([
     { ...emptyLine },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -103,7 +111,8 @@ export default function CreateAccountPayableModal({
   );
 
   const total = sumAmount(lines);
-  const remaining = Math.round((total - (Number(paidAmount) || 0)) * 100) / 100;
+  const remaining =
+    Math.round((total - (Number(formData.paid_amount) || 0)) * 100) / 100;
 
   const addLine = () => setLines((prev) => [...prev, { ...emptyLine }]);
   const removeLine = (index: number) =>
@@ -114,10 +123,11 @@ export default function CreateAccountPayableModal({
     );
 
   const selectedStatus =
-    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ??
+    STATUS_OPTIONS[0];
 
   const handleSubmit = async () => {
-    if (!date) {
+    if (!formData.date) {
       Swal.fire({
         icon: "warning",
         title: "Date is required",
@@ -153,14 +163,16 @@ export default function CreateAccountPayableModal({
 
     setIsLoading(true);
     try {
+      const { date, due_date, party_name, reference, description, status } =
+        formData;
       const payload: AccountPayablePayload = {
         date,
-        due_date: dueDate || undefined,
-        party_name: partyName.trim(),
+        due_date: due_date || undefined,
+        party_name: party_name.trim(),
         reference: reference.trim(),
         description: description.trim(),
         status,
-        paid_amount: paidAmount,
+        paid_amount: formData.paid_amount,
         lines: filled.map((l) => ({
           account_id: l.account_id,
           description: l.description.trim(),
@@ -230,8 +242,9 @@ export default function CreateAccountPayableModal({
               </label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -240,8 +253,9 @@ export default function CreateAccountPayableModal({
               <label className={labelCls}>Due Date</label>
               <input
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                name="due_date"
+                value={formData.due_date}
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -254,10 +268,12 @@ export default function CreateAccountPayableModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus(
-                    (opt?.value as AccountPayableStatus) ??
+                  setFormData((prev) => ({
+                    ...prev,
+                    status:
+                      (opt?.value as AccountPayableStatus) ??
                       AccountPayableStatus.DRAFT,
-                  )
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -269,8 +285,9 @@ export default function CreateAccountPayableModal({
             <div className="group">
               <label className={labelCls}>Vendor</label>
               <input
-                value={partyName}
-                onChange={(e) => setPartyName(e.target.value)}
+                name="party_name"
+                value={formData.party_name}
+                onChange={handleChange}
                 placeholder="e.g. Vendor name"
                 className={inputCls}
               />
@@ -279,8 +296,9 @@ export default function CreateAccountPayableModal({
             <div className="group">
               <label className={labelCls}>Reference</label>
               <input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
                 placeholder="e.g. PO-001"
                 className={inputCls}
               />
@@ -289,8 +307,9 @@ export default function CreateAccountPayableModal({
             <div className="group">
               <label className={labelCls}>Description / Memo</label>
               <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 placeholder="What is this for?"
                 className={inputCls}
               />
@@ -415,11 +434,16 @@ export default function CreateAccountPayableModal({
               <div>
                 <label className={labelCls}>Paid Amount</label>
                 <CurrencyInput
-                  value={paidAmount}
+                  value={formData.paid_amount}
                   placeholder="0"
                   aria-label="Paid amount"
                   // Paksa ke maksimum = total (remaining tak boleh negatif).
-                  onChange={(v) => setPaidAmount(v > total ? total : v)}
+                  onChange={(v) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      paid_amount: v > total ? total : v,
+                    }))
+                  }
                   className={`${inputCls} text-right`}
                 />
               </div>

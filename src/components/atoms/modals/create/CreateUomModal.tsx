@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { UomPayload, UomApiDaum } from "@/types/uom";
+import { FormDataUomProps, UomPayload, UomApiDaum } from "@/types/uom";
 
 interface DataProps {
   isOpen: boolean;
@@ -19,14 +19,18 @@ const inputCls =
 const labelCls =
   "block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5";
 
+const defaultValue: FormDataUomProps = {
+  name: "",
+  code: "",
+  description: "",
+};
+
 export default function CreateUomModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [description, setDescription] = useState("");
+  const [formData, setFormData] = useState<FormDataUomProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -37,7 +41,26 @@ export default function CreateUomModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataUomProps) => {
+      // Code selalu uppercase.
+      if (name === "code") {
+        return { ...prev, code: value.toUpperCase() };
+      }
+      return {
+        ...prev,
+        [name as keyof FormDataUomProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, description } = formData;
+
     if (!name.trim() || !code.trim()) {
       Swal.fire({
         icon: "warning",
@@ -112,8 +135,9 @@ export default function CreateUomModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. Kilogram"
                 className={inputCls}
               />
@@ -124,8 +148,9 @@ export default function CreateUomModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 placeholder="e.g. KG"
                 className={inputCls}
               />
@@ -137,8 +162,9 @@ export default function CreateUomModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                name="description"
+                onChange={handleChange}
                 rows={2}
                 placeholder="Short description"
                 className={`${inputCls} resize-none`}

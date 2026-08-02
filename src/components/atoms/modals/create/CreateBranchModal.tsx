@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { BranchPayload, BranchApiDaum } from "@/types/facility";
+import { BranchApiDaum, FormDataBranchProps } from "@/types/facility";
 import LocationPicker, {
   LatLng,
   PickedAddress,
@@ -23,23 +23,36 @@ const inputCls =
 const labelCls =
   "block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5";
 
+const defaultValue: FormDataBranchProps = {
+  name: "",
+  notes: "",
+  description: "",
+  contact_info: {
+    phone: "",
+    email: "",
+    manager_name: "",
+  },
+  address: {
+    street: "",
+    city: "",
+    state_province: "",
+    postal_code: "",
+    country: "Indonesia",
+  },
+  location: {
+    type: "Point",
+    coordinates: [0, 0],
+  },
+};
+
 export default function CreateBranchModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [managerName, setManagerName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [stateProvince, setStateProvince] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("Indonesia");
-  const [isActive, setIsActive] = useState(true);
-  const [notes, setNotes] = useState("");
+  const [formData, setFormData] = useState<FormDataBranchProps>(defaultValue);
+  // State terpisah — memang tidak bisa disatukan ke dalam formData:
+  // coords (bentuk LatLng untuk map picker, beda dgn location GeoJSON) & flag UI.
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +60,17 @@ export default function CreateBranchModal({
   // Klik peta → simpan koordinat & isi alamat otomatis (hasil reverse geocode).
   const handlePickLocation = (c: LatLng, addr: PickedAddress) => {
     setCoords(c);
-    if (addr.street) setStreet(addr.street);
-    if (addr.city) setCity(addr.city);
-    if (addr.state_province) setStateProvince(addr.state_province);
-    if (addr.postal_code) setPostalCode(addr.postal_code);
-    if (addr.country) setCountry(addr.country);
+    setFormData((prev: FormDataBranchProps) => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        ...(addr.street ? { street: addr.street } : {}),
+        ...(addr.city ? { city: addr.city } : {}),
+        ...(addr.state_province ? { state_province: addr.state_province } : {}),
+        ...(addr.postal_code ? { postal_code: addr.postal_code } : {}),
+        ...(addr.country ? { country: addr.country } : {}),
+      },
+    }));
   };
 
   useEffect(() => {
@@ -62,7 +81,49 @@ export default function CreateBranchModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataBranchProps) => {
+      // 1. Update contact_info
+      if (["phone", "email", "manager_name"].includes(name)) {
+        return {
+          ...prev,
+          contact_info: {
+            ...prev.contact_info,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 3. Update top-level field biasa (termasuk name, description, location jika string biasa, dll)
+      return {
+        ...prev,
+        [name as keyof FormDataBranchProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -74,36 +135,9 @@ export default function CreateBranchModal({
 
     setIsLoading(true);
     try {
-      const payload: BranchPayload = {
-        name: name.trim(),
-        description: description.trim(),
-        contact_info: {
-          phone: phone.trim() ? [phone.trim()] : [],
-          email: email.trim(),
-          manager_name: managerName.trim(),
-        },
-        address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
-        },
-        ...(coords
-          ? {
-              location: {
-                type: "Point" as const,
-                coordinates: [coords.lng, coords.lat],
-              },
-            }
-          : {}),
-        is_active: isActive,
-        notes: notes.trim(),
-      };
-
       const result = await apiPost<SingleResponse<BranchApiDaum>>(
         "/branch",
-        payload,
+        formData,
         false,
         false,
       );
@@ -160,8 +194,9 @@ export default function CreateBranchModal({
                 Branch Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. ANGGREK"
                 className={inputCls}
               />
@@ -173,8 +208,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>Manager Name</label>
               <input
-                value={managerName}
-                onChange={(e) => setManagerName(e.target.value)}
+                value={formData.contact_info.manager_name ?? ""}
+                name="manager_name"
+                onChange={handleChange}
                 placeholder="e.g. Budi Santoso"
                 className={inputCls}
               />
@@ -183,8 +219,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>Email</label>
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.contact_info.email ?? ""}
+                name="email"
+                onChange={handleChange}
                 placeholder="branch@example.com"
                 className={inputCls}
               />
@@ -193,8 +230,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.contact_info.phone ?? ""}
+                name="phone"
+                onChange={handleChange}
                 placeholder="e.g. 021-12345678"
                 className={inputCls}
               />
@@ -225,8 +263,9 @@ export default function CreateBranchModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street ?? ""}
+                name="street"
+                onChange={handleChange}
                 placeholder="Jl. Anggrek No. 1"
                 className={inputCls}
               />
@@ -235,8 +274,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city ?? ""}
+                name="city"
+                onChange={handleChange}
                 placeholder="Jakarta"
                 className={inputCls}
               />
@@ -245,8 +285,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province ?? ""}
+                name="state_province"
+                onChange={handleChange}
                 placeholder="DKI Jakarta"
                 className={inputCls}
               />
@@ -255,8 +296,9 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code ?? ""}
+                name="postal_code"
+                onChange={handleChange}
                 placeholder="10110"
                 className={inputCls}
               />
@@ -265,31 +307,19 @@ export default function CreateBranchModal({
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country ?? ""}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
 
             <div className="group md:col-span-2">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
-                />
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  Active
-                </span>
-              </label>
-            </div>
-
-            <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description ?? ""}
+                name="description"
+                onChange={handleChange}
                 rows={2}
                 placeholder="Optional description"
                 className={`${inputCls} resize-none`}
@@ -299,8 +329,9 @@ export default function CreateBranchModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 placeholder="Optional note"
                 className={`${inputCls} resize-none`}

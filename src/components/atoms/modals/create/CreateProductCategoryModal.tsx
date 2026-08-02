@@ -10,6 +10,7 @@ import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
 import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
 import {
+  FormDataProductCategoryProps,
   ProductCategoryApiDaum,
   ProductCategoryPayload,
 } from "@/types/productCategory";
@@ -32,19 +33,38 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
+const defaultValue: FormDataProductCategoryProps = {
+  name: "",
+  prefix: "",
+  is_active: true,
+};
+
 export default function CreateProductCategoryModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState("");
-  const [prefix, setPrefix] = useState("");
-  const [isActive, setIsActive] = useState(true);
+  const [formData, setFormData] =
+    useState<FormDataProductCategoryProps>(defaultValue);
+  // State terpisah: tabel line accounts (dinamis add/remove) & daftar COA fetched.
   const [lines, setLines] = useState<LineForm[]>([
     { title: "", account_id: "" },
   ]);
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      // Prefix selalu huruf besar (awalan kode produk).
+      if (name === "prefix") return { ...prev, prefix: value.toUpperCase() };
+      return { ...prev, [name]: value };
+    });
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -99,6 +119,8 @@ export default function CreateProductCategoryModal({
     });
 
   const handleSubmit = async () => {
+    const { name, prefix, is_active } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -121,7 +143,7 @@ export default function CreateProductCategoryModal({
       const payload: ProductCategoryPayload = {
         name: name.trim(),
         prefix: prefix.trim(),
-        is_active: isActive,
+        is_active,
         line_accounts: lines
           .filter((l) => l.account_id)
           .map((l) => ({ title: l.title.trim(), account_id: l.account_id })),
@@ -186,8 +208,9 @@ export default function CreateProductCategoryModal({
                 Category Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. Raw Material"
                 className={inputCls}
               />
@@ -198,8 +221,9 @@ export default function CreateProductCategoryModal({
                 Prefix<span className="text-red-500">*</span>
               </label>
               <input
-                value={prefix}
-                onChange={(e) => setPrefix(e.target.value.toUpperCase())}
+                value={formData.prefix}
+                name="prefix"
+                onChange={handleChange}
                 placeholder="e.g. RAW"
                 className={inputCls}
               />
@@ -212,8 +236,9 @@ export default function CreateProductCategoryModal({
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">

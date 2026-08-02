@@ -24,6 +24,27 @@ export const imageUrl = (path?: string | null): string => {
 
 /* -------------------------------- BRANCH -------------------------------- */
 
+interface ContactInfo {
+  phone: string;
+  email: string;
+  manager_name: string;
+}
+
+interface Location {
+  type: string;
+  coordinates: number[];
+}
+export interface FormDataBranchProps {
+  name: string;
+  notes: string;
+  description: string;
+  contact_info: ContactInfo;
+  address: AddressInfo;
+  location: Location;
+  // Hanya dipakai oleh update form (create default aktif).
+  is_active?: boolean;
+}
+
 export interface BranchContact {
   phone?: string[];
   email?: string;
@@ -132,6 +153,21 @@ export interface BuildingPayload {
   notes?: string;
 }
 
+// Bentuk state form (Create/Update) untuk Building — semua field input plain
+// disatukan ke dalam satu objek formData. branch_id / is_active dipakai
+// tergantung modal (create pakai branch_id, update pakai is_active).
+export interface FormDataBuildingProps {
+  branch_id: string;
+  name: string;
+  building_type: BuildingType;
+  total_floors: number;
+  building_area_sqm: number;
+  land_area_sqm: number;
+  address: AddressInfo;
+  notes: string;
+  is_active: boolean;
+}
+
 /* ---------------------------- BUILDING FLOOR ---------------------------- */
 
 export enum FloorType {
@@ -164,6 +200,17 @@ export interface BuildingFloorPayload {
   max_capacity?: number;
   floor_plan_url_id?: string | null;
   notes?: string;
+}
+
+// Bentuk state form (Create/Update) untuk Building Floor. building_id hanya
+// dipakai di Create (Update tidak mengirim building_id). floor_plan_url_id
+// tetap state terpisah karena hasil upload gambar.
+export interface FormDataBuildingFloorProps {
+  building_id?: string;
+  type: FloorType;
+  floor_area_sqm: number;
+  max_capacity: number;
+  notes: string;
 }
 
 /* ------------------------------ ROOM UNIT ------------------------------- */
@@ -277,6 +324,22 @@ export interface RoomUnitPayload {
   amenities?: string[];
   image_id?: string | null;
   notes?: string;
+}
+
+// Bentuk state form (Create/Update) untuk Room Unit. building_id / floor_id
+// hanya dipakai di Create sebagai selector (building_id tidak dikirim, hanya
+// untuk filter lantai). amenities & image_id tetap state terpisah karena
+// multi-select array & hasil upload gambar. is_active dipakai di Update.
+export interface FormDataRoomUnitProps {
+  building_id?: string;
+  floor_id?: string;
+  name: string;
+  unit_type: RoomUnitType;
+  status: RoomStatus;
+  capacity: number;
+  area_sqm: number;
+  notes: string;
+  is_active: boolean;
 }
 
 /* ------------------------------- HELPERS -------------------------------- */

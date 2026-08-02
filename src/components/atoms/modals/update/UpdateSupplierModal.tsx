@@ -6,7 +6,11 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
-import { SupplierApiDaum, SupplierPayload } from "@/types/supplier";
+import {
+  FormDataSupplierProps,
+  SupplierApiDaum,
+  SupplierPayload,
+} from "@/types/supplier";
 
 interface DataProps {
   isOpen: boolean;
@@ -26,26 +30,23 @@ export default function UpdateSupplierModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [code, setCode] = useState(initialData.code);
-  const [contactPerson, setContactPerson] = useState(
-    initialData.contact_info?.contact_person ?? "",
-  );
-  const [email, setEmail] = useState(initialData.contact_info?.email ?? "");
-  const [phone, setPhone] = useState(
-    initialData.contact_info?.phone?.[0] ?? "",
-  );
-  const [street, setStreet] = useState(initialData.address?.street ?? "");
-  const [city, setCity] = useState(initialData.address?.city ?? "");
-  const [stateProvince, setStateProvince] = useState(
-    initialData.address?.state_province ?? "",
-  );
-  const [postalCode, setPostalCode] = useState(
-    initialData.address?.postal_code ?? "",
-  );
-  const [country, setCountry] = useState(
-    initialData.address?.country ?? "Indonesia",
-  );
+  const [formData, setFormData] = useState<FormDataSupplierProps>(() => ({
+    name: initialData.name,
+    code: initialData.code,
+    contact_info: {
+      phone: initialData.contact_info?.phone?.[0] ?? "",
+      email: initialData.contact_info?.email ?? "",
+      contact_person: initialData.contact_info?.contact_person ?? "",
+    },
+    address: {
+      street: initialData.address?.street ?? "",
+      city: initialData.address?.city ?? "",
+      state_province: initialData.address?.state_province ?? "",
+      postal_code: initialData.address?.postal_code ?? "",
+      country: initialData.address?.country ?? "Indonesia",
+    },
+  }));
+  // State terpisah — status field yang hanya diedit di form update (tidak ada di FormDataSupplierProps).
   const [isActive, setIsActive] = useState(initialData.is_active);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,7 +58,49 @@ export default function UpdateSupplierModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataSupplierProps) => {
+      // 1. Update contact_info
+      if (["phone", "email", "contact_person"].includes(name)) {
+        return {
+          ...prev,
+          contact_info: {
+            ...prev.contact_info,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 3. Update top-level field biasa (name, code)
+      return {
+        ...prev,
+        [name as keyof FormDataSupplierProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, contact_info, address } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -81,16 +124,16 @@ export default function UpdateSupplierModal({
         name: name.trim(),
         code: code.trim(),
         contact_info: {
-          phone: phone.trim() ? [phone.trim()] : [],
-          email: email.trim(),
-          contact_person: contactPerson.trim(),
+          phone: contact_info.phone.trim() ? [contact_info.phone.trim()] : [],
+          email: contact_info.email.trim(),
+          contact_person: contact_info.contact_person.trim(),
         },
         address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
+          street: address.street.trim(),
+          city: address.city.trim(),
+          state_province: address.state_province.trim(),
+          postal_code: address.postal_code.trim(),
+          country: address.country.trim(),
         },
         is_active: isActive,
       };
@@ -159,8 +202,9 @@ export default function UpdateSupplierModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -169,72 +213,82 @@ export default function UpdateSupplierModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                disabled
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Contact Person</label>
               <input
-                value={contactPerson}
-                onChange={(e) => setContactPerson(e.target.value)}
+                value={formData.contact_info.contact_person}
+                name="contact_person"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Email</label>
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.contact_info.email}
+                name="email"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group md:col-span-2">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.contact_info.phone}
+                name="phone"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street}
+                name="street"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city}
+                name="city"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province}
+                name="state_province"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code}
+                name="postal_code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>

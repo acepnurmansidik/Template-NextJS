@@ -6,7 +6,12 @@ import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
-import { ProductApiDaum, ProductPayload, Ref } from "@/types/product";
+import {
+  FormDataProductProps,
+  ProductApiDaum,
+  ProductPayload,
+  Ref,
+} from "@/types/product";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { ListResponse, SingleResponse } from "@/types/api";
 
@@ -49,25 +54,29 @@ export default function UpdateProductModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // FETCHED option lists — tetap state terpisah (hanya daftar option-nya).
   const [categories, setCategories] = useState<CategoryDaum[]>([]);
   const [uoms, setUoms] = useState<UomDaum[]>([]);
 
-  const [categoryId, setCategoryId] = useState<string | null>(
-    refId(initialData.product_category_id),
-  );
-  const [uomId, setUomId] = useState<string | null>(refId(initialData.uom_id));
-  const [code, setCode] = useState(initialData.code ?? "");
-  const [name, setName] = useState(initialData.name ?? "");
-  const [barcode, setBarcode] = useState(initialData.barcode ?? "");
-  const [description, setDescription] = useState(initialData.description ?? "");
-  const [purchasePrice, setPurchasePrice] = useState(
-    initialData.purchase_price ?? 0,
-  );
-  const [sellingPrice, setSellingPrice] = useState(
-    initialData.selling_price ?? 0,
-  );
-  const [isActive, setIsActive] = useState(initialData.is_active);
+  const [formData, setFormData] = useState<FormDataProductProps>(() => ({
+    product_category_id: refId(initialData.product_category_id),
+    uom_id: refId(initialData.uom_id),
+    code: initialData.code ?? "",
+    name: initialData.name ?? "",
+    barcode: initialData.barcode ?? "",
+    description: initialData.description ?? "",
+    purchase_price: initialData.purchase_price ?? 0,
+    selling_price: initialData.selling_price ?? 0,
+    is_active: initialData.is_active,
+  }));
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -118,7 +127,19 @@ export default function UpdateProductModal({
   );
 
   const handleSubmit = async () => {
-    if (!categoryId || !uomId || !code.trim() || !name.trim()) {
+    const {
+      product_category_id,
+      uom_id,
+      code,
+      name,
+      description,
+      barcode,
+      purchase_price,
+      selling_price,
+      is_active,
+    } = formData;
+
+    if (!product_category_id || !uom_id || !code.trim() || !name.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Category, UOM, Code & Name are required",
@@ -130,15 +151,15 @@ export default function UpdateProductModal({
     setIsLoading(true);
     try {
       const payload: ProductPayload = {
-        product_category_id: categoryId,
-        uom_id: uomId,
+        product_category_id,
+        uom_id,
         code: code.trim(),
         name: name.trim(),
         description: description.trim(),
         barcode: barcode.trim(),
-        purchase_price: purchasePrice,
-        selling_price: sellingPrice,
-        is_active: isActive,
+        purchase_price,
+        selling_price,
+        is_active,
       };
 
       const result = await apiPut<SingleResponse<ProductApiDaum>>(
@@ -179,8 +200,10 @@ export default function UpdateProductModal({
   if (!isOpen) return null;
 
   const selectedCategory =
-    categoryOptions.find((o) => o.value === categoryId) ?? null;
-  const selectedUom = uomOptions.find((o) => o.value === uomId) ?? null;
+    categoryOptions.find((o) => o.value === formData.product_category_id) ??
+    null;
+  const selectedUom =
+    uomOptions.find((o) => o.value === formData.uom_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -214,7 +237,12 @@ export default function UpdateProductModal({
                 placeholder="Select category…"
                 options={categoryOptions}
                 value={selectedCategory}
-                onChange={(opt) => setCategoryId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_category_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -232,7 +260,12 @@ export default function UpdateProductModal({
                 placeholder="Select unit of measure…"
                 options={uomOptions}
                 value={selectedUom}
-                onChange={(opt) => setUomId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    uom_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -245,8 +278,9 @@ export default function UpdateProductModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -256,8 +290,9 @@ export default function UpdateProductModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -265,8 +300,9 @@ export default function UpdateProductModal({
             <div className="group">
               <label className={labelCls}>Barcode</label>
               <input
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
+                value={formData.barcode}
+                name="barcode"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -275,8 +311,13 @@ export default function UpdateProductModal({
               <label className="flex items-center gap-3 cursor-pointer select-none mt-7">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  checked={formData.is_active ?? false}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_active: e.target.checked,
+                    }))
+                  }
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -288,8 +329,10 @@ export default function UpdateProductModal({
             <div className="group">
               <label className={labelCls}>Purchase Price</label>
               <CurrencyInput
-                value={purchasePrice}
-                onChange={setPurchasePrice}
+                value={formData.purchase_price}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, purchase_price: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -297,8 +340,10 @@ export default function UpdateProductModal({
             <div className="group">
               <label className={labelCls}>Selling Price</label>
               <CurrencyInput
-                value={sellingPrice}
-                onChange={setSellingPrice}
+                value={formData.selling_price}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, selling_price: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -306,8 +351,9 @@ export default function UpdateProductModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                name="description"
+                onChange={handleChange}
                 rows={3}
                 className={`${inputCls} resize-none`}
               />

@@ -8,6 +8,7 @@ import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
 import { ListResponse, SingleResponse } from "@/types/api";
 import {
+  FormDataStockPositionProps,
   StockPositionApiDaum,
   StockPositionPayload,
 } from "@/types/stockPosition";
@@ -66,13 +67,16 @@ export default function CreateStockPositionModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // FETCHED option lists — tetap state terpisah (product & warehouse rows).
   const [products, setProducts] = useState<RefSourceDaum[]>([]);
   const [warehouses, setWarehouses] = useState<RefSourceDaum[]>([]);
 
-  const [productId, setProductId] = useState<string | null>(null);
-  const [warehouseId, setWarehouseId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(0);
-  const [reservedQuantity, setReservedQuantity] = useState(0);
+  const [formData, setFormData] = useState<FormDataStockPositionProps>({
+    product_id: null,
+    warehouse_id: null,
+    quantity: 0,
+    reserved_quantity: 0,
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -110,11 +114,15 @@ export default function CreateStockPositionModal({
   const productOptions = useMemo(() => toOptions(products), [products]);
   const warehouseOptions = useMemo(() => toOptions(warehouses), [warehouses]);
 
-  const selectedProductRow = products.find((p) => p._id === productId);
+  const selectedProductRow = products.find(
+    (p) => p._id === formData.product_id,
+  );
   const productUom = uomOf(selectedProductRow);
 
   const handleSubmit = async () => {
-    if (!productId || !warehouseId) {
+    const { product_id, warehouse_id, quantity, reserved_quantity } = formData;
+
+    if (!product_id || !warehouse_id) {
       Swal.fire({
         icon: "warning",
         title: "Product & warehouse are required",
@@ -126,12 +134,12 @@ export default function CreateStockPositionModal({
     setIsLoading(true);
     try {
       const payload: StockPositionPayload = {
-        product_id: productId,
-        warehouse_id: warehouseId,
+        product_id,
+        warehouse_id,
         // UOM otomatis mengikuti UOM dari product terpilih.
         uom_id: productUom.id,
         quantity,
-        reserved_quantity: reservedQuantity,
+        reserved_quantity,
       };
 
       const result = await apiPost<SingleResponse<StockPositionApiDaum>>(
@@ -172,9 +180,9 @@ export default function CreateStockPositionModal({
   if (!isOpen) return null;
 
   const selectedProduct =
-    productOptions.find((o) => o.value === productId) ?? null;
+    productOptions.find((o) => o.value === formData.product_id) ?? null;
   const selectedWarehouse =
-    warehouseOptions.find((o) => o.value === warehouseId) ?? null;
+    warehouseOptions.find((o) => o.value === formData.warehouse_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -203,7 +211,12 @@ export default function CreateStockPositionModal({
                 placeholder="Select product…"
                 options={productOptions}
                 value={selectedProduct}
-                onChange={(opt) => setProductId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -221,7 +234,12 @@ export default function CreateStockPositionModal({
                 placeholder="Select warehouse…"
                 options={warehouseOptions}
                 value={selectedWarehouse}
-                onChange={(opt) => setWarehouseId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    warehouse_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -239,8 +257,10 @@ export default function CreateStockPositionModal({
             <div className="group">
               <label className={labelCls}>Quantity</label>
               <CurrencyInput
-                value={quantity}
-                onChange={setQuantity}
+                value={formData.quantity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, quantity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -248,8 +268,10 @@ export default function CreateStockPositionModal({
             <div className="group">
               <label className={labelCls}>Reserved Quantity</label>
               <CurrencyInput
-                value={reservedQuantity}
-                onChange={setReservedQuantity}
+                value={formData.reserved_quantity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, reserved_quantity: v }))
+                }
                 className={inputCls}
               />
             </div>

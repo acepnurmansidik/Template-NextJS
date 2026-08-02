@@ -11,6 +11,7 @@ import {
   BuildingFloorApiDaum,
   BuildingFloorPayload,
   FloorType,
+  FormDataBuildingFloorProps,
   refImagePath,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
@@ -47,18 +48,19 @@ export default function UpdateBuildingFloorModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [type, setType] = useState<FloorType>(
-    initialData.type ?? FloorType.FLOOR,
-  );
-  const [area, setArea] = useState(initialData.floor_area_sqm ?? 0);
-  const [capacity, setCapacity] = useState(initialData.max_capacity ?? 0);
+  const [formData, setFormData] = useState<FormDataBuildingFloorProps>(() => ({
+    type: initialData.type ?? FloorType.FLOOR,
+    floor_area_sqm: initialData.floor_area_sqm ?? 0,
+    max_capacity: initialData.max_capacity ?? 0,
+    notes: initialData.notes ?? "",
+  }));
+  // State terpisah — hasil upload gambar floor plan & flag UI.
   const [planId, setPlanId] = useState<string | null>(
     typeof initialData.floor_plan_url_id === "object" &&
       initialData.floor_plan_url_id
       ? initialData.floor_plan_url_id._id
       : ((initialData.floor_plan_url_id as string) ?? null),
   );
-  const [notes, setNotes] = useState(initialData.notes ?? "");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -69,14 +71,26 @@ export default function UpdateBuildingFloorModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataBuildingFloorProps]: value,
+    }));
+  };
+
   const handleSubmit = async () => {
+    const { type, floor_area_sqm, max_capacity, notes } = formData;
+
     setIsLoading(true);
     try {
       // Name & floor_level dikelola otomatis oleh sistem — tidak dikirim.
       const payload: BuildingFloorPayload = {
         type,
-        floor_area_sqm: area,
-        max_capacity: capacity,
+        floor_area_sqm,
+        max_capacity,
         floor_plan_url_id: planId,
         notes: notes.trim(),
       };
@@ -115,7 +129,8 @@ export default function UpdateBuildingFloorModal({
 
   if (!isOpen) return null;
 
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === type) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.type) ?? null;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-zinc-950">
@@ -162,7 +177,10 @@ export default function UpdateBuildingFloorModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setType((opt?.value as FloorType) ?? FloorType.FLOOR)
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: (opt?.value as FloorType) ?? FloorType.FLOOR,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -174,8 +192,10 @@ export default function UpdateBuildingFloorModal({
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
               <NumberInput
-                value={area}
-                onChange={setArea}
+                value={formData.floor_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, floor_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -184,8 +204,10 @@ export default function UpdateBuildingFloorModal({
               <label className={labelCls}>Max Capacity</label>
               <NumberInput
                 integer
-                value={capacity}
-                onChange={setCapacity}
+                value={formData.max_capacity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, max_capacity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -203,8 +225,9 @@ export default function UpdateBuildingFloorModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

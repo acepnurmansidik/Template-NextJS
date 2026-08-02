@@ -15,3 +15,9 @@ export interface UomPayload {
   description?: string;
   is_active?: boolean;
 }
+
+export interface FormDataUomProps {
+  name: string;
+  code: string;
+  description: string;
+}

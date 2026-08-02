@@ -9,6 +9,7 @@ import axios from "axios";
 import { apiPut } from "@/utils/api";
 import {
   amenityIds,
+  FormDataRoomUnitProps,
   refImagePath,
   RoomStatus,
   ROOM_STATUS_LABEL,
@@ -54,15 +55,17 @@ export default function UpdateRoomUnitModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [unitType, setUnitType] = useState<RoomUnitType>(
-    initialData.unit_type ?? "bedroom",
-  );
-  const [status, setStatus] = useState<RoomStatus>(
-    (initialData.status as RoomStatus) ?? RoomStatus.AVAILABLE,
-  );
-  const [capacity, setCapacity] = useState(initialData.capacity ?? 0);
-  const [area, setArea] = useState(initialData.area_sqm ?? 0);
+  const [formData, setFormData] = useState<FormDataRoomUnitProps>(() => ({
+    name: initialData.name,
+    unit_type: initialData.unit_type ?? "bedroom",
+    status: (initialData.status as RoomStatus) ?? RoomStatus.AVAILABLE,
+    capacity: initialData.capacity ?? 0,
+    area_sqm: initialData.area_sqm ?? 0,
+    notes: initialData.notes ?? "",
+    is_active: initialData.is_active,
+  }));
+  // State terpisah — bukan field payload plain: amenities (multi-select array),
+  // imageId (hasil upload gambar) & flag UI.
   const [amenities, setAmenities] = useState<string[]>(
     amenityIds(initialData.amenities),
   );
@@ -71,8 +74,6 @@ export default function UpdateRoomUnitModal({
       ? initialData.image_id._id
       : ((initialData.image_id as string) ?? null),
   );
-  const [notes, setNotes] = useState(initialData.notes ?? "");
-  const [isActive, setIsActive] = useState(initialData.is_active);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -83,21 +84,38 @@ export default function UpdateRoomUnitModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      return {
+        ...prev,
+        [name as keyof FormDataRoomUnitProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, unit_type, status, capacity, area_sqm, notes, is_active } =
+      formData;
+
     setIsLoading(true);
     try {
       const payload: Omit<RoomUnitPayload, "floor_id"> & {
         is_active: boolean;
       } = {
         name: name.trim(),
-        unit_type: unitType,
+        unit_type,
         status,
         capacity: capacity,
-        area_sqm: area,
+        area_sqm,
         amenities,
         image_id: imageId,
         notes: notes.trim(),
-        is_active: isActive,
+        is_active,
       };
 
       const result = await apiPut<SingleResponse<RoomUnitApiDaum>>(
@@ -137,8 +155,10 @@ export default function UpdateRoomUnitModal({
 
   if (!isOpen) return null;
 
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === unitType) ?? null;
-  const selectedStatus = STATUS_OPTIONS.find((o) => o.value === status) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.unit_type) ?? null;
+  const selectedStatus =
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -165,8 +185,9 @@ export default function UpdateRoomUnitModal({
             <div className="group">
               <label className={labelCls}>Name</label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -178,7 +199,10 @@ export default function UpdateRoomUnitModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setUnitType((opt?.value as RoomUnitType) ?? "bedroom")
+                  setFormData((prev) => ({
+                    ...prev,
+                    unit_type: (opt?.value as RoomUnitType) ?? "bedroom",
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -194,7 +218,10 @@ export default function UpdateRoomUnitModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus((opt?.value as RoomStatus) ?? RoomStatus.AVAILABLE)
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: (opt?.value as RoomStatus) ?? RoomStatus.AVAILABLE,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -206,8 +233,9 @@ export default function UpdateRoomUnitModal({
               <label className="flex items-center gap-3 cursor-pointer select-none mt-7">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -219,16 +247,20 @@ export default function UpdateRoomUnitModal({
               <label className={labelCls}>Capacity</label>
               <NumberInput
                 integer
-                value={capacity}
-                onChange={setCapacity}
+                value={formData.capacity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, capacity: v }))
+                }
                 className={inputCls}
               />
             </div>
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
               <NumberInput
-                value={area}
-                onChange={setArea}
+                value={formData.area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -252,8 +284,9 @@ export default function UpdateRoomUnitModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

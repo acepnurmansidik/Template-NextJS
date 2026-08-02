@@ -8,6 +8,7 @@ import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
 import { ListResponse, SingleResponse } from "@/types/api";
 import {
+  FormDataStockPositionProps,
   StockPositionApiDaum,
   StockPositionPayload,
   refId,
@@ -66,19 +67,16 @@ export default function UpdateStockPositionModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // FETCHED option lists — tetap state terpisah (product & warehouse rows).
   const [products, setProducts] = useState<RefSourceDaum[]>([]);
   const [warehouses, setWarehouses] = useState<RefSourceDaum[]>([]);
 
-  const [productId, setProductId] = useState<string | null>(
-    refId(initialData.product_id) || null,
-  );
-  const [warehouseId, setWarehouseId] = useState<string | null>(
-    refId(initialData.warehouse_id) || null,
-  );
-  const [quantity, setQuantity] = useState(initialData.quantity ?? 0);
-  const [reservedQuantity, setReservedQuantity] = useState(
-    initialData.reserved_quantity ?? 0,
-  );
+  const [formData, setFormData] = useState<FormDataStockPositionProps>(() => ({
+    product_id: refId(initialData.product_id) || null,
+    warehouse_id: refId(initialData.warehouse_id) || null,
+    quantity: initialData.quantity ?? 0,
+    reserved_quantity: initialData.reserved_quantity ?? 0,
+  }));
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -116,14 +114,18 @@ export default function UpdateStockPositionModal({
   const productOptions = useMemo(() => toOptions(products), [products]);
   const warehouseOptions = useMemo(() => toOptions(warehouses), [warehouses]);
 
-  const selectedProductRow = products.find((p) => p._id === productId);
+  const selectedProductRow = products.find(
+    (p) => p._id === formData.product_id,
+  );
   // UOM otomatis dari product; fallback ke UOM awal jika product belum termuat.
   const productUom = selectedProductRow
     ? labelUom(selectedProductRow.uom_id)
     : labelUom(initialData.uom_id as UomRef);
 
   const handleSubmit = async () => {
-    if (!productId || !warehouseId) {
+    const { product_id, warehouse_id, quantity, reserved_quantity } = formData;
+
+    if (!product_id || !warehouse_id) {
       Swal.fire({
         icon: "warning",
         title: "Product & warehouse are required",
@@ -135,11 +137,11 @@ export default function UpdateStockPositionModal({
     setIsLoading(true);
     try {
       const payload: StockPositionPayload = {
-        product_id: productId,
-        warehouse_id: warehouseId,
+        product_id,
+        warehouse_id,
         uom_id: productUom.id,
         quantity,
-        reserved_quantity: reservedQuantity,
+        reserved_quantity,
       };
 
       const result = await apiPut<SingleResponse<StockPositionApiDaum>>(
@@ -180,9 +182,9 @@ export default function UpdateStockPositionModal({
   if (!isOpen) return null;
 
   const selectedProduct =
-    productOptions.find((o) => o.value === productId) ?? null;
+    productOptions.find((o) => o.value === formData.product_id) ?? null;
   const selectedWarehouse =
-    warehouseOptions.find((o) => o.value === warehouseId) ?? null;
+    warehouseOptions.find((o) => o.value === formData.warehouse_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -216,7 +218,12 @@ export default function UpdateStockPositionModal({
                 placeholder="Select product…"
                 options={productOptions}
                 value={selectedProduct}
-                onChange={(opt) => setProductId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -234,7 +241,12 @@ export default function UpdateStockPositionModal({
                 placeholder="Select warehouse…"
                 options={warehouseOptions}
                 value={selectedWarehouse}
-                onChange={(opt) => setWarehouseId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    warehouse_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -252,8 +264,10 @@ export default function UpdateStockPositionModal({
             <div className="group">
               <label className={labelCls}>Quantity</label>
               <CurrencyInput
-                value={quantity}
-                onChange={setQuantity}
+                value={formData.quantity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, quantity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -261,8 +275,10 @@ export default function UpdateStockPositionModal({
             <div className="group">
               <label className={labelCls}>Reserved Quantity</label>
               <CurrencyInput
-                value={reservedQuantity}
-                onChange={setReservedQuantity}
+                value={formData.reserved_quantity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, reserved_quantity: v }))
+                }
                 className={inputCls}
               />
             </div>

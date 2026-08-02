@@ -12,6 +12,7 @@ import {
   BuildingPayload,
   BuildingType,
   BUILDING_TYPE_LABEL,
+  FormDataBuildingProps,
 } from "@/types/facility";
 import NumberInput from "@/components/atoms/shared/NumberInput";
 
@@ -44,19 +45,23 @@ export default function UpdateBuildingModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [type, setType] = useState<BuildingType>(
-    initialData.building_type ?? BuildingType.OFFICE,
-  );
-  const [totalFloors, setTotalFloors] = useState(initialData.total_floors ?? 1);
-  const [buildingArea, setBuildingArea] = useState(
-    initialData.building_area_sqm ?? 0,
-  );
-  const [landArea, setLandArea] = useState(initialData.land_area_sqm ?? 0);
-  const [street, setStreet] = useState(initialData.address?.street ?? "");
-  const [city, setCity] = useState(initialData.address?.city ?? "");
-  const [notes, setNotes] = useState(initialData.notes ?? "");
-  const [isActive, setIsActive] = useState(initialData.is_active);
+  const [formData, setFormData] = useState<FormDataBuildingProps>(() => ({
+    branch_id:
+      typeof initialData.branch_id === "object"
+        ? initialData.branch_id._id
+        : initialData.branch_id,
+    name: initialData.name,
+    building_type: initialData.building_type ?? BuildingType.OFFICE,
+    total_floors: initialData.total_floors ?? 1,
+    building_area_sqm: initialData.building_area_sqm ?? 0,
+    land_area_sqm: initialData.land_area_sqm ?? 0,
+    address: {
+      street: initialData.address?.street ?? "",
+      city: initialData.address?.city ?? "",
+    },
+    notes: initialData.notes ?? "",
+    is_active: initialData.is_active,
+  }));
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -67,7 +72,44 @@ export default function UpdateBuildingModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      // Update address (street, city)
+      if (["street", "city"].includes(name)) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+      // Field top-level biasa (name, notes)
+      return {
+        ...prev,
+        [name as keyof FormDataBuildingProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const {
+      branch_id,
+      name,
+      building_type,
+      total_floors,
+      building_area_sqm,
+      land_area_sqm,
+      address,
+      notes,
+      is_active,
+    } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -79,18 +121,18 @@ export default function UpdateBuildingModal({
     setIsLoading(true);
     try {
       const payload: BuildingPayload & { is_active: boolean } = {
-        branch_id:
-          typeof initialData.branch_id === "object"
-            ? initialData.branch_id._id
-            : initialData.branch_id,
+        branch_id,
         name: name.trim(),
-        building_type: type,
-        total_floors: Math.max(totalFloors || 1, 1),
-        building_area_sqm: buildingArea,
-        land_area_sqm: landArea,
-        address: { street: street.trim(), city: city.trim() },
+        building_type,
+        total_floors: Math.max(total_floors || 1, 1),
+        building_area_sqm,
+        land_area_sqm,
+        address: {
+          street: (address.street ?? "").trim(),
+          city: (address.city ?? "").trim(),
+        },
         notes: notes.trim(),
-        is_active: isActive,
+        is_active,
       };
 
       const result = await apiPut<SingleResponse<BuildingApiDaum>>(
@@ -130,9 +172,10 @@ export default function UpdateBuildingModal({
 
   if (!isOpen) return null;
 
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === type) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.building_type) ?? null;
   const floorsWillAdd = Math.max(
-    (Number(totalFloors) || 0) - (initialData.total_floors ?? 0),
+    (Number(formData.total_floors) || 0) - (initialData.total_floors ?? 0),
     0,
   );
 
@@ -163,8 +206,9 @@ export default function UpdateBuildingModal({
                 Building Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -177,7 +221,11 @@ export default function UpdateBuildingModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setType((opt?.value as BuildingType) ?? BuildingType.OFFICE)
+                  setFormData((prev) => ({
+                    ...prev,
+                    building_type:
+                      (opt?.value as BuildingType) ?? BuildingType.OFFICE,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -191,8 +239,10 @@ export default function UpdateBuildingModal({
               <NumberInput
                 integer
                 min={1}
-                value={totalFloors}
-                onChange={setTotalFloors}
+                value={formData.total_floors}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, total_floors: v }))
+                }
                 className={inputCls}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
@@ -206,8 +256,9 @@ export default function UpdateBuildingModal({
               <label className="flex items-center gap-3 cursor-pointer select-none mt-7">
                 <input
                   type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -219,8 +270,10 @@ export default function UpdateBuildingModal({
             <div className="group">
               <label className={labelCls}>Building Area (m²)</label>
               <NumberInput
-                value={buildingArea}
-                onChange={setBuildingArea}
+                value={formData.building_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, building_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -228,8 +281,10 @@ export default function UpdateBuildingModal({
             <div className="group">
               <label className={labelCls}>Land Area (m²)</label>
               <NumberInput
-                value={landArea}
-                onChange={setLandArea}
+                value={formData.land_area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, land_area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -237,8 +292,9 @@ export default function UpdateBuildingModal({
             <div className="group">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street ?? ""}
+                name="street"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -246,8 +302,9 @@ export default function UpdateBuildingModal({
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city ?? ""}
+                name="city"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -255,8 +312,9 @@ export default function UpdateBuildingModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

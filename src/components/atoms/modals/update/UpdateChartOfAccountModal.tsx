@@ -12,6 +12,7 @@ import {
   AccountType,
   ChartOfAccountApiDaum,
   ChartOfAccountPayload,
+  FormDataChartOfAccountProps,
   localSegment,
   normalBalanceForType,
   selectableParents,
@@ -41,17 +42,30 @@ export default function UpdateChartOfAccountModal({
   onSuccess,
   initialData,
 }: DataProps) {
+  // State terpisah — accounts adalah opsi dropdown hasil fetch (bukan field
+  // payload), plus flag UI.
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
   // State kode menyimpan SEGMEN LOKAL saja (prefix induk terkunci di UI).
-  const [code, setCode] = useState(localSegment(initialData.code));
-  const [name, setName] = useState(initialData.name);
-  const [type, setType] = useState<AccountType>(initialData.type);
-  const [isHeader, setIsHeader] = useState(initialData.is_header);
-  const [parentId, setParentId] = useState<string | null>(
-    initialData.parent_id,
-  );
-  const [description, setDescription] = useState(initialData.description ?? "");
+  const [formData, setFormData] = useState<FormDataChartOfAccountProps>(() => ({
+    code: localSegment(initialData.code),
+    name: initialData.name,
+    type: initialData.type,
+    is_header: initialData.is_header,
+    parent_id: initialData.parent_id,
+    description: initialData.description ?? "",
+  }));
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => {
+      if (type === "checkbox") return { ...prev, [name]: checked };
+      return { ...prev, [name]: value };
+    });
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -86,16 +100,17 @@ export default function UpdateChartOfAccountModal({
     [accounts, initialData._id],
   );
 
-  const selectedParent = accounts.find((a) => a._id === parentId) ?? null;
-  const effectiveType = selectedParent ? selectedParent.type : type;
+  const selectedParent =
+    accounts.find((a) => a._id === formData.parent_id) ?? null;
+  const effectiveType = selectedParent ? selectedParent.type : formData.type;
   const normalBalance = normalBalanceForType(effectiveType);
 
   // Kode induk otomatis menjadi prefix terkunci; user hanya edit segmen lokal.
   const codePrefix = selectedParent ? `${selectedParent.code}.` : "";
-  const fullCodePreview = `${codePrefix}${code || "…"}`;
+  const fullCodePreview = `${codePrefix}${formData.code || "…"}`;
 
   const handleSubmit = async () => {
-    if (!code.trim()) {
+    if (!formData.code.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Account code is required",
@@ -103,7 +118,7 @@ export default function UpdateChartOfAccountModal({
       });
       return;
     }
-    if (!name.trim()) {
+    if (!formData.name.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Account name is required",
@@ -114,13 +129,14 @@ export default function UpdateChartOfAccountModal({
 
     setIsLoading(true);
     try {
+      const { code, name, is_header, parent_id, description, type } = formData;
       const payload: ChartOfAccountPayload = {
         code: code.trim(),
         name: name.trim(),
-        is_header: isHeader,
-        parent_id: parentId,
+        is_header,
+        parent_id,
         description: description.trim(),
-        ...(parentId ? {} : { type }),
+        ...(parent_id ? {} : { type }),
       };
 
       const result = await apiPut<SingleResponse<ChartOfAccountApiDaum>>(
@@ -164,7 +180,7 @@ export default function UpdateChartOfAccountModal({
   const selectedTypeOption =
     TYPE_OPTIONS.find((o) => o.value === effectiveType) ?? null;
   const selectedParentOption =
-    parentOptions.find((o) => o.value === parentId) ?? null;
+    parentOptions.find((o) => o.value === formData.parent_id) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -195,8 +211,13 @@ export default function UpdateChartOfAccountModal({
                   </span>
                 )}
                 <input
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\./g, ""))}
+                  value={formData.code}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      code: e.target.value.replace(/\./g, ""),
+                    }))
+                  }
                   className="flex-1 min-w-0 bg-white dark:bg-zinc-950 p-2.5 text-sm outline-none dark:text-zinc-100"
                 />
               </div>
@@ -219,8 +240,9 @@ export default function UpdateChartOfAccountModal({
                 Account Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
             </div>
@@ -237,7 +259,12 @@ export default function UpdateChartOfAccountModal({
                 placeholder="— Root account —"
                 options={parentOptions}
                 value={selectedParentOption}
-                onChange={(opt) => setParentId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    parent_id: opt?.value ?? null,
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -256,11 +283,14 @@ export default function UpdateChartOfAccountModal({
               <Select
                 instanceId="coa-type-update"
                 classNamePrefix="rs"
-                isDisabled={!!parentId}
+                isDisabled={!!formData.parent_id}
                 options={TYPE_OPTIONS}
                 value={selectedTypeOption}
                 onChange={(opt) =>
-                  setType((opt?.value as AccountType) ?? AccountType.ASSET)
+                  setFormData((prev) => ({
+                    ...prev,
+                    type: (opt?.value as AccountType) ?? AccountType.ASSET,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -268,7 +298,7 @@ export default function UpdateChartOfAccountModal({
                 styles={selectStyles}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                {parentId
+                {formData.parent_id
                   ? "Diturunkan otomatis dari induk."
                   : `Saldo normal: ${normalBalance}.`}
               </p>
@@ -279,8 +309,9 @@ export default function UpdateChartOfAccountModal({
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={isHeader}
-                  onChange={(e) => setIsHeader(e.target.checked)}
+                  name="is_header"
+                  checked={formData.is_header}
+                  onChange={handleChange}
                   className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -298,8 +329,9 @@ export default function UpdateChartOfAccountModal({
                 Description
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 rows={3}
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 resize-none"
               />

@@ -16,6 +16,7 @@ import {
   JournalStatus,
   sumLines,
   JournalEntryApiDaum,
+  FormDataJournalEntryProps,
 } from "@/types/journalEntry";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 
@@ -53,11 +54,15 @@ export default function CreateJournalEntryModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  // State terpisah — daftar baris debit/credit (dinamis) & daftar akun COA
+  // yang di-fetch untuk dropdown, tidak bisa jadi field scalar formData.
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [date, setDate] = useState(today());
-  const [description, setDescription] = useState("");
-  const [reference, setReference] = useState("");
-  const [status, setStatus] = useState<JournalStatus>(JournalStatus.DRAFT);
+  const [formData, setFormData] = useState<FormDataJournalEntryProps>(() => ({
+    date: today(),
+    description: "",
+    reference: "",
+    status: JournalStatus.DRAFT,
+  }));
   const [lines, setLines] = useState<JournalLineForm[]>(initialLines);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,6 +73,16 @@ export default function CreateJournalEntryModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataJournalEntryProps]: value,
+    }));
+  };
 
   // Ambil COA; hanya akun POSTABLE (bukan header) yang bisa dijurnal.
   useEffect(() => {
@@ -110,9 +125,11 @@ export default function CreateJournalEntryModal({
     );
 
   const selectedStatus =
-    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ??
+    STATUS_OPTIONS[0];
 
   const handleSubmit = async () => {
+    const { date, description, reference, status } = formData;
     if (!date) {
       Swal.fire({
         icon: "warning",
@@ -228,8 +245,9 @@ export default function CreateJournalEntryModal({
               </label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -237,8 +255,9 @@ export default function CreateJournalEntryModal({
             <div className="group">
               <label className={labelCls}>Reference</label>
               <input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
                 placeholder="e.g. INV-001"
                 className={inputCls}
               />
@@ -252,9 +271,10 @@ export default function CreateJournalEntryModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus(
-                    (opt?.value as JournalStatus) ?? JournalStatus.DRAFT,
-                  )
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: (opt?.value as JournalStatus) ?? JournalStatus.DRAFT,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -266,8 +286,9 @@ export default function CreateJournalEntryModal({
             <div className="group md:col-span-3">
               <label className={labelCls}>Description / Memo</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 rows={2}
                 placeholder="What is this journal for?"
                 className={`${inputCls} resize-none`}

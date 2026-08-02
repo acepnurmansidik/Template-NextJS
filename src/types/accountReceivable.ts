@@ -49,6 +49,17 @@ export interface AccountReceivableLineForm {
   amount: number;
 }
 
+// Field header form (di luar lines yang punya handler tersendiri).
+export interface FormDataAccountReceivableProps {
+  date: string;
+  due_date: string;
+  party_name: string;
+  reference: string;
+  description: string;
+  status: AccountReceivableStatus;
+  paid_amount: number;
+}
+
 // Payload create/update.
 export interface AccountReceivablePayload {
   date: string;

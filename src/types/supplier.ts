@@ -30,3 +30,20 @@ export interface SupplierPayload {
   address?: SupplierAddress;
   is_active?: boolean;
 }
+
+export interface FormDataSupplierProps {
+  name: string;
+  code: string;
+  contact_info: {
+    phone: string;
+    email: string;
+    contact_person: string;
+  };
+  address: {
+    street: string;
+    city: string;
+    state_province: string;
+    postal_code: string;
+    country: string;
+  };
+}

@@ -11,6 +11,7 @@ import {
   LayoutComponentApiDaum,
   LayoutComponentPayload,
   LAYOUT_COMPONENT_CATEGORIES,
+  FormDataLayoutComponentProps,
 } from "@/types/LayoutComponent";
 import { refImagePath } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
@@ -44,14 +45,15 @@ export default function UpdateLayoutComponentModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [category, setCategory] = useState<string>(
-    initialData.category ?? LAYOUT_COMPONENT_CATEGORIES[0],
-  );
-  const [imageId, setImageId] = useState<string | null>(
-    typeof initialData.image_id === "object" && initialData.image_id
-      ? initialData.image_id._id
-      : ((initialData.image_id as string) ?? null),
+  const [formData, setFormData] = useState<FormDataLayoutComponentProps>(
+    () => ({
+      name: initialData.name,
+      category: initialData.category ?? LAYOUT_COMPONENT_CATEGORIES[0],
+      image_id:
+        typeof initialData.image_id === "object" && initialData.image_id
+          ? initialData.image_id._id
+          : ((initialData.image_id as string) ?? null),
+    }),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +65,16 @@ export default function UpdateLayoutComponentModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async () => {
+    const { name, category, image_id } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -77,7 +88,7 @@ export default function UpdateLayoutComponentModal({
       const payload: LayoutComponentPayload = {
         name: name.trim(),
         category,
-        image_id: imageId,
+        image_id,
       };
 
       const result = await apiPut<SingleResponse<LayoutComponentApiDaum>>(
@@ -118,7 +129,7 @@ export default function UpdateLayoutComponentModal({
   if (!isOpen) return null;
 
   const selectedCategory =
-    CATEGORY_OPTIONS.find((o) => o.value === category) ?? null;
+    CATEGORY_OPTIONS.find((o) => o.value === formData.category) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -142,8 +153,9 @@ export default function UpdateLayoutComponentModal({
                 Component Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -156,7 +168,10 @@ export default function UpdateLayoutComponentModal({
                 options={CATEGORY_OPTIONS}
                 value={selectedCategory}
                 onChange={(opt) =>
-                  setCategory(opt?.value ?? LAYOUT_COMPONENT_CATEGORIES[0])
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: opt?.value ?? LAYOUT_COMPONENT_CATEGORIES[0],
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -168,9 +183,11 @@ export default function UpdateLayoutComponentModal({
             <div className="group md:col-span-2">
               <ImageUpload
                 endpoint="/layout-component/upload"
-                value={imageId}
+                value={formData.image_id}
                 imagePath={refImagePath(initialData.image_id)}
-                onChange={(id) => setImageId(id)}
+                onChange={(id) =>
+                  setFormData((prev) => ({ ...prev, image_id: id }))
+                }
                 label="Component Image"
               />
             </div>

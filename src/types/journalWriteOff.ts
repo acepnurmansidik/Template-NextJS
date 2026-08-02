@@ -79,6 +79,17 @@ export interface WriteOffLineForm {
   credit: number;
 }
 
+// Field header/scalar form (baris debit/credit dikelola state `lines` terpisah).
+export interface FormDataJournalWriteOffProps {
+  date: string;
+  write_off_type: WriteOffType;
+  description: string;
+  reference: string;
+  status: WriteOffStatus;
+  source_type: WriteOffSourceType;
+  source_id: string;
+}
+
 export interface JournalWriteOffPayload {
   date: string;
   write_off_type?: WriteOffType;

@@ -13,6 +13,7 @@ import {
   CalculatedFormulaApiDaum,
   CalculatedFormulaForm,
   PopulatedComponent,
+  FormDataCalculatedFormulaProps,
 } from "@/types/calculatedFormula";
 import { refId, ComponentFormulaApiDaum } from "@/types/componentFormula";
 import { ChartOfAccountApiDaum } from "@/types/chartOfAccount";
@@ -41,22 +42,27 @@ interface DataProps {
   initialData: CalculatedFormulaApiDaum;
 }
 
+const defaultValue: FormDataCalculatedFormulaProps = {
+  name: "",
+  calc_type: CalcType.SINGLE,
+  decimal_place: 2,
+  rounding: "round",
+  accounts: [],
+  account_assignment: AccountAssignment.FORMULA_COMPONENT,
+};
+
 export default function UpdateCalculatedFormulaModal({
   isOpen,
   onClose,
   onSuccess,
   initialData,
 }: DataProps) {
-  const [name, setName] = useState<string>("");
-  const [calcType, setCalcType] = useState<CalcType>(CalcType.SINGLE);
-  const [decimalPlace, setDecimalPlace] = useState<number>(2);
-  const [rounding, setRounding] = useState<RoundMode>("round");
+  const [formData, setFormData] =
+    useState<FormDataCalculatedFormulaProps>(defaultValue);
+  // State terpisah — susunan token ekspresi (SINGLE) & daftar komponen
+  // (PER_COMPONENT) bersifat dinamis, bukan field scalar formData.
   const [tokens, setTokens] = useState<BuilderToken[]>([]);
   const [perComponents, setPerComponents] = useState<ComponentDraft[]>([]);
-  const [accounts, setAccounts] = useState<string[]>([]);
-  const [accountAssignment, setAccountAssignment] = useState<AccountAssignment>(
-    AccountAssignment.FORMULA_COMPONENT,
-  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState<boolean>(false);
 
@@ -115,24 +121,22 @@ export default function UpdateCalculatedFormulaModal({
     if (isOpen) {
       fetchComponents();
       fetchAccounts();
-      setName(initialData.name ?? "");
-      setAccounts((initialData.accounts ?? []).map(refId).filter(Boolean));
-      setAccountAssignment(
-        initialData.account_assignment === AccountAssignment.COMPONENT_DETAIL
-          ? AccountAssignment.COMPONENT_DETAIL
-          : AccountAssignment.FORMULA_COMPONENT,
-      );
-      const type =
-        initialData.calc_type === CalcType.PER_COMPONENT
-          ? CalcType.PER_COMPONENT
-          : CalcType.SINGLE;
-      setCalcType(type);
-      setDecimalPlace(initialData.decimal_place ?? 2);
-      setRounding(
-        (ROUND_MODES.some((m) => m.value === initialData.rounding)
+      setFormData({
+        name: initialData.name ?? "",
+        calc_type:
+          initialData.calc_type === CalcType.PER_COMPONENT
+            ? CalcType.PER_COMPONENT
+            : CalcType.SINGLE,
+        decimal_place: initialData.decimal_place ?? 2,
+        rounding: (ROUND_MODES.some((m) => m.value === initialData.rounding)
           ? initialData.rounding
           : "round") as RoundMode,
-      );
+        accounts: (initialData.accounts ?? []).map(refId).filter(Boolean),
+        account_assignment:
+          initialData.account_assignment === AccountAssignment.COMPONENT_DETAIL
+            ? AccountAssignment.COMPONENT_DETAIL
+            : AccountAssignment.FORMULA_COMPONENT,
+      });
       // Seed token dari ekspresi ter-populate (list endpoint mem-populate).
       setTokens(apiTokensToBuilder(initialData.expression));
       // Seed komponen bila formula bertipe PER_COMPONENT.
@@ -148,7 +152,26 @@ export default function UpdateCalculatedFormulaModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  // Native input/select (name, rounding, account_assignment) → satu handler.
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataCalculatedFormulaProps]: value,
+    }));
+  };
+
   const handleSubmit = async () => {
+    const {
+      name,
+      calc_type: calcType,
+      decimal_place: decimalPlace,
+      rounding,
+      accounts,
+      account_assignment: accountAssignment,
+    } = formData;
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -297,7 +320,12 @@ export default function UpdateCalculatedFormulaModal({
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
-          <CalcTypeToggle value={calcType} onChange={setCalcType} />
+          <CalcTypeToggle
+            value={formData.calc_type}
+            onChange={(v) =>
+              setFormData((prev) => ({ ...prev, calc_type: v }))
+            }
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="group md:col-span-2">
@@ -305,8 +333,9 @@ export default function UpdateCalculatedFormulaModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 placeholder="e.g. Total Tax"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
               />
@@ -317,8 +346,10 @@ export default function UpdateCalculatedFormulaModal({
                 Decimal Place
               </label>
               <NumberInput
-                value={decimalPlace}
-                onChange={setDecimalPlace}
+                value={formData.decimal_place}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, decimal_place: v }))
+                }
                 integer
                 aria-label="Decimal place"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -333,8 +364,9 @@ export default function UpdateCalculatedFormulaModal({
                 Pembulatan Akhir
               </label>
               <select
-                value={rounding}
-                onChange={(e) => setRounding(e.target.value as RoundMode)}
+                name="rounding"
+                value={formData.rounding}
+                onChange={handleChange}
                 aria-label="Arah pembulatan hasil akhir"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
               >
@@ -358,13 +390,15 @@ export default function UpdateCalculatedFormulaModal({
               </label>
               <AccountsSelect
                 instanceId="calc-final-accounts-update"
-                value={accounts}
-                onChange={setAccounts}
+                value={formData.accounts}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, accounts: v }))
+                }
                 options={accountOptions}
                 isLoading={isLoadingAccounts}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                {calcType === CalcType.PER_COMPONENT
+                {formData.calc_type === CalcType.PER_COMPONENT
                   ? "Akun untuk hasil akhir. Tiap komponen punya akun sendiri di bawah."
                   : "Akun untuk hasil akhir formula."}
               </p>
@@ -376,10 +410,9 @@ export default function UpdateCalculatedFormulaModal({
                 Assign Account Type
               </label>
               <select
-                value={accountAssignment}
-                onChange={(e) =>
-                  setAccountAssignment(e.target.value as AccountAssignment)
-                }
+                name="account_assignment"
+                value={formData.account_assignment}
+                onChange={handleChange}
                 aria-label="Jenis assign akun"
                 className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100 cursor-pointer"
               >
@@ -392,21 +425,22 @@ export default function UpdateCalculatedFormulaModal({
                 )}
               </select>
               <p className="mt-1 text-[11px] text-zinc-400">
-                {accountAssignment === AccountAssignment.COMPONENT_DETAIL
+                {formData.account_assignment ===
+                AccountAssignment.COMPONENT_DETAIL
                   ? "Nilai di-assign ke akun tiap komponen detail (Chart of Account yang di-set di koleksi Component Formula)."
                   : "Nilai di-assign hanya ke akun yang di-set pada formula ini / komponennya."}
               </p>
             </div>
           </div>
 
-          {calcType === CalcType.PER_COMPONENT ? (
+          {formData.calc_type === CalcType.PER_COMPONENT ? (
             <PerComponentBuilder
               components={perComponents}
               onChange={setPerComponents}
               availableComponents={availableComponents}
               accountOptions={accountOptions}
-              masterDecimalPlace={decimalPlace}
-              masterRounding={rounding}
+              masterDecimalPlace={formData.decimal_place}
+              masterRounding={formData.rounding}
               isLoadingComponents={isLoadingComponents}
               isLoadingAccounts={isLoadingAccounts}
             />
@@ -415,8 +449,8 @@ export default function UpdateCalculatedFormulaModal({
               tokens={tokens}
               onChange={setTokens}
               availableComponents={availableComponents}
-              decimalPlace={decimalPlace}
-              rounding={rounding}
+              decimalPlace={formData.decimal_place}
+              rounding={formData.rounding}
               isLoadingComponents={isLoadingComponents}
             />
           )}

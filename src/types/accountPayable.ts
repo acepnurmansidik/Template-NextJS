@@ -49,6 +49,17 @@ export interface AccountPayableLineForm {
   amount: number;
 }
 
+// Field header form (di luar lines yang punya handler tersendiri).
+export interface FormDataAccountPayableProps {
+  date: string;
+  due_date: string;
+  party_name: string;
+  reference: string;
+  description: string;
+  status: AccountPayableStatus;
+  paid_amount: number;
+}
+
 // Payload create/update.
 export interface AccountPayablePayload {
   date: string;

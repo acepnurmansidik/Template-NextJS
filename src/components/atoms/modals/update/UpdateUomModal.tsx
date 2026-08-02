@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPut } from "@/utils/api";
-import { UomApiDaum, UomPayload } from "@/types/uom";
+import { FormDataUomProps, UomApiDaum, UomPayload } from "@/types/uom";
 
 interface DataProps {
   isOpen: boolean;
@@ -26,9 +26,12 @@ export default function UpdateUomModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState(initialData.name);
-  const [code, setCode] = useState(initialData.code);
-  const [description, setDescription] = useState(initialData.description ?? "");
+  const [formData, setFormData] = useState<FormDataUomProps>(() => ({
+    name: initialData.name,
+    code: initialData.code,
+    description: initialData.description ?? "",
+  }));
+  // State terpisah — status field yang hanya diedit di form update (tidak ada di FormDataUomProps).
   const [isActive, setIsActive] = useState(initialData.is_active);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +43,26 @@ export default function UpdateUomModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataUomProps) => {
+      // Code selalu uppercase.
+      if (name === "code") {
+        return { ...prev, code: value.toUpperCase() };
+      }
+      return {
+        ...prev,
+        [name as keyof FormDataUomProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, description } = formData;
+
     if (!name.trim() || !code.trim()) {
       Swal.fire({
         icon: "warning",
@@ -121,8 +143,9 @@ export default function UpdateUomModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
@@ -131,16 +154,18 @@ export default function UpdateUomModal({
                 Code<span className="text-red-500">*</span>
               </label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
             <div className="group md:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                name="description"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

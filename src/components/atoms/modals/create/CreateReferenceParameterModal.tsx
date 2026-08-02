@@ -6,7 +6,11 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { RefParamPayload, RefParamApiDaum } from "@/types/refParam";
+import {
+  RefParamPayload,
+  RefParamApiDaum,
+  FormDataRefParamProps,
+} from "@/types/refParam";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 
 interface DataProps {
@@ -28,9 +32,12 @@ export default function CreateReferenceParameterModal({
   onSuccess,
   defaultType = "",
 }: DataProps) {
-  const [value, setValue] = useState("");
-  const [type, setType] = useState(defaultType);
-  const [description, setDescription] = useState("");
+  const [formData, setFormData] = useState<FormDataRefParamProps>(() => ({
+    value: "",
+    type: defaultType,
+    description: "",
+  }));
+  // State terpisah — image upload (bukan field teks payload) & flag UI.
   const [iconId, setIconId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +49,15 @@ export default function CreateReferenceParameterModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async () => {
+    const { value, type, description } = formData;
     if (!value.trim() || !type.trim() || !description.trim()) {
       Swal.fire({
         icon: "warning",
@@ -118,8 +133,9 @@ export default function CreateReferenceParameterModal({
                 Value<span className="text-red-500">*</span>
               </label>
               <input
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
+                value={formData.value}
+                name="value"
+                onChange={handleChange}
                 placeholder="e.g. Projector"
                 className={inputCls}
               />
@@ -133,8 +149,9 @@ export default function CreateReferenceParameterModal({
                 Type (group)<span className="text-red-500">*</span>
               </label>
               <input
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                value={formData.type}
+                name="type"
+                onChange={handleChange}
                 placeholder="e.g. amenities"
                 className={inputCls}
               />
@@ -148,8 +165,9 @@ export default function CreateReferenceParameterModal({
                 Description<span className="text-red-500">*</span>
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={formData.description}
+                name="description"
+                onChange={handleChange}
                 rows={2}
                 placeholder="Short description"
                 className={`${inputCls} resize-none`}

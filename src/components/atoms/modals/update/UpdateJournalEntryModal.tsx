@@ -16,6 +16,7 @@ import {
   JournalLineForm,
   JournalStatus,
   sumLines,
+  FormDataJournalEntryProps,
 } from "@/types/journalEntry";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 
@@ -51,11 +52,15 @@ export default function UpdateJournalEntryModal({
   // Entry POSTED terkunci — seluruh field dinonaktifkan.
   const disabled = initialData.status === JournalStatus.POSTED;
 
+  // State terpisah — daftar baris debit/credit (dinamis) & daftar akun COA
+  // yang di-fetch untuk dropdown, tidak bisa jadi field scalar formData.
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [date, setDate] = useState(initialData.date.slice(0, 10));
-  const [description, setDescription] = useState(initialData.description ?? "");
-  const [reference, setReference] = useState(initialData.reference ?? "");
-  const [status, setStatus] = useState<JournalStatus>(initialData.status);
+  const [formData, setFormData] = useState<FormDataJournalEntryProps>(() => ({
+    date: initialData.date.slice(0, 10),
+    description: initialData.description ?? "",
+    reference: initialData.reference ?? "",
+    status: initialData.status,
+  }));
   const [lines, setLines] = useState<JournalLineForm[]>(
     initialData.lines.map((l) => ({
       account_id: l.account_id,
@@ -73,6 +78,16 @@ export default function UpdateJournalEntryModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataJournalEntryProps]: value,
+    }));
+  };
 
   useEffect(() => {
     (async () => {
@@ -114,9 +129,11 @@ export default function UpdateJournalEntryModal({
     );
 
   const selectedStatus =
-    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ??
+    STATUS_OPTIONS[0];
 
   const handleSubmit = async () => {
+    const { date, description, reference, status } = formData;
     const filled = lines.filter(
       (l) => l.account_id || l.debit > 0 || l.credit > 0,
     );
@@ -236,9 +253,10 @@ export default function UpdateJournalEntryModal({
               </label>
               <input
                 type="date"
-                value={date}
+                name="date"
+                value={formData.date}
                 disabled={disabled}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={handleChange}
                 className={`${inputCls} disabled:opacity-60`}
               />
             </div>
@@ -246,9 +264,10 @@ export default function UpdateJournalEntryModal({
             <div className="group">
               <label className={labelCls}>Reference</label>
               <input
-                value={reference}
+                name="reference"
+                value={formData.reference}
                 disabled={disabled}
-                onChange={(e) => setReference(e.target.value)}
+                onChange={handleChange}
                 placeholder="e.g. INV-001"
                 className={`${inputCls} disabled:opacity-60`}
               />
@@ -263,9 +282,10 @@ export default function UpdateJournalEntryModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus(
-                    (opt?.value as JournalStatus) ?? JournalStatus.DRAFT,
-                  )
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: (opt?.value as JournalStatus) ?? JournalStatus.DRAFT,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -277,9 +297,10 @@ export default function UpdateJournalEntryModal({
             <div className="group md:col-span-3">
               <label className={labelCls}>Description / Memo</label>
               <textarea
-                value={description}
+                name="description"
+                value={formData.description}
                 disabled={disabled}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={handleChange}
                 rows={2}
                 placeholder="What is this journal for?"
                 className={`${inputCls} resize-none disabled:opacity-60`}

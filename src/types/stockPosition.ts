@@ -30,3 +30,12 @@ export const refLabel = (r?: Ref | null): string =>
 // Ambil id string dari sebuah ref (untuk prefilled update form).
 export const refId = (r?: Ref | null): string =>
   r ? (typeof r === "object" ? r._id : r) : "";
+
+// Bentuk field yang dikumpulkan modal Create/Update. `uom_id` tidak disimpan di
+// sini karena diturunkan otomatis dari product terpilih (read-only).
+export interface FormDataStockPositionProps {
+  product_id: string | null;
+  warehouse_id: string | null;
+  quantity: number;
+  reserved_quantity: number;
+}

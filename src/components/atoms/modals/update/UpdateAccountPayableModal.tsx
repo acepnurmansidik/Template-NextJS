@@ -15,6 +15,7 @@ import {
   AccountPayableLineForm,
   AccountPayablePayload,
   AccountPayableStatus,
+  FormDataAccountPayableProps,
 } from "@/types/accountPayable";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { formatAmount, sumAmount } from "@/utils/utils";
@@ -52,17 +53,15 @@ export default function UpdateAccountPayableModal({
   initialData,
 }: DataProps) {
   const [accounts, setAccounts] = useState<ChartOfAccountApiDaum[]>([]);
-  const [date, setDate] = useState(initialData.date.slice(0, 10));
-  const [dueDate, setDueDate] = useState(
-    initialData.due_date ? initialData.due_date.slice(0, 10) : "",
-  );
-  const [partyName, setPartyName] = useState(initialData.party_name ?? "");
-  const [reference, setReference] = useState(initialData.reference ?? "");
-  const [description, setDescription] = useState(initialData.description ?? "");
-  const [status, setStatus] = useState<AccountPayableStatus>(
-    initialData.status,
-  );
-  const [paidAmount, setPaidAmount] = useState(initialData.paid_amount ?? 0);
+  const [formData, setFormData] = useState<FormDataAccountPayableProps>(() => ({
+    date: initialData.date.slice(0, 10),
+    due_date: initialData.due_date ? initialData.due_date.slice(0, 10) : "",
+    party_name: initialData.party_name ?? "",
+    reference: initialData.reference ?? "",
+    description: initialData.description ?? "",
+    status: initialData.status,
+    paid_amount: initialData.paid_amount ?? 0,
+  }));
   const [lines, setLines] = useState<AccountPayableLineForm[]>(
     initialData.lines.map((l) => ({
       account_id: l.account_id,
@@ -71,6 +70,13 @@ export default function UpdateAccountPayableModal({
     })),
   );
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -104,7 +110,8 @@ export default function UpdateAccountPayableModal({
   );
 
   const total = sumAmount(lines);
-  const remaining = Math.round((total - (Number(paidAmount) || 0)) * 100) / 100;
+  const remaining =
+    Math.round((total - (Number(formData.paid_amount) || 0)) * 100) / 100;
 
   const addLine = () => setLines((prev) => [...prev, { ...emptyLine }]);
   const removeLine = (index: number) =>
@@ -116,7 +123,7 @@ export default function UpdateAccountPayableModal({
 
   // Status WRITE_OFF (dari proses write-off) tetap ditampilkan walau tak bisa dipilih manual.
   const statusOptions =
-    status === AccountPayableStatus.WRITE_OFF
+    formData.status === AccountPayableStatus.WRITE_OFF
       ? [
           ...STATUS_OPTIONS,
           {
@@ -126,7 +133,7 @@ export default function UpdateAccountPayableModal({
         ]
       : STATUS_OPTIONS;
   const selectedStatus =
-    statusOptions.find((o) => o.value === status) ?? statusOptions[0];
+    statusOptions.find((o) => o.value === formData.status) ?? statusOptions[0];
 
   const handleSubmit = async () => {
     const filled = lines.filter((l) => l.account_id || l.amount > 0);
@@ -157,14 +164,16 @@ export default function UpdateAccountPayableModal({
 
     setIsLoading(true);
     try {
+      const { date, due_date, party_name, reference, description, status } =
+        formData;
       const payload: AccountPayablePayload = {
         date,
-        due_date: dueDate || undefined,
-        party_name: partyName.trim(),
+        due_date: due_date || undefined,
+        party_name: party_name.trim(),
         reference: reference.trim(),
         description: description.trim(),
         status,
-        paid_amount: paidAmount,
+        paid_amount: formData.paid_amount,
         lines: filled.map((l) => ({
           account_id: l.account_id,
           description: l.description.trim(),
@@ -243,8 +252,9 @@ export default function UpdateAccountPayableModal({
               </label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 className={
                   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                 }
@@ -261,8 +271,9 @@ export default function UpdateAccountPayableModal({
               </label>
               <input
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                name="due_date"
+                value={formData.due_date}
+                onChange={handleChange}
                 className={
                   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                 }
@@ -283,10 +294,12 @@ export default function UpdateAccountPayableModal({
                 options={statusOptions}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus(
-                    (opt?.value as AccountPayableStatus) ??
+                  setFormData((prev) => ({
+                    ...prev,
+                    status:
+                      (opt?.value as AccountPayableStatus) ??
                       AccountPayableStatus.DRAFT,
-                  )
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -304,8 +317,9 @@ export default function UpdateAccountPayableModal({
                 Vendor
               </label>
               <input
-                value={partyName}
-                onChange={(e) => setPartyName(e.target.value)}
+                name="party_name"
+                value={formData.party_name}
+                onChange={handleChange}
                 placeholder="e.g. Vendor name"
                 className={
                   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -322,8 +336,9 @@ export default function UpdateAccountPayableModal({
                 Reference
               </label>
               <input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
                 placeholder="e.g. PO-001"
                 className={
                   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -340,8 +355,9 @@ export default function UpdateAccountPayableModal({
                 Description / Memo
               </label>
               <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 placeholder="What is this for?"
                 className={
                   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
@@ -476,10 +492,15 @@ export default function UpdateAccountPayableModal({
                   Paid Amount
                 </label>
                 <CurrencyInput
-                  value={paidAmount}
+                  value={formData.paid_amount}
                   placeholder="0"
                   aria-label="Paid amount"
-                  onChange={(v) => setPaidAmount(v > total ? total : v)}
+                  onChange={(v) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      paid_amount: v > total ? total : v,
+                    }))
+                  }
                   className={`${"w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"} text-right`}
                 />
               </div>

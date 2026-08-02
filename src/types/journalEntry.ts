@@ -40,6 +40,14 @@ export interface JournalLineForm {
   credit: number;
 }
 
+// Field header/scalar form (baris debit/credit dikelola state `lines` terpisah).
+export interface FormDataJournalEntryProps {
+  date: string;
+  description: string;
+  reference: string;
+  status: JournalStatus;
+}
+
 // Payload create/update.
 export interface JournalEntryPayload {
   date: string;

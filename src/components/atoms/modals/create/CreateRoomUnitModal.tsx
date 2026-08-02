@@ -9,6 +9,7 @@ import { apiGet, apiPost } from "@/utils/api";
 import {
   BuildingApiDaum,
   BuildingFloorApiDaum,
+  FormDataRoomUnitProps,
   RoomStatus,
   ROOM_STATUS_LABEL,
   ROOM_UNIT_TYPES,
@@ -52,19 +53,23 @@ export default function CreateRoomUnitModal({
   onClose,
   onSuccess,
 }: DataProps) {
+  const [formData, setFormData] = useState<FormDataRoomUnitProps>({
+    building_id: "",
+    floor_id: "",
+    name: "",
+    unit_type: "bedroom",
+    status: RoomStatus.AVAILABLE,
+    capacity: 0,
+    area_sqm: 0,
+    notes: "",
+    is_active: true,
+  });
+  // State terpisah — bukan field payload plain: daftar opsi (fetched),
+  // amenities (multi-select array), imageId (hasil upload) & flag UI.
   const [buildings, setBuildings] = useState<BuildingApiDaum[]>([]);
   const [floors, setFloors] = useState<BuildingFloorApiDaum[]>([]);
-  const [buildingId, setBuildingId] = useState<string | null>(null);
-  const [floorId, setFloorId] = useState<string | null>(null);
-
-  const [name, setName] = useState("");
-  const [unitType, setUnitType] = useState<RoomUnitType>("bedroom");
-  const [status, setStatus] = useState<RoomStatus>(RoomStatus.AVAILABLE);
-  const [capacity, setCapacity] = useState(0);
-  const [area, setArea] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [imageId, setImageId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -74,6 +79,16 @@ export default function CreateRoomUnitModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataRoomUnitProps]: value,
+    }));
+  };
 
   useEffect(() => {
     (async () => {
@@ -92,25 +107,25 @@ export default function CreateRoomUnitModal({
 
   // Ambil lantai saat building dipilih.
   useEffect(() => {
-    if (!buildingId) {
+    if (!formData.building_id) {
       setFloors([]);
-      setFloorId(null);
+      setFormData((prev) => ({ ...prev, floor_id: "" }));
       return;
     }
     (async () => {
       try {
         const result = await apiGet<ListResponse<BuildingFloorApiDaum>>(
           "/building-floor",
-          { building_id: buildingId, limit: 1000 },
+          { building_id: formData.building_id, limit: 1000 },
           false,
         );
         setFloors(result.data ?? []);
       } catch {
         setFloors([]);
       }
-      setFloorId(null);
+      setFormData((prev) => ({ ...prev, floor_id: "" }));
     })();
-  }, [buildingId]);
+  }, [formData.building_id]);
 
   const buildingOptions: Option[] = useMemo(
     () =>
@@ -123,7 +138,10 @@ export default function CreateRoomUnitModal({
   );
 
   const handleSubmit = async () => {
-    if (!floorId) {
+    const { floor_id, name, unit_type, status, capacity, area_sqm, notes } =
+      formData;
+
+    if (!floor_id) {
       Swal.fire({
         icon: "warning",
         title: "Building & floor are required",
@@ -135,12 +153,12 @@ export default function CreateRoomUnitModal({
     setIsLoading(true);
     try {
       const payload: RoomUnitPayload = {
-        floor_id: floorId,
+        floor_id,
         name: name.trim(),
-        unit_type: unitType,
+        unit_type,
         status,
         capacity: capacity,
-        area_sqm: area,
+        area_sqm,
         amenities,
         image_id: imageId,
         notes: notes.trim(),
@@ -184,10 +202,13 @@ export default function CreateRoomUnitModal({
   if (!isOpen) return null;
 
   const selectedBuilding =
-    buildingOptions.find((o) => o.value === buildingId) ?? null;
-  const selectedFloor = floorOptions.find((o) => o.value === floorId) ?? null;
-  const selectedType = TYPE_OPTIONS.find((o) => o.value === unitType) ?? null;
-  const selectedStatus = STATUS_OPTIONS.find((o) => o.value === status) ?? null;
+    buildingOptions.find((o) => o.value === formData.building_id) ?? null;
+  const selectedFloor =
+    floorOptions.find((o) => o.value === formData.floor_id) ?? null;
+  const selectedType =
+    TYPE_OPTIONS.find((o) => o.value === formData.unit_type) ?? null;
+  const selectedStatus =
+    STATUS_OPTIONS.find((o) => o.value === formData.status) ?? null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -216,7 +237,12 @@ export default function CreateRoomUnitModal({
                 placeholder="Select building…"
                 options={buildingOptions}
                 value={selectedBuilding}
-                onChange={(opt) => setBuildingId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    building_id: opt?.value ?? "",
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -232,10 +258,15 @@ export default function CreateRoomUnitModal({
                 instanceId="room-floor-create"
                 classNamePrefix="rs"
                 placeholder="Select floor…"
-                isDisabled={!buildingId}
+                isDisabled={!formData.building_id}
                 options={floorOptions}
                 value={selectedFloor}
-                onChange={(opt) => setFloorId(opt?.value ?? null)}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    floor_id: opt?.value ?? "",
+                  }))
+                }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
@@ -249,8 +280,9 @@ export default function CreateRoomUnitModal({
             <div className="group">
               <label className={labelCls}>Name (optional)</label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="Kosongkan untuk otomatis (Room N)"
                 className={inputCls}
               />
@@ -264,7 +296,10 @@ export default function CreateRoomUnitModal({
                 options={TYPE_OPTIONS}
                 value={selectedType}
                 onChange={(opt) =>
-                  setUnitType((opt?.value as RoomUnitType) ?? "bedroom")
+                  setFormData((prev) => ({
+                    ...prev,
+                    unit_type: (opt?.value as RoomUnitType) ?? "bedroom",
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -281,7 +316,10 @@ export default function CreateRoomUnitModal({
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
                 onChange={(opt) =>
-                  setStatus((opt?.value as RoomStatus) ?? RoomStatus.AVAILABLE)
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: (opt?.value as RoomStatus) ?? RoomStatus.AVAILABLE,
+                  }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
@@ -294,8 +332,10 @@ export default function CreateRoomUnitModal({
               <label className={labelCls}>Capacity</label>
               <NumberInput
                 integer
-                value={capacity}
-                onChange={setCapacity}
+                value={formData.capacity}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, capacity: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -303,8 +343,10 @@ export default function CreateRoomUnitModal({
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
               <NumberInput
-                value={area}
-                onChange={setArea}
+                value={formData.area_sqm}
+                onChange={(v) =>
+                  setFormData((prev) => ({ ...prev, area_sqm: v }))
+                }
                 className={inputCls}
               />
             </div>
@@ -330,8 +372,9 @@ export default function CreateRoomUnitModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={formData.notes}
+                name="notes"
+                onChange={handleChange}
                 rows={2}
                 className={`${inputCls} resize-none`}
               />

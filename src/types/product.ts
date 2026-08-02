@@ -34,3 +34,18 @@ export interface ProductPayload {
 // Ambil label yang bisa ditampilkan dari sebuah Ref (nama > kode > em dash).
 export const refLabel = (r?: Ref): string =>
   r && typeof r === "object" ? (r.name ?? r.code ?? "—") : "—";
+
+// Bentuk form yang dikumpulkan modal Create/Update. Nilai select disimpan
+// sebagai id string (bukan daftar option yang di-fetch). `is_active` hanya
+// dipakai oleh Update.
+export interface FormDataProductProps {
+  product_category_id: string | null;
+  uom_id: string | null;
+  code: string;
+  name: string;
+  barcode: string;
+  description: string;
+  purchase_price: number;
+  selling_price: number;
+  is_active?: boolean;
+}

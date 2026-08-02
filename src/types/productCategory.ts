@@ -34,3 +34,11 @@ export interface ProductCategoryPayload {
 // Ambil id akun dari LineAccount (string atau objek populate).
 export const accountId = (ref?: AccountRef): string =>
   ref && typeof ref === "object" ? ref._id : (ref ?? "");
+
+// Bentuk field plain yang dikumpulkan modal Create/Update. `line_accounts`
+// (tabel dinamis add/remove) tetap dikelola state terpisah, bukan di sini.
+export interface FormDataProductCategoryProps {
+  name: string;
+  prefix: string;
+  is_active: boolean;
+}

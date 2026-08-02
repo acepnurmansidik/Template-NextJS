@@ -6,7 +6,11 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { apiPost } from "@/utils/api";
-import { SupplierApiDaum, SupplierPayload } from "@/types/supplier";
+import {
+  FormDataSupplierProps,
+  SupplierApiDaum,
+  SupplierPayload,
+} from "@/types/supplier";
 
 interface DataProps {
   isOpen: boolean;
@@ -19,21 +23,30 @@ const inputCls =
 const labelCls =
   "block text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5";
 
+const defaultValue: FormDataSupplierProps = {
+  name: "",
+  code: "",
+  contact_info: {
+    phone: "",
+    email: "",
+    contact_person: "",
+  },
+  address: {
+    street: "",
+    city: "",
+    state_province: "",
+    postal_code: "",
+    country: "Indonesia",
+  },
+};
+
 export default function CreateSupplierModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [contactPerson, setContactPerson] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [stateProvince, setStateProvince] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("Indonesia");
+  const [formData, setFormData] =
+    useState<FormDataSupplierProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -44,7 +57,49 @@ export default function CreateSupplierModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: FormDataSupplierProps) => {
+      // 1. Update contact_info
+      if (["phone", "email", "contact_person"].includes(name)) {
+        return {
+          ...prev,
+          contact_info: {
+            ...prev.contact_info,
+            [name]: value,
+          },
+        };
+      }
+
+      // 2. Update address
+      if (
+        ["street", "city", "state_province", "postal_code", "country"].includes(
+          name,
+        )
+      ) {
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [name]: value,
+          },
+        };
+      }
+
+      // 3. Update top-level field biasa (name, code)
+      return {
+        ...prev,
+        [name as keyof FormDataSupplierProps]: value,
+      };
+    });
+  };
+
   const handleSubmit = async () => {
+    const { name, code, contact_info, address } = formData;
+
     if (!name.trim()) {
       Swal.fire({
         icon: "warning",
@@ -60,16 +115,16 @@ export default function CreateSupplierModal({
         // Kosongkan → backend auto-generate kode (SUP-####).
         code: code.trim() || undefined,
         contact_info: {
-          phone: phone.trim() ? [phone.trim()] : [],
-          email: email.trim(),
-          contact_person: contactPerson.trim(),
+          phone: contact_info.phone.trim() ? [contact_info.phone.trim()] : [],
+          email: contact_info.email.trim(),
+          contact_person: contact_info.contact_person.trim(),
         },
         address: {
-          street: street.trim(),
-          city: city.trim(),
-          state_province: stateProvince.trim(),
-          postal_code: postalCode.trim(),
-          country: country.trim(),
+          street: address.street.trim(),
+          city: address.city.trim(),
+          state_province: address.state_province.trim(),
+          postal_code: address.postal_code.trim(),
+          country: address.country.trim(),
         },
       };
 
@@ -132,8 +187,9 @@ export default function CreateSupplierModal({
                 Name<span className="text-red-500">*</span>
               </label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                name="name"
+                onChange={handleChange}
                 placeholder="e.g. PT Sumber Rejeki"
                 className={inputCls}
               />
@@ -142,8 +198,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>Code</label>
               <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={formData.code}
+                name="code"
+                onChange={handleChange}
                 placeholder="Kosongkan untuk auto-generate (SUP-####)"
                 className={inputCls}
               />
@@ -152,8 +209,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>Contact Person</label>
               <input
-                value={contactPerson}
-                onChange={(e) => setContactPerson(e.target.value)}
+                value={formData.contact_info.contact_person}
+                name="contact_person"
+                onChange={handleChange}
                 placeholder="e.g. Budi Santoso"
                 className={inputCls}
               />
@@ -162,8 +220,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>Email</label>
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.contact_info.email}
+                name="email"
+                onChange={handleChange}
                 placeholder="supplier@example.com"
                 className={inputCls}
               />
@@ -172,8 +231,9 @@ export default function CreateSupplierModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Phone</label>
               <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formData.contact_info.phone}
+                name="phone"
+                onChange={handleChange}
                 placeholder="e.g. 021-12345678"
                 className={inputCls}
               />
@@ -182,8 +242,9 @@ export default function CreateSupplierModal({
             <div className="group md:col-span-2">
               <label className={labelCls}>Street</label>
               <input
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.address.street}
+                name="street"
+                onChange={handleChange}
                 placeholder="Jl. Sumber No. 1"
                 className={inputCls}
               />
@@ -192,8 +253,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>City</label>
               <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.address.city}
+                name="city"
+                onChange={handleChange}
                 placeholder="Jakarta"
                 className={inputCls}
               />
@@ -202,8 +264,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>State / Province</label>
               <input
-                value={stateProvince}
-                onChange={(e) => setStateProvince(e.target.value)}
+                value={formData.address.state_province}
+                name="state_province"
+                onChange={handleChange}
                 placeholder="DKI Jakarta"
                 className={inputCls}
               />
@@ -212,8 +275,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>Postal Code</label>
               <input
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.address.postal_code}
+                name="postal_code"
+                onChange={handleChange}
                 placeholder="10110"
                 className={inputCls}
               />
@@ -222,8 +286,9 @@ export default function CreateSupplierModal({
             <div className="group">
               <label className={labelCls}>Country</label>
               <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.address.country}
+                name="country"
+                onChange={handleChange}
                 className={inputCls}
               />
             </div>
