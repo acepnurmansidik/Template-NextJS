@@ -182,7 +182,7 @@ export default function UpdateLayoutComponentModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/layout-component/upload"
+                endpoint="/auth/upload-file"
                 value={formData.image_id}
                 imagePath={refImagePath(initialData.image_id)}
                 onChange={(id) =>

@@ -15,7 +15,7 @@ import {
   refImagePath,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
-import NumberInput from "@/components/atoms/shared/NumberInput";
+import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 
 interface DataProps {
   isOpen: boolean;
@@ -191,7 +191,7 @@ export default function UpdateBuildingFloorModal({
 
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
-              <NumberInput
+              <CurrencyInput
                 value={formData.floor_area_sqm}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, floor_area_sqm: v }))
@@ -202,8 +202,8 @@ export default function UpdateBuildingFloorModal({
 
             <div className="group">
               <label className={labelCls}>Max Capacity</label>
-              <NumberInput
-                integer
+              <CurrencyInput
+                maxDecimals={0}
                 value={formData.max_capacity}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, max_capacity: v }))
@@ -214,7 +214,7 @@ export default function UpdateBuildingFloorModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/building-floor/upload"
+                endpoint="/auth/upload-file"
                 value={planId}
                 imagePath={refImagePath(initialData.floor_plan_url_id)}
                 onChange={(id) => setPlanId(id)}

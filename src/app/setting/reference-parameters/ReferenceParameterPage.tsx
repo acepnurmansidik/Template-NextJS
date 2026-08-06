@@ -31,8 +31,6 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
   const [data, setData] = useState<RefParamApiDaum[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
-  const [type, setType] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -53,37 +51,21 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
   );
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
 
-  const fetchTypes = useCallback(async () => {
-    try {
-      const res = await apiGet<RefParamTypesResponse>(
-        "/ref-parameter/types",
-        {},
-        false,
-      );
-      setTypes(res.data ?? []);
-    } catch {
-      setTypes([]);
-    }
-  }, []);
-
   const fetchingData = useCallback(async () => {
     try {
       const result = await apiGet<ListResponse<RefParamApiDaum>>(
         "/ref-parameter",
-        { page, limit, search, type },
+        { page, limit, search },
         false,
       );
+
       setData(result.data ?? []);
       setTotalData(result.page_size ?? 0);
     } catch {
       setData([]);
       setTotalData(0);
     }
-  }, [page, limit, search, type]);
-
-  useEffect(() => {
-    fetchTypes();
-  }, [fetchTypes]);
+  }, [page, limit, search]);
 
   useEffect(() => {
     fetchingData();
@@ -161,39 +143,6 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
                 in value &amp; description
               </span>
             </div>
-
-            {/* TYPE (GROUP) FILTER */}
-            <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto bg-gray-100 dark:bg-zinc-700/50 p-1 rounded-lg">
-              <button
-                onClick={() => {
-                  setType("");
-                  setPage(1);
-                }}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  type === ""
-                    ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
-                }`}
-              >
-                All
-              </button>
-              {types.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setType(t);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all capitalize ${
-                    type === t
-                      ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                      : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  {t.replace(/_/g, " ")}
-                </button>
-              ))}
-            </div>
           </div>
 
           <TableReferenceParameter
@@ -215,11 +164,9 @@ export const ReferenceParameterPage = ({ title, subtitle }: DataProps) => {
       {isModalCreateOpen && (
         <CreateReferenceParameterModal
           isOpen={isModalCreateOpen}
-          defaultType={type}
           onClose={() => setIsModalCreateOpen(false)}
           onSuccess={() => {
             setIsModalCreateOpen(false);
-            fetchTypes();
             fetchingData();
           }}
         />

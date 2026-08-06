@@ -16,6 +16,8 @@ interface DataProps {
   allowNegative?: boolean;
   groupSeparator?: string; // pemisah ribuan (default ".")
   decimalSeparator?: string; // pemisah desimal (default ",")
+  max?: number; // batas atas — nilai dipaksa turun ke `max` bila melebihi
+  min?: number; // batas bawah — nilai dipaksa naik ke `min` bila kurang
   "aria-label"?: string;
 }
 
@@ -69,8 +71,18 @@ export default function CurrencyInput({
   allowNegative = false,
   groupSeparator = ".",
   decimalSeparator = ",",
+  max,
+  min,
   "aria-label": ariaLabel,
 }: DataProps) {
+  // Paksa nilai ke dalam rentang [min, max] bila prop-nya di-set.
+  const clamp = (n: number): number => {
+    let out = n;
+    if (typeof max === "number" && out > max) out = max;
+    if (typeof min === "number" && out < min) out = min;
+    return out;
+  };
+
   const [text, setText] = useState<string>(
     numToDisplay(value, maxDecimals, groupSeparator, decimalSeparator),
   );
@@ -105,13 +117,21 @@ export default function CurrencyInput({
       hasDec && maxDecimals > 0
         ? `${grouped}${decimalSeparator}${decDigits}`
         : grouped;
-    const display = (neg ? "-" : "") + body;
-    setText(display);
 
     const intForNum = intDigitsRaw.replace(/^0+(?=\d)/, "") || "0";
     const numAbs = Number(`${intForNum}.${decDigits || "0"}`);
-    const numeric = neg ? -numAbs : numAbs;
-    onChange(Number.isFinite(numeric) ? numeric : 0);
+    const rawNumeric = neg ? -numAbs : numAbs;
+    const numeric = clamp(Number.isFinite(rawNumeric) ? rawNumeric : 0);
+
+    // Bila nilai dipaksa oleh batas [min, max], tampilkan angka hasil clamp
+    // (bukan angka mentah yang diketik) agar display konsisten dengan value.
+    const display =
+      numeric !== rawNumeric
+        ? numToDisplay(numeric, maxDecimals, groupSeparator, decimalSeparator)
+        : (neg ? "-" : "") + body;
+    setText(display);
+
+    onChange(numeric);
   };
 
   return (

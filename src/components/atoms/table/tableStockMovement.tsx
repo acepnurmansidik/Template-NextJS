@@ -4,16 +4,19 @@ import { useState } from "react";
 import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { apiDelete } from "@/utils/api";
+import { FiEdit2, FiTrash2, FiEye, FiCheckCircle } from "react-icons/fi";
+import { apiDelete, apiPut } from "@/utils/api";
 import {
   MovementType,
   MOVEMENT_TYPE_LABEL,
   refLabel,
   StockMovementApiDaum,
+  MOVEMENT_STATUS_LABEL,
+  MovementStatus,
 } from "@/types/stockMovement";
 import { formatCurrencyPure } from "@/utils/formatter";
 import UpdateStockMovementModal from "../modals/update/UpdateStockMovementModal";
+import ViewStockMovementModal from "../modals/view/ViewStockMovementModal";
 
 interface DataProps {
   columns: Column[];
@@ -39,6 +42,12 @@ const TYPE_BADGE: Record<MovementType, string> = {
     "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700",
   [MovementType.TRANSFER]:
     "border-sky-300 bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-700",
+};
+const STATUS_BADGE: Record<MovementStatus, string> = {
+  [MovementStatus.DRAFT]:
+    "border-gray-300 bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700",
+  [MovementStatus.APPROVED]:
+    "border-green-300 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
 };
 
 const formatDate = (value?: string) => {
@@ -66,6 +75,7 @@ export const TableStockMovement = ({
   onRefresh,
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
   const [selectedData, setSelectedData] = useState<StockMovementApiDaum | null>(
     null,
   );
@@ -94,6 +104,51 @@ export const TableStockMovement = ({
           icon: "success",
           title: "Deleted successfully",
           text: result.message || "Your data has been deleted successfully.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#2563eb",
+          timer: 2500,
+          timerProgressBar: true,
+        });
+        onRefresh?.();
+      }
+    } catch (error) {
+      const serverMessage =
+        axios.isAxiosError(error) &&
+        (error.response?.data?.message || error.response?.data?.error);
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: serverMessage || "Failed to delete data. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc2626",
+      });
+    }
+  };
+
+  const handleApproved = async (row: StockMovementApiDaum) => {
+    try {
+      const confirmation = await Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this data!",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Yes, approve it!",
+        cancelButtonText: "No, cancel",
+      });
+      if (!confirmation.isConfirmed) return;
+
+      const result = await apiPut<SingleResponse<StockMovementApiDaum>>(
+        `/stock-movement/${row._id}`,
+        { status: "APPROVED" },
+        false,
+      );
+      if (result.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Updated successfully",
+          text: result.message || "Your data has been updated successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
@@ -149,10 +204,12 @@ export const TableStockMovement = ({
             {formatCurrencyPure(row.quantity ?? 0)}
           </span>
         );
-      case "reference":
+      case "status":
         return (
-          <span className="text-gray-600 dark:text-zinc-400">
-            {row.reference || "—"}
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_BADGE[row.status]}`}
+          >
+            {MOVEMENT_STATUS_LABEL[row.status] ?? row.status}
           </span>
         );
       default:
@@ -213,51 +270,81 @@ export const TableStockMovement = ({
                   </td>
                 </tr>
               ) : (
-                data.map((row, rowIndex) => (
-                  <tr
-                    key={row._id}
-                    className={`transition text-sm border-b border-gray-100/50 dark:border-zinc-700/50 ${
-                      rowIndex % 2 === 0
-                        ? "bg-gray-50 dark:bg-zinc-700/30"
-                        : "bg-white dark:bg-transparent"
-                    }`}
-                  >
-                    {columns.map((col, indexCol) => (
-                      <td
-                        key={indexCol}
-                        className={`py-3 px-3 text-gray-700 dark:text-zinc-300 ${col.classname ?? ""}`}
-                      >
-                        {col.value === "action" ? (
-                          <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
-                            {hasAccess.update && (
-                              <button
-                                onClick={() => {
-                                  setSelectedData(row);
-                                  setShowModalUpdate(true);
-                                }}
-                                title="Edit"
-                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
-                              >
-                                <FiEdit2 size={15} />
-                              </button>
-                            )}
-                            {hasAccess.delete && (
-                              <button
-                                onClick={() => handleDelete(row)}
-                                title="Delete"
-                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 cursor-pointer"
-                              >
-                                <FiTrash2 size={15} />
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          renderCell(row, col.value)
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                data.map((row, rowIndex) => {
+                  const locked = row.status === MovementStatus.APPROVED;
+                  return (
+                    <tr
+                      key={row._id}
+                      className={`transition text-sm border-b border-gray-100/50 dark:border-zinc-700/50 ${
+                        rowIndex % 2 === 0
+                          ? "bg-gray-50 dark:bg-zinc-700/30"
+                          : "bg-white dark:bg-transparent"
+                      }`}
+                    >
+                      {columns.map((col, indexCol) => (
+                        <td
+                          key={indexCol}
+                          className={`py-3 px-3 text-gray-700 dark:text-zinc-300 ${col.classname ?? ""}`}
+                        >
+                          {col.value === "action" ? (
+                            <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                              {hasAccess.view && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedData(row);
+                                    setShowModalView(true);
+                                  }}
+                                  title="View"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                                >
+                                  <FiEye size={15} />
+                                </button>
+                              )}
+                              {hasAccess.approved && row.status == "DRAFT" && (
+                                <button
+                                  onClick={() => handleApproved(row)}
+                                  title="Approved"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 cursor-pointer"
+                                >
+                                  <FiCheckCircle size={15} />
+                                </button>
+                              )}
+
+                              {hasAccess.update && row.status == "DRAFT" && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedData(row);
+                                    setShowModalUpdate(true);
+                                  }}
+                                  title="Edit"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer"
+                                >
+                                  <FiEdit2 size={15} />
+                                </button>
+                              )}
+                              {hasAccess.delete && row.status === "DRAFT" && (
+                                <button
+                                  onClick={() => handleDelete(row)}
+                                  title="Delete"
+                                  className="h-7 w-7 flex items-center justify-center rounded-md hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 cursor-pointer"
+                                >
+                                  <FiTrash2 size={15} />
+                                </button>
+                              )}
+                              {locked && (
+                                <span className="text-[11px] italic text-zinc-400 dark:text-zinc-500 select-none">
+                                  Locked
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            renderCell(row, col.value)
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -363,6 +450,14 @@ export const TableStockMovement = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
+        />
+      )}
+
+      {showModalView && selectedData && (
+        <ViewStockMovementModal
+          isOpen={showModalView}
+          initialData={selectedData}
+          onClose={() => setShowModalView(false)}
         />
       )}
     </div>

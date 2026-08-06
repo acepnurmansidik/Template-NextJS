@@ -173,7 +173,7 @@ export default function UpdateReferenceParameterModal({
             </div>
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/ref-parameter/upload"
+                endpoint="/auth/upload-file"
                 value={iconId}
                 imagePath={refImagePath(initialData.icon_id)}
                 onChange={(id) => setIconId(id)}

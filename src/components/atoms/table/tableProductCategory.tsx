@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import { ProductCategoryApiDaum } from "@/types/productCategory";
 import UpdateProductCategoryModal from "../modals/update/UpdateProductCategoryModal";
+import ViewProductCategoryModal from "../modals/view/ViewProductCategoryModal";
 
 interface DataProps {
   columns: Column[];
@@ -39,6 +40,7 @@ export const TableProductCategory = ({
   const [selectedData, setSelectedData] =
     useState<ProductCategoryApiDaum | null>(null);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
 
   const handleDelete = async (row: ProductCategoryApiDaum) => {
     try {
@@ -192,6 +194,18 @@ export const TableProductCategory = ({
                       >
                         {col.value === "action" ? (
                           <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                            {hasAccess.view && (
+                              <button
+                                onClick={() => {
+                                  setSelectedData(row);
+                                  setShowModalView(true);
+                                }}
+                                title="View"
+                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <FiEye size={15} />
+                              </button>
+                            )}
                             {hasAccess.update && (
                               <button
                                 onClick={() => {
@@ -326,6 +340,14 @@ export const TableProductCategory = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
+        />
+      )}
+
+      {showModalView && selectedData && (
+        <ViewProductCategoryModal
+          isOpen={showModalView}
+          initialData={selectedData}
+          onClose={() => setShowModalView(false)}
         />
       )}
     </div>

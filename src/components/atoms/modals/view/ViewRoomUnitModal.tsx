@@ -11,6 +11,7 @@ import {
   RoomStatus,
   RoomUnitApiDaum,
 } from "@/types/facility";
+import { formatCurrencyPure } from "@/utils/formatter";
 
 interface DataProps {
   isOpen: boolean;
@@ -97,11 +98,11 @@ export default function ViewRoomUnitModal({
             <Field label="Unit Type" value={c.unit_type?.replace(/_/g, " ")} />
             <Field
               label="Capacity"
-              value={c.capacity ? String(c.capacity) : "—"}
+              value={c.capacity ? formatCurrencyPure(c.capacity) : "—"}
             />
             <Field
               label="Area"
-              value={c.area_sqm ? `${c.area_sqm} m²` : "—"}
+              value={c.area_sqm ? `${formatCurrencyPure(c.area_sqm)} m²` : "—"}
             />
             <Field label="Slug" value={c.slug} />
             <div className="col-span-2">

@@ -280,7 +280,7 @@ export const TableIAM = ({
                               )}
                             </div>
                           ) : col.value === "role_name" ? (
-                            <div className="flex border border-blue-400 rounded-full justify-center items-center py-0.5 bg-blue-50 font-semibold text-blue-500 flex-wrap gap-2 max-h-[50px] overflow-hidden relative">
+                            <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
                               {row.role_id.name}
                             </div>
                           ) : col.value === "email" ? (

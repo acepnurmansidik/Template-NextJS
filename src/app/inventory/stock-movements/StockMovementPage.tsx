@@ -23,7 +23,7 @@ const columns: Column[] = [
   { title: "Product", value: "product", classname: "w-[24%]" },
   { title: "Warehouse", value: "warehouse", classname: "w-[18%]" },
   { title: "Quantity", value: "quantity", classname: "w-[10%]" },
-  { title: "Reference", value: "reference", classname: "w-[12%]" },
+  { title: "Status", value: "status", classname: "w-[12%]" },
   { title: "Action", value: "action", classname: "w-[10%]" },
 ];
 

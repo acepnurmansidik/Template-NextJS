@@ -9,6 +9,7 @@ import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import { apiDelete, apiGet, apiPost } from "@/utils/api";
 import { BuildingApiDaum, BuildingFloorApiDaum, BUILDING_TYPE_LABEL, BuildingType, refImagePath, refName } from "@/types/facility";
 import UpdateBuildingFloorModal from "../update/UpdateBuildingFloorModal";
+import { formatCurrencyPure } from "@/utils/formatter";
 
 interface DataProps {
   isOpen: boolean;
@@ -161,7 +162,7 @@ export default function ViewBuildingModal({
                   />
                   <Field
                     label="Total Floors"
-                    value={String(building.total_floors)}
+                    value={formatCurrencyPure(building.total_floors ?? 0)}
                   />
                   <Field
                     label="Status"
@@ -171,7 +172,7 @@ export default function ViewBuildingModal({
                     label="Building Area"
                     value={
                       building.building_area_sqm
-                        ? `${building.building_area_sqm} m²`
+                        ? `${formatCurrencyPure(building.building_area_sqm)} m²`
                         : "—"
                     }
                   />
@@ -179,7 +180,7 @@ export default function ViewBuildingModal({
                     label="Land Area"
                     value={
                       building.land_area_sqm
-                        ? `${building.land_area_sqm} m²`
+                        ? `${formatCurrencyPure(building.land_area_sqm)} m²`
                         : "—"
                     }
                   />
@@ -248,13 +249,13 @@ export default function ViewBuildingModal({
                                 {f.name}
                               </td>
                               <td className="py-2.5 px-3 text-center text-zinc-600 dark:text-zinc-400">
-                                {f.floor_level}
+                                {formatCurrencyPure(f.floor_level ?? 0)}
                               </td>
                               <td className="py-2.5 px-3 text-right font-mono text-zinc-600 dark:text-zinc-400">
-                                {f.floor_area_sqm || 0}
+                                {formatCurrencyPure(f.floor_area_sqm || 0)}
                               </td>
                               <td className="py-2.5 px-3 text-right font-mono text-zinc-600 dark:text-zinc-400">
-                                {f.max_capacity || 0}
+                                {formatCurrencyPure(f.max_capacity || 0)}
                               </td>
                               <td className="py-2.5 px-3">
                                 {refImagePath(f.floor_plan_url_id) ? (

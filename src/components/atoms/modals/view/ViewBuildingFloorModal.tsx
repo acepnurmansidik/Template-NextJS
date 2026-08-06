@@ -8,6 +8,7 @@ import {
   refImagePath,
   refName,
 } from "@/types/facility";
+import { formatCurrencyPure } from "@/utils/formatter";
 
 interface DataProps {
   isOpen: boolean;
@@ -80,18 +81,18 @@ export default function ViewBuildingFloorModal({
           <div className="md:col-span-2 grid grid-cols-2 gap-6">
             <Field label="Building" value={refName(c.building_id)} />
             <Field label="Type" value={c.type} />
-            <Field label="Floor Level" value={String(c.floor_level)} />
+            <Field label="Floor Level" value={formatCurrencyPure(c.floor_level ?? 0)} />
             <Field
               label="Status"
               value={c.is_active ? "Active" : "Inactive"}
             />
             <Field
               label="Area"
-              value={c.floor_area_sqm ? `${c.floor_area_sqm} m²` : "—"}
+              value={c.floor_area_sqm ? `${formatCurrencyPure(c.floor_area_sqm)} m²` : "—"}
             />
             <Field
               label="Max Capacity"
-              value={c.max_capacity ? String(c.max_capacity) : "—"}
+              value={c.max_capacity ? formatCurrencyPure(c.max_capacity) : "—"}
             />
             <Field label="Slug" value={c.slug} />
             <div className="col-span-2">

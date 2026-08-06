@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import { UomApiDaum } from "@/types/uom";
 import UpdateUomModal from "../modals/update/UpdateUomModal";
+import ViewUomModal from "../modals/view/ViewUomModal";
 
 interface DataProps {
   columns: Column[];
@@ -37,6 +38,7 @@ export const TableUom = ({
   onRefresh,
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
   const [selectedData, setSelectedData] = useState<UomApiDaum | null>(null);
 
   const handleDelete = async (row: UomApiDaum) => {
@@ -188,6 +190,18 @@ export const TableUom = ({
                       >
                         {col.value === "action" ? (
                           <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                            {hasAccess.view && (
+                              <button
+                                onClick={() => {
+                                  setSelectedData(row);
+                                  setShowModalView(true);
+                                }}
+                                title="View"
+                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <FiEye size={15} />
+                              </button>
+                            )}
                             {hasAccess.update && (
                               <button
                                 onClick={() => {
@@ -322,6 +336,14 @@ export const TableUom = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
+        />
+      )}
+
+      {showModalView && selectedData && (
+        <ViewUomModal
+          isOpen={showModalView}
+          initialData={selectedData}
+          onClose={() => setShowModalView(false)}
         />
       )}
     </div>

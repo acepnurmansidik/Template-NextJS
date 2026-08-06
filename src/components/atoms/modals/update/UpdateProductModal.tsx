@@ -11,8 +11,11 @@ import {
   ProductApiDaum,
   ProductPayload,
   Ref,
+  imageRefId,
+  imageRefPath,
 } from "@/types/product";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
@@ -61,6 +64,7 @@ export default function UpdateProductModal({
   const [formData, setFormData] = useState<FormDataProductProps>(() => ({
     product_category_id: refId(initialData.product_category_id),
     uom_id: refId(initialData.uom_id),
+    product_image_id: imageRefId(initialData.product_image_id),
     code: initialData.code ?? "",
     name: initialData.name ?? "",
     barcode: initialData.barcode ?? "",
@@ -153,6 +157,7 @@ export default function UpdateProductModal({
       const payload: ProductPayload = {
         product_category_id,
         uom_id,
+        product_image_id: formData.product_image_id,
         code: code.trim(),
         name: name.trim(),
         description: description.trim(),
@@ -356,6 +361,21 @@ export default function UpdateProductModal({
                 onChange={handleChange}
                 rows={3}
                 className={`${inputCls} resize-none`}
+              />
+            </div>
+
+            <div className="group md:col-span-2">
+              <ImageUpload
+                endpoint="/auth/upload-file"
+                label="Product Image"
+                value={formData.product_image_id}
+                imagePath={imageRefPath(initialData.product_image_id)}
+                onChange={(imageId) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_image_id: imageId,
+                  }))
+                }
               />
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Cookies from "js-cookie";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -51,6 +51,9 @@ const SidebarSkeleton = ({ collapsed }: { collapsed: boolean }) => (
 // KUNCI UTAMA: Menyimpan state di memory global browser
 let globalOpenKey: string | null = null;
 let globalCollapsed: boolean = false;
+// Simpan posisi scroll menu agar tidak reset ke atas saat komponen remount
+// (pindah halaman). Sama pola-nya dengan globalOpenKey/globalCollapsed.
+let globalScrollTop: number = 0;
 
 const Sidebar = () => {
   const router = useRouter();
@@ -67,6 +70,9 @@ const Sidebar = () => {
 
   const [openKey, setOpenKeyState] = useState<string | null>(globalOpenKey);
   const [collapsed, setCollapsedState] = useState<boolean>(globalCollapsed);
+
+  // Container menu yang bisa di-scroll; posisinya dipulihkan setelah remount.
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Ambil data user (IAM) sekali saja. Store Redux tetap hidup saat pindah
   // halaman (client-side nav), jadi cukup fetch bila data belum ada & tidak
@@ -125,6 +131,11 @@ const Sidebar = () => {
     globalCollapsed = val;
     setCollapsedState(val);
   };
+
+  // Pulihkan posisi scroll menu sebelum paint agar tidak "loncat" ke atas.
+  useLayoutEffect(() => {
+    if (menuRef.current) menuRef.current.scrollTop = globalScrollTop;
+  }, [showSkeleton, menuGroups]);
 
   useEffect(() => {
     // // AM: Access Module
@@ -195,7 +206,13 @@ const Sidebar = () => {
       </div>
 
       {/* MENU */}
-      <div className="overflow-y-auto flex-1 px-2">
+      <div
+        ref={menuRef}
+        onScroll={(e) => {
+          globalScrollTop = e.currentTarget.scrollTop;
+        }}
+        className="overflow-y-auto flex-1 px-2"
+      >
         {showSkeleton ? (
           <SidebarSkeleton collapsed={collapsed} />
         ) : (
@@ -279,14 +296,13 @@ const Sidebar = () => {
                               className="relative flex items-center w-full h-10 pl-6"
                             >
                               <div className="absolute left-0 w-0.5 h-full flex flex-col">
-                                {/* Bagian Atas: Gunakan kondisi khusus untuk item pertama agar menyambung ke parent */}
+                                {/* Bagian Atas: aktif (termasuk child pertama) selalu
+                                    terang agar membentuk sudut huruf "L" ke parent. */}
                                 <div
                                   className={`w-full h-1/2 ${
-                                    childIndex === 0 && isCurrentActive
-                                      ? "bg-gray-800 dark:bg-zinc-700" // Garis sambung ke parent
-                                      : isAboveActive || isCurrentActive
-                                        ? "bg-gray-800 dark:bg-zinc-200"
-                                        : "bg-gray-200 dark:bg-zinc-700"
+                                    isAboveActive || isCurrentActive
+                                      ? "bg-gray-800 dark:bg-zinc-200"
+                                      : "bg-gray-200 dark:bg-zinc-700"
                                   }`}
                                 />
                                 {/* Bagian Bawah */}

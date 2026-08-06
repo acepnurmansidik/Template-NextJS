@@ -9,11 +9,21 @@ export enum MovementType {
   TRANSFER = "TRANSFER",
 }
 
+export enum MovementStatus {
+  DRAFT = "DRAFT",
+  APPROVED = "APPROVED",
+}
+
 export const MOVEMENT_TYPE_LABEL: Record<MovementType, string> = {
   IN: "Stock In",
   OUT: "Stock Out",
   ADJUSTMENT: "Adjustment",
   TRANSFER: "Transfer",
+};
+
+export const MOVEMENT_STATUS_LABEL: Record<MovementStatus, string> = {
+  DRAFT: "Draft",
+  APPROVED: "Approved",
 };
 
 export interface StockMovementApiDaum {
@@ -23,6 +33,7 @@ export interface StockMovementApiDaum {
   destination_warehouse_id?: Ref | null;
   uom_id?: Ref | null;
   type: MovementType;
+  status: MovementStatus;
   quantity: number;
   reference?: string;
   date?: string;

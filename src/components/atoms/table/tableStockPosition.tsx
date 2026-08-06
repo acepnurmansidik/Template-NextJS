@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import { StockPositionApiDaum, refLabel } from "@/types/stockPosition";
 import { formatCurrencyPure } from "@/utils/formatter";
 import UpdateStockPositionModal from "../modals/update/UpdateStockPositionModal";
+import ViewStockPositionModal from "../modals/view/ViewStockPositionModal";
 
 interface DataProps {
   columns: Column[];
@@ -38,6 +39,7 @@ export const TableStockPosition = ({
   onRefresh,
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
   const [selectedData, setSelectedData] = useState<StockPositionApiDaum | null>(
     null,
   );
@@ -187,6 +189,18 @@ export const TableStockPosition = ({
                       >
                         {col.value === "action" ? (
                           <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                            {hasAccess.view && (
+                              <button
+                                onClick={() => {
+                                  setSelectedData(row);
+                                  setShowModalView(true);
+                                }}
+                                title="View"
+                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <FiEye size={15} />
+                              </button>
+                            )}
                             {hasAccess.update && (
                               <button
                                 onClick={() => {
@@ -321,6 +335,14 @@ export const TableStockPosition = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
+        />
+      )}
+
+      {showModalView && selectedData && (
+        <ViewStockPositionModal
+          isOpen={showModalView}
+          initialData={selectedData}
+          onClose={() => setShowModalView(false)}
         />
       )}
     </div>

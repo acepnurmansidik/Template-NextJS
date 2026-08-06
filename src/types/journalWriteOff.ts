@@ -8,6 +8,11 @@ export enum WriteOffStatus {
   POSTED = "POSTED",
 }
 
+export const WRITE_OFF_STATUS_LABEL: Record<WriteOffStatus, string> = {
+  [WriteOffStatus.DRAFT]: "Draft",
+  [WriteOffStatus.POSTED]: "Posted",
+};
+
 // Tipe dokumen sumber yang ditautkan (dihapus) oleh write-off.
 export enum WriteOffSourceType {
   NONE = "NONE",

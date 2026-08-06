@@ -18,7 +18,7 @@ import {
   RoomUnitType,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
-import NumberInput from "@/components/atoms/shared/NumberInput";
+import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
 import { ListResponse, SingleResponse } from "@/types/api";
 
@@ -330,8 +330,8 @@ export default function CreateRoomUnitModal({
 
             <div className="group">
               <label className={labelCls}>Capacity</label>
-              <NumberInput
-                integer
+              <CurrencyInput
+                maxDecimals={0}
                 value={formData.capacity}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, capacity: v }))
@@ -342,7 +342,7 @@ export default function CreateRoomUnitModal({
 
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
-              <NumberInput
+              <CurrencyInput
                 value={formData.area_sqm}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, area_sqm: v }))
@@ -362,7 +362,7 @@ export default function CreateRoomUnitModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/room-unit/upload"
+                endpoint="/auth/upload-file"
                 value={imageId}
                 onChange={(id) => setImageId(id)}
                 label="Room Photo"

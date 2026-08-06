@@ -4,10 +4,14 @@
 
 export type Ref = string | { _id: string; name?: string; code?: string; prefix?: string };
 
+// Referensi gambar: string id atau objek populate { _id, path }.
+export type ImageRef = string | { _id: string; path?: string } | null;
+
 export interface ProductApiDaum {
   _id: string;
   product_category_id: Ref;
   uom_id: Ref;
+  product_image_id?: ImageRef;
   code: string;
   name: string;
   slug: string;
@@ -22,6 +26,7 @@ export interface ProductApiDaum {
 export interface ProductPayload {
   product_category_id: string;
   uom_id: string;
+  product_image_id?: string | null;
   code?: string;
   name: string;
   description?: string;
@@ -30,6 +35,14 @@ export interface ProductPayload {
   selling_price?: number;
   is_active?: boolean;
 }
+
+// Ambil id string dari ImageRef (string / objek populate).
+export const imageRefId = (r?: ImageRef): string | null =>
+  r ? (typeof r === "object" ? r._id : r) : null;
+
+// Ambil path gambar dari ImageRef populate (untuk preview).
+export const imageRefPath = (r?: ImageRef): string | null =>
+  r && typeof r === "object" ? (r.path ?? null) : null;
 
 // Ambil label yang bisa ditampilkan dari sebuah Ref (nama > kode > em dash).
 export const refLabel = (r?: Ref): string =>
@@ -41,6 +54,7 @@ export const refLabel = (r?: Ref): string =>
 export interface FormDataProductProps {
   product_category_id: string | null;
   uom_id: string | null;
+  product_image_id: string | null;
   code: string;
   name: string;
   barcode: string;

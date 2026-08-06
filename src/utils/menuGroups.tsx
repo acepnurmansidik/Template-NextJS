@@ -354,6 +354,83 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    title: "Procurement",
+    menu_items: [
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-clipboard-pen-line"
+          >
+            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+            <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h2" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v4" />
+            <path d="M4.012 16.737A2 2 0 0 0 3 18.478V20a2 2 0 0 0 2 2h1.522a2 2 0 0 0 1.74-1.012" />
+            <path d="M21.378 12.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" />
+          </svg>
+        ),
+        name: "Purchase Request",
+        path: "/procurement/purchase-requests",
+        children: [],
+      },
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-shopping-cart"
+          >
+            <circle cx="8" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+          </svg>
+        ),
+        name: "Purchase Order",
+        path: "/procurement/purchase-orders",
+        children: [],
+      },
+      {
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-package-check"
+          >
+            <path d="m16 16 2 2 4-4" />
+            <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />
+            <path d="M3.3 7 12 12l8.7-5" />
+            <path d="M12 22V12" />
+          </svg>
+        ),
+        name: "Good Receipt",
+        path: "/procurement/good-receipts",
+        children: [],
+      },
+    ],
+  },
+  {
     title: "Facility",
     menu_items: [
       {

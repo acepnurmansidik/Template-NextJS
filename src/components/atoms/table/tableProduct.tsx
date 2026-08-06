@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Column, SingleResponse } from "@/types/api";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 import { apiDelete } from "@/utils/api";
 import { ProductApiDaum, refLabel } from "@/types/product";
 import UpdateProductModal from "../modals/update/UpdateProductModal";
+import ViewProductModal from "../modals/view/ViewProductModal";
 
 interface DataProps {
   columns: Column[];
@@ -39,6 +40,7 @@ export const TableProduct = ({
   onRefresh,
 }: DataProps) => {
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [showModalView, setShowModalView] = useState(false);
   const [selectedData, setSelectedData] = useState<ProductApiDaum | null>(null);
 
   const handleDelete = async (row: ProductApiDaum) => {
@@ -202,6 +204,18 @@ export const TableProduct = ({
                       >
                         {col.value === "action" ? (
                           <div className="flex items-center gap-0.5 text-gray-500 dark:text-zinc-400">
+                            {hasAccess.view && (
+                              <button
+                                onClick={() => {
+                                  setSelectedData(row);
+                                  setShowModalView(true);
+                                }}
+                                title="View"
+                                className="h-7 w-7 flex items-center justify-center rounded-md hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer"
+                              >
+                                <FiEye size={15} />
+                              </button>
+                            )}
                             {hasAccess.update && (
                               <button
                                 onClick={() => {
@@ -336,6 +350,14 @@ export const TableProduct = ({
             setShowModalUpdate(false);
             onRefresh?.();
           }}
+        />
+      )}
+
+      {showModalView && selectedData && (
+        <ViewProductModal
+          isOpen={showModalView}
+          initialData={selectedData}
+          onClose={() => setShowModalView(false)}
         />
       )}
     </div>

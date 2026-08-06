@@ -6,6 +6,8 @@ export interface ListResponse<T> {
   data: T[];
   page_size?: number;
   current_page?: number;
+  // Opsional: jumlah dokumen per status (mis. { ALL, DRAFT, SUBMITTED, ... }).
+  status_counts?: Record<string, number>;
 }
 
 export interface SingleResponse<T> {

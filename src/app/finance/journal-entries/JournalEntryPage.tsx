@@ -7,7 +7,11 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import { JournalEntryApiDaum, JournalStatus } from "@/types/journalEntry";
+import {
+  JOURNAL_STATUS_LABEL,
+  JournalEntryApiDaum,
+  JournalStatus,
+} from "@/types/journalEntry";
 import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
 import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
 import { Column, ListResponse } from "@/types/api";
@@ -27,10 +31,9 @@ interface DataProps {
   subtitle: string;
 }
 
-const STATUS_FILTERS: { label: string; value: string }[] = [
-  { label: "All", value: "" },
-  { label: "Draft", value: JournalStatus.DRAFT },
-  { label: "Posted", value: JournalStatus.POSTED },
+const STATUS_FILTERS: JournalStatus[] = [
+  JournalStatus.DRAFT,
+  JournalStatus.POSTED,
 ];
 
 export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
@@ -44,6 +47,8 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
   const [totalData, setTotalData] = useState(0);
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
@@ -64,16 +69,18 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
     try {
       const result = await apiGet<ListResponse<JournalEntryApiDaum>>(
         "/journal-entry",
-        { page, limit, search, status },
+        { page, limit, search, status: statusFilter },
         false,
       );
       setData(result.data ?? []);
       setTotalData(result.page_size ?? 0);
+      setStatusCounts(result.status_counts ?? {});
     } catch {
       setData([]);
       setTotalData(0);
+      setStatusCounts({});
     }
-  }, [page, limit, search, status]);
+  }, [page, limit, search, status, statusFilter]);
 
   useEffect(() => {
     fetchingData();
@@ -129,6 +136,47 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
           </div>
         </div>
 
+        {/* STATUS FILTER — segmented control, rata kanan di bawah tombol Create */}
+        <div className="flex justify-end mb-3">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/60 p-1">
+            {[
+              { value: "", label: "All", count: statusCounts.ALL ?? 0 },
+              ...STATUS_FILTERS.map((s) => ({
+                value: s as string,
+                label: JOURNAL_STATUS_LABEL[s],
+                count: statusCounts[s] ?? 0,
+              })),
+            ].map((chip) => {
+              const active = statusFilter === chip.value;
+              return (
+                <button
+                  key={chip.value || "ALL"}
+                  onClick={() => {
+                    setStatusFilter(chip.value);
+                    setPage(1);
+                  }}
+                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    active
+                      ? "bg-white dark:bg-zinc-700 text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  <span>{chip.label}</span>
+                  <span
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-md text-[10px] font-bold tabular-nums ${
+                      active
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-600 dark:bg-zinc-600 dark:text-zinc-200"
+                    }`}
+                  >
+                    {chip.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="px-6 py-4 rounded-lg shadow-xs bg-white dark:bg-zinc-800 transition-colors duration-300">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-zinc-700">
             <div className="flex flex-col space-y-1.5">
@@ -150,26 +198,6 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
                 </span>{" "}
                 in entry no, reference
               </span>
-            </div>
-
-            {/* STATUS FILTER */}
-            <div className="flex items-center gap-1.5 self-start md:self-auto bg-gray-100 dark:bg-zinc-700/50 p-1 rounded-lg">
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.value || "all"}
-                  onClick={() => {
-                    setStatus(f.value);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    status === f.value
-                      ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                      : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
             </div>
           </div>
 

@@ -12,6 +12,7 @@ import {
   ProductPayload,
 } from "@/types/product";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
@@ -45,6 +46,7 @@ const selectStyles = {
 const defaultValue: FormDataProductProps = {
   product_category_id: null,
   uom_id: null,
+  product_image_id: null,
   code: "",
   name: "",
   barcode: "",
@@ -146,6 +148,7 @@ export default function CreateProductModal({
       const payload: ProductPayload = {
         product_category_id,
         uom_id,
+        product_image_id: formData.product_image_id,
         // Kosongkan → backend auto-generate kode per kategori.
         code: code.trim() || undefined,
         name: name.trim(),
@@ -329,6 +332,20 @@ export default function CreateProductModal({
                 onChange={handleChange}
                 rows={3}
                 className={`${inputCls} resize-none`}
+              />
+            </div>
+
+            <div className="group md:col-span-2">
+              <ImageUpload
+                endpoint="/auth/upload-file"
+                label="Product Image"
+                value={formData.product_image_id}
+                onChange={(imageId) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    product_image_id: imageId,
+                  }))
+                }
               />
             </div>
           </div>

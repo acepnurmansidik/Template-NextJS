@@ -14,7 +14,7 @@ import {
   BUILDING_TYPE_LABEL,
   FormDataBuildingProps,
 } from "@/types/facility";
-import NumberInput from "@/components/atoms/shared/NumberInput";
+import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
@@ -286,8 +286,8 @@ export default function CreateBuildingModal({
               <label className={labelCls}>
                 Total Floors<span className="text-red-500">*</span>
               </label>
-              <NumberInput
-                integer
+              <CurrencyInput
+                maxDecimals={0}
                 min={1}
                 value={formData.total_floors}
                 onChange={(v) =>
@@ -304,7 +304,7 @@ export default function CreateBuildingModal({
 
             <div className="group">
               <label className={labelCls}>Building Area (m²)</label>
-              <NumberInput
+              <CurrencyInput
                 value={formData.building_area_sqm}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, building_area_sqm: v }))
@@ -315,7 +315,7 @@ export default function CreateBuildingModal({
 
             <div className="group">
               <label className={labelCls}>Land Area (m²)</label>
-              <NumberInput
+              <CurrencyInput
                 value={formData.land_area_sqm}
                 onChange={(v) =>
                   setFormData((prev) => ({ ...prev, land_area_sqm: v }))

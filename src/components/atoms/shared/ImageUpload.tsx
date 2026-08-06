@@ -55,6 +55,7 @@ export default function ImageUpload({
       );
       const first = result.data?.[0];
       if (first) {
+        console.log();
         setPreview(imageUrl(first.path));
         onChange(first._id, first.path);
       }

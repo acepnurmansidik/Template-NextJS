@@ -8,6 +8,11 @@ export enum JournalStatus {
   POSTED = "POSTED",
 }
 
+export const JOURNAL_STATUS_LABEL: Record<JournalStatus, string> = {
+  [JournalStatus.DRAFT]: "Draft",
+  [JournalStatus.POSTED]: "Posted",
+};
+
 // Satu baris jurnal sebagaimana dikembalikan API (kode/nama akun ter-snapshot).
 export interface JournalLineApiDaum {
   account_id: string;

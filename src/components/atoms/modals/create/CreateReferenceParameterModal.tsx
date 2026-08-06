@@ -18,7 +18,6 @@ interface DataProps {
   onClose: () => void;
   onSuccess?: () => void;
   // Type default (mis. saat menambah dari filter type tertentu).
-  defaultType?: string;
 }
 
 const inputCls =
@@ -30,11 +29,10 @@ export default function CreateReferenceParameterModal({
   isOpen,
   onClose,
   onSuccess,
-  defaultType = "",
 }: DataProps) {
   const [formData, setFormData] = useState<FormDataRefParamProps>(() => ({
     value: "",
-    type: defaultType,
+    type: "",
     description: "",
   }));
   // State terpisah — image upload (bukan field teks payload) & flag UI.
@@ -176,7 +174,7 @@ export default function CreateReferenceParameterModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/ref-parameter/upload"
+                endpoint="/auth/upload-file"
                 value={iconId}
                 onChange={(id) => setIconId(id)}
                 label="Icon (optional)"
