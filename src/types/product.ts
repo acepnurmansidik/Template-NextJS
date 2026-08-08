@@ -2,7 +2,11 @@
 // Referenced models (product_category_id, uom_id) may arrive either as raw
 // id strings or populated objects depending on the endpoint.
 
-export type Ref = string | { _id: string; name?: string; code?: string; prefix?: string };
+import { SupplierApiDaum } from "./supplier";
+
+export type Ref =
+  | string
+  | { _id: string; name?: string; code?: string; prefix?: string };
 
 // Referensi gambar: string id atau objek populate { _id, path }.
 export type ImageRef = string | { _id: string; path?: string } | null;
@@ -10,6 +14,7 @@ export type ImageRef = string | { _id: string; path?: string } | null;
 export interface ProductApiDaum {
   _id: string;
   product_category_id: Ref;
+  supplier_id: SupplierApiDaum;
   uom_id: Ref;
   product_image_id?: ImageRef;
   code: string;
@@ -27,6 +32,7 @@ export interface ProductPayload {
   product_category_id: string;
   uom_id: string;
   product_image_id?: string | null;
+  supplier_id?: string | null;
   code?: string;
   name: string;
   description?: string;
@@ -55,6 +61,7 @@ export interface FormDataProductProps {
   product_category_id: string | null;
   uom_id: string | null;
   product_image_id: string | null;
+  supplier_id: string | null;
   code: string;
   name: string;
   barcode: string;

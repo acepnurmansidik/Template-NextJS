@@ -214,7 +214,7 @@ export default function UpdateBuildingFloorModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 value={planId}
                 imagePath={refImagePath(initialData.floor_plan_url_id)}
                 onChange={(id) => setPlanId(id)}

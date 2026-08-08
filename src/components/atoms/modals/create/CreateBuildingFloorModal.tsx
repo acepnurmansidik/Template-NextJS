@@ -252,7 +252,7 @@ export default function CreateBuildingFloorModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 value={planId}
                 onChange={(id) => setPlanId(id)}
                 label="Floor Plan"

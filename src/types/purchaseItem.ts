@@ -8,7 +8,19 @@
 
 export type Ref =
   | string
-  | { _id: string; name?: string; code?: string; prefix?: string };
+  | {
+      _id: string;
+      name?: string;
+      code?: string;
+      prefix?: string;
+      // Nomor dokumen bila ref berupa PR/PO yang di-populate (untuk tampilan
+      // "item ini dari PR mana").
+      request_no?: string;
+      order_no?: string;
+      // Supplier default produk (di-populate saat product_id di-populate) —
+      // dipakai untuk auto-isi supplier item PO saat sumber dari PR.
+      supplier_id?: Ref | null;
+    };
 
 // Ambil label yang bisa ditampilkan dari sebuah Ref (name > code > em dash).
 export const refLabel = (r?: Ref | null): string =>
@@ -18,6 +30,12 @@ export const refLabel = (r?: Ref | null): string =>
 export const refId = (r?: Ref | null): string | null => {
   if (!r) return null;
   return typeof r === "object" ? r._id : r;
+};
+
+// Nomor dokumen (request_no / order_no) dari sebuah Ref populate.
+export const refDocNo = (r?: Ref | null): string => {
+  if (r && typeof r === "object") return r.request_no ?? r.order_no ?? "—";
+  return "—";
 };
 
 // Label "CODE — Name" dari sebuah Ref populate (untuk cache tampilan).
@@ -42,6 +60,8 @@ export enum GoodReceiptStatus {
 export enum ProcurementStatus {
   DRAFT = "DRAFT",
   SUBMITTED = "SUBMITTED",
+  PARTIAL_ORDERED = "PARTIAL_ORDERED",
+  ORDERED = "ORDERED",
   PARTIAL_RECEIVED = "PARTIAL_RECEIVED",
   RECEIVED = "RECEIVED",
   CLOSED = "CLOSED",
@@ -50,9 +70,27 @@ export enum ProcurementStatus {
 export const PROCUREMENT_STATUS_LABEL: Record<ProcurementStatus, string> = {
   [ProcurementStatus.DRAFT]: "Draft",
   [ProcurementStatus.SUBMITTED]: "Submitted",
+  [ProcurementStatus.PARTIAL_ORDERED]: "Partial Ordered",
+  [ProcurementStatus.ORDERED]: "Ordered",
   [ProcurementStatus.PARTIAL_RECEIVED]: "Partial Received",
   [ProcurementStatus.RECEIVED]: "Received",
   [ProcurementStatus.CLOSED]: "Closed",
+};
+
+// Status siklus satu baris item (detail_product_items.status).
+//  PENDING -> ORDERED -> PARTIAL_RECEIVED -> RECEIVED
+export enum DetailItemStatus {
+  PENDING = "PENDING",
+  ORDERED = "ORDERED",
+  PARTIAL_RECEIVED = "PARTIAL_RECEIVED",
+  RECEIVED = "RECEIVED",
+}
+
+export const DETAIL_ITEM_STATUS_LABEL: Record<DetailItemStatus, string> = {
+  [DetailItemStatus.PENDING]: "Pending",
+  [DetailItemStatus.ORDERED]: "Ordered",
+  [DetailItemStatus.PARTIAL_RECEIVED]: "Partial Received",
+  [DetailItemStatus.RECEIVED]: "Received",
 };
 
 // Satu baris item sebagaimana dikembalikan API (referensi bisa populate).
@@ -69,6 +107,8 @@ export interface PurchaseItemApiDaum {
   // Qty yang benar-benar diterima (khusus Good Receipt).
   received_qty?: number;
   price: number;
+  // Status siklus item (PENDING/ORDERED/PARTIAL_RECEIVED/RECEIVED).
+  status?: DetailItemStatus;
   created_at?: string;
 }
 
@@ -139,23 +179,34 @@ export const sumItems = (
 export const apiItemToForm = (
   it: PurchaseItemApiDaum,
   sourcePrId: string | null = null,
-): PurchaseItemForm => ({
-  product_id: refId(it.product_id) ?? "",
-  uom_id: refId(it.uom_id),
-  supplier_id: refId(it.supplier_id),
-  warehouse_id: refId(it.warehouse_id),
-  quantity: Number(it.quantity) || 0,
-  received_qty: Number(it.received_qty) || 0,
-  price: Number(it.price) || 0,
-  product_label: refCodeName(it.product_id),
-  uom_label: refCodeName(it.uom_id),
-  source_pr_id: sourcePrId,
-  // _id detail item dipakai PO untuk reuse (shared doc) — HANYA bila item ini
-  // memang milik sebuah PR (punya purchase_request_id). Item manual tidak
-  // ditandai agar tetap diperlakukan sebagai baris baru.
-  source_item_ids:
-    it._id && refId(it.purchase_request_id) ? [String(it._id)] : [],
-});
+): PurchaseItemForm => {
+  // Supplier default produk (bila product_id di-populate membawa supplier_id).
+  const productRef = it.product_id;
+  const productSupplier =
+    productRef && typeof productRef === "object"
+      ? (productRef.supplier_id ?? null)
+      : null;
+
+  return {
+    product_id: refId(it.product_id) ?? "",
+    uom_id: refId(it.uom_id),
+    // Supplier item; bila item belum punya supplier (mis. baris dari PR yang
+    // tak menyimpan supplier), fallback ke supplier default produk.
+    supplier_id: refId(it.supplier_id) ?? refId(productSupplier),
+    warehouse_id: refId(it.warehouse_id),
+    quantity: Number(it.quantity) || 0,
+    received_qty: Number(it.received_qty) || 0,
+    price: Number(it.price) || 0,
+    product_label: refCodeName(it.product_id),
+    uom_label: refCodeName(it.uom_id),
+    source_pr_id: sourcePrId,
+    // _id detail item dipakai PO untuk reuse (shared doc) — HANYA bila item ini
+    // memang milik sebuah PR (punya purchase_request_id). Item manual tidak
+    // ditandai agar tetap diperlakukan sebagai baris baru.
+    source_item_ids:
+      it._id && refId(it.purchase_request_id) ? [String(it._id)] : [],
+  };
+};
 
 // Ubah baris form menjadi item payload. `source_item_ids` hanya dikirim bila ada
 // (dipakai PO untuk reuse detail PR).

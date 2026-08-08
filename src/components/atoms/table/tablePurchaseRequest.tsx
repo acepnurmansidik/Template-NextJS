@@ -188,20 +188,6 @@ export const TablePurchaseRequest = ({
             {formatCurrencyPure(row.total_amount ?? 0)}
           </span>
         );
-      case "po_flag": {
-        const hasPo = !!refId(row.purchase_order_id);
-        return (
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-              hasPo
-                ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700"
-                : "border-zinc-300 bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400 dark:border-zinc-600"
-            }`}
-          >
-            {hasPo ? "Ordered" : "Not yet"}
-          </span>
-        );
-      }
       case "status":
         return (
           <span

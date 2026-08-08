@@ -22,13 +22,12 @@ interface DataProps {
 }
 
 const columns: Column[] = [
-  { title: "Request No", value: "request_no", classname: "w-[16%]" },
-  { title: "Date", value: "date", classname: "w-[12%]" },
-  { title: "Items", value: "items", classname: "w-[8%]" },
-  { title: "Total", value: "total", classname: "w-[14%]" },
-  { title: "PO", value: "po_flag", classname: "w-[12%]" },
-  { title: "Status", value: "status", classname: "w-[12%]" },
-  { title: "Action", value: "action", classname: "w-[14%]" },
+  { title: "Request No", value: "request_no", classname: "w-[18%]" },
+  { title: "Date", value: "date", classname: "w-[14%]" },
+  { title: "Items", value: "items", classname: "w-[10%]" },
+  { title: "Total", value: "total", classname: "w-[16%]" },
+  { title: "Status", value: "status", classname: "w-[14%]" },
+  { title: "Action", value: "action", classname: "w-[16%]" },
 ];
 
 const STATUS_REQUEST: ProcurementStatus[] = [

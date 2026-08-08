@@ -6,11 +6,15 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import { FiUploadCloud, FiX } from "react-icons/fi";
 import { apiPost } from "@/utils/api";
+import { ImageRef } from "@/types/api";
 import { imageUrl } from "@/types/facility";
 
 interface DataProps {
-  // Endpoint upload, mis. "/building/upload".
+  // Endpoint upload, mis. "/upload/single".
   endpoint: string;
+  // Nama field form-data. Harus cocok dengan multer di route tujuan
+  // (`/upload/single` -> "file"). Default "file".
+  field?: string;
   // Path gambar saat ini (untuk preview) & id terpilih.
   value?: string | null;
   imagePath?: string | null;
@@ -18,10 +22,11 @@ interface DataProps {
   label?: string;
 }
 
-// Uploader gambar generik — POST multipart (field "proofs") ke `endpoint`,
-// menyimpan lewat model Image di backend, lalu mengembalikan { _id, path }.
+// Uploader gambar generik — POST multipart ke `endpoint`, menyimpan lewat model
+// Image di backend, lalu mengembalikan { _id, path }.
 export default function ImageUpload({
   endpoint,
+  field = "file",
   value,
   imagePath,
   onChange,
@@ -46,16 +51,18 @@ export default function ImageUpload({
     setUploading(true);
     try {
       const form = new FormData();
-      form.append("proofs", file);
+      form.append(field, file);
       const result = await apiPost<UploadImageResponse>(
         endpoint,
         form,
         false,
         true,
       );
-      const first = result.data?.[0];
+      // `/upload/single` mengembalikan data objek { _id, path }; endpoint lama
+      // bisa mengembalikan array — tangani keduanya.
+      const raw = result.data as unknown;
+      const first = (Array.isArray(raw) ? raw[0] : raw) as ImageRef | undefined;
       if (first) {
-        console.log();
         setPreview(imageUrl(first.path));
         onChange(first._id, first.path);
       }

@@ -8,6 +8,7 @@ import {
   WarehouseMode,
 } from "@/types/goodReceipt";
 import { refLabel } from "@/types/purchaseItem";
+import { imageUrl } from "@/types/facility";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
 
 interface DataProps {
@@ -50,6 +51,7 @@ export default function ViewGoodReceiptModal({
   if (!isOpen) return null;
 
   const items = initialData.items ?? [];
+  const proofs = initialData.received_proof_id ?? [];
   const isMulti = initialData.warehouse_mode === WarehouseMode.MULTIPLE;
   const poLabels = (initialData.po_ids ?? [])
     .map((r) => refLabel(r))
@@ -177,6 +179,35 @@ export default function ViewGoodReceiptModal({
                 </tr>
               </tfoot>
             </table>
+          </div>
+
+          {/* RECEIVED PROOF */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-2">
+              Received Proof
+            </p>
+            {proofs.length === 0 ? (
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">—</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {proofs.map((img) => (
+                  <a
+                    key={img._id}
+                    href={imageUrl(img.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block h-28 w-28"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl(img.path)}
+                      alt="received proof"
+                      className="h-28 w-28 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700 hover:opacity-90 transition-opacity"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

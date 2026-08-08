@@ -15,6 +15,7 @@ import {
 } from "@/types/purchaseOrder";
 import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import {
+  DetailItemStatus,
   ProcurementStatus,
   PurchaseItemForm,
   apiItemToForm,
@@ -119,16 +120,19 @@ export default function UpdatePurchaseOrderModal({
     [suppliers],
   );
 
-  // PR SUBMITTED yang belum dibuatkan PO, ATAU sudah terhubung ke PO ini.
+  // PR yang masih punya item PENDING (Submitted / Partial Ordered), ATAU sudah
+  // terhubung ke PO ini (purchase_order_id kini array).
   const prOptions: Option[] = useMemo(
     () =>
       purchaseRequests
-        .filter(
-          (pr) =>
-            pr.status === ProcurementStatus.SUBMITTED &&
-            (!refId(pr.purchase_order_id) ||
-              refId(pr.purchase_order_id) === initialData._id),
-        )
+        .filter((pr) => {
+          const linkedPoIds = (pr.purchase_order_id ?? []).map((r) => refId(r));
+          return (
+            pr.status === ProcurementStatus.SUBMITTED ||
+            pr.status === ProcurementStatus.PARTIAL_ORDERED ||
+            linkedPoIds.includes(initialData._id)
+          );
+        })
         .map((pr) => ({ value: pr._id, label: pr.request_no })),
     [purchaseRequests, initialData._id],
   );
@@ -181,6 +185,10 @@ export default function UpdatePurchaseOrderModal({
       for (const prId of nextIds) {
         const pr = purchaseRequests.find((p) => p._id === prId);
         for (const raw of pr?.items ?? []) {
+          // Muat item yang belum dipesan (PENDING) atau yang memang milik PO ini.
+          const onThisPo = refId(raw.purchase_order_id) === initialData._id;
+          if (raw.status && raw.status !== DetailItemStatus.PENDING && !onThisPo)
+            continue;
           prItems.push(apiItemToForm(raw, prId));
         }
       }

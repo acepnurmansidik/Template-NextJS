@@ -274,7 +274,7 @@ export default function UpdateRoomUnitModal({
             </div>
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 value={imageId}
                 imagePath={refImagePath(initialData.image_id)}
                 onChange={(id) => setImageId(id)}

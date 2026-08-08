@@ -7,7 +7,7 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
-import { ListResponse, SingleResponse } from "@/types/api";
+import { ListResponse } from "@/types/api";
 import {
   FormDataPurchaseOrderProps,
   PurchaseOrderApiDaum,
@@ -15,6 +15,7 @@ import {
 } from "@/types/purchaseOrder";
 import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import {
+  DetailItemStatus,
   ProcurementStatus,
   PurchaseItemForm,
   apiItemToForm,
@@ -115,14 +116,16 @@ export default function CreatePurchaseOrderModal({
     [suppliers],
   );
 
-  // Hanya PR SUBMITTED & belum dibuatkan PO yang bisa dipilih.
+  // PR yang masih punya item PENDING: SUBMITTED (belum dipesan) atau
+  // PARTIAL_ORDERED (sebagian sudah dipesan) tetap bisa dibuatkan PO.
   const prOptions: Option[] = useMemo(
     () =>
       purchaseRequests
         .filter(
           (pr) =>
-            pr.status === ProcurementStatus.SUBMITTED &&
-            !refId(pr.purchase_order_id),
+            pr.status === ProcurementStatus.SUBMITTED ||
+            pr.status === ProcurementStatus.PARTIAL_ORDERED ||
+            pr.status === ProcurementStatus.PARTIAL_RECEIVED,
         )
         .map((pr) => ({ value: pr._id, label: pr.request_no })),
     [purchaseRequests],
@@ -130,8 +133,7 @@ export default function CreatePurchaseOrderModal({
 
   const total = sumItems(items);
 
-  const addItem = () =>
-    setItems((prev) => [...prev, { ...emptyPurchaseItem }]);
+  const addItem = () => setItems((prev) => [...prev, { ...emptyPurchaseItem }]);
   const removeItem = (index: number) =>
     setItems((prev) => prev.filter((_, i) => i !== index));
   const patchItem = (index: number, patch: Partial<PurchaseItemForm>) =>
@@ -140,6 +142,7 @@ export default function CreatePurchaseOrderModal({
     );
 
   const handlePickProduct = (index: number, opt: ProductOption | null) => {
+    if (!opt) return;
     setItems((prev) =>
       prev.map((it, i) => {
         if (i !== index) return it;
@@ -160,6 +163,7 @@ export default function CreatePurchaseOrderModal({
           uom_id: refId(data?.uom_id ?? null),
           uom_label: refCodeName(data?.uom_id ?? null),
           price: it.price > 0 ? it.price : Number(data?.purchase_price) || 0,
+          supplier_id: refId(data.supplier_id ?? null),
         };
       }),
     );
@@ -178,6 +182,8 @@ export default function CreatePurchaseOrderModal({
       for (const prId of nextIds) {
         const pr = purchaseRequests.find((p) => p._id === prId);
         for (const raw of pr?.items ?? []) {
+          // Hanya item yang belum dipesan (PENDING) yang bisa dibuatkan PO.
+          if (raw.status && raw.status !== DetailItemStatus.PENDING) continue;
           prItems.push(apiItemToForm(raw, prId));
         }
       }
@@ -227,7 +233,8 @@ export default function CreatePurchaseOrderModal({
         items: filled.map(formItemToPayload),
       };
 
-      const result = await apiPost<SingleResponse<PurchaseOrderApiDaum>>(
+      // Backend memecah item per-supplier → bisa menghasilkan beberapa PO.
+      const result = await apiPost<ListResponse<PurchaseOrderApiDaum>>(
         "/purchase-order",
         payload,
         false,
@@ -341,8 +348,9 @@ export default function CreatePurchaseOrderModal({
                 styles={selectStyles}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
-                Hanya PR ber-status Submitted &amp; belum dibuatkan PO. Melepas
-                PR akan menghapus item terkait secara otomatis.
+                PR ber-status Submitted / Partial Ordered (hanya item yang belum
+                dipesan yang dimuat). Item akan dikelompokkan per-supplier
+                menjadi beberapa PO otomatis saat disimpan.
               </p>
             </div>
 
@@ -469,7 +477,9 @@ export default function CreatePurchaseOrderModal({
                               value={item.quantity}
                               placeholder="0"
                               aria-label={`Quantity item ${index + 1}`}
-                              onChange={(v) => patchItem(index, { quantity: v })}
+                              onChange={(v) =>
+                                patchItem(index, { quantity: v })
+                              }
                               className={`${inputCls} text-right`}
                             />
                           </td>
@@ -478,9 +488,7 @@ export default function CreatePurchaseOrderModal({
                               value={item.price}
                               placeholder="0"
                               aria-label={`Purchase price item ${index + 1}`}
-                              onChange={(v) =>
-                                patchItem(index, { price: v })
-                              }
+                              onChange={(v) => patchItem(index, { price: v })}
                               className={`${inputCls} text-right`}
                             />
                           </td>

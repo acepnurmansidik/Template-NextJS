@@ -20,6 +20,7 @@ export interface ProductSource {
   code?: string;
   name?: string;
   uom_id?: Ref | null;
+  supplier_id?: Ref | null;
   purchase_price?: number;
 }
 
@@ -73,9 +74,7 @@ export const fetchProductOptions = async (
 export const supplierOptionsFrom = (suppliers: SupplierSource[]): Option[] =>
   suppliers.map((s) => ({ value: s._id, label: codeNameLabel(s) }));
 
-export const warehouseOptionsFrom = (
-  warehouses: WarehouseSource[],
-): Option[] =>
+export const warehouseOptionsFrom = (warehouses: WarehouseSource[]): Option[] =>
   warehouses.map((w) => ({ value: w._id, label: codeNameLabel(w) }));
 
 // Label UOM dari sebuah Ref uom (populate: "CODE — Name", string: apa adanya).

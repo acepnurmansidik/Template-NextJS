@@ -21,8 +21,9 @@ export interface PurchaseRequestApiDaum {
   reference?: string;
   description?: string;
   status: ProcurementStatus;
-  // Flag: terisi bila PR sudah dipakai/di-generate menjadi PO.
-  purchase_order_id?: Ref | null;
+  // Daftar PO yang menampung item PR ini (bisa banyak — item dipecah
+  // per-supplier menjadi beberapa PO). Dihitung otomatis dari item.
+  purchase_order_id?: Ref[];
   items: PurchaseItemApiDaum[];
   total_amount: number;
   created_at?: string;

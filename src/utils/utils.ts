@@ -60,6 +60,12 @@ export const STATUS_BADGE: Record<string, string> = {
     "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700",
   CLOSED:
     "border-red-300 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700",
+  ORDERED:
+    "border-green-300 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
+  PARTIAL_ORDERED:
+    "border-teal-300 bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700",
+  PENDING:
+    "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
 };
 
 export const CHART_COLORS = [

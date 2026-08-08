@@ -4,11 +4,26 @@ import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import {
+  DETAIL_ITEM_STATUS_LABEL,
+  DetailItemStatus,
   PROCUREMENT_STATUS_LABEL,
-  refId,
   refLabel,
 } from "@/types/purchaseItem";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
+
+// Badge status satu baris item (PENDING/ORDERED/PARTIAL_RECEIVED/RECEIVED).
+const ItemStatusBadge = ({ status }: { status?: DetailItemStatus }) => {
+  const s = status ?? DetailItemStatus.PENDING;
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+        STATUS_BADGE[s] ?? ""
+      }`}
+    >
+      {DETAIL_ITEM_STATUS_LABEL[s] ?? s}
+    </span>
+  );
+};
 
 interface DataProps {
   isOpen: boolean;
@@ -50,7 +65,6 @@ export default function ViewPurchaseRequestModal({
   if (!isOpen) return null;
 
   const items = initialData.items ?? [];
-  const hasPo = !!refId(initialData.purchase_order_id);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -80,15 +94,6 @@ export default function ViewPurchaseRequestModal({
               {PROCUREMENT_STATUS_LABEL[initialData.status] ??
                 initialData.status}
             </span>
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                hasPo
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700"
-                  : "border-zinc-300 bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400 dark:border-zinc-600"
-              }`}
-            >
-              {hasPo ? "Ordered" : "Not ordered"}
-            </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -117,6 +122,7 @@ export default function ViewPurchaseRequestModal({
                 <tr className="text-[11px] uppercase tracking-widest text-zinc-500">
                   <th className="py-2.5 px-3 font-bold">Product</th>
                   <th className="py-2.5 px-3 font-bold">UOM</th>
+                  <th className="py-2.5 px-3 font-bold">Status</th>
                   <th className="py-2.5 px-3 font-bold text-right">Qty</th>
                   <th className="py-2.5 px-3 font-bold text-right">Price</th>
                   <th className="py-2.5 px-3 font-bold text-right">Subtotal</th>
@@ -126,7 +132,7 @@ export default function ViewPurchaseRequestModal({
                 {items.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-500"
                     >
                       No items.
@@ -143,6 +149,9 @@ export default function ViewPurchaseRequestModal({
                       </td>
                       <td className="py-2.5 px-3 text-zinc-600 dark:text-zinc-400">
                         {refLabel(item.uom_id)}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <ItemStatusBadge status={item.status} />
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-zinc-700 dark:text-zinc-300">
                         {formatAmount(item.quantity)}
@@ -164,7 +173,7 @@ export default function ViewPurchaseRequestModal({
                 <tr className="border-t-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 font-bold text-sm">
                   <td
                     className="py-3 px-3 text-right text-zinc-500"
-                    colSpan={4}
+                    colSpan={5}
                   >
                     Total
                   </td>

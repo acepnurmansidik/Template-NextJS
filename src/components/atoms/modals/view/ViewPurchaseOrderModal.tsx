@@ -3,8 +3,28 @@
 import { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 import { PurchaseOrderApiDaum } from "@/types/purchaseOrder";
-import { PROCUREMENT_STATUS_LABEL, refLabel } from "@/types/purchaseItem";
+import {
+  DETAIL_ITEM_STATUS_LABEL,
+  DetailItemStatus,
+  PROCUREMENT_STATUS_LABEL,
+  refDocNo,
+  refLabel,
+} from "@/types/purchaseItem";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
+
+// Badge status satu baris item (PENDING/ORDERED/PARTIAL_RECEIVED/RECEIVED).
+const ItemStatusBadge = ({ status }: { status?: DetailItemStatus }) => {
+  const s = status ?? DetailItemStatus.PENDING;
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+        STATUS_BADGE[s] ?? ""
+      }`}
+    >
+      {DETAIL_ITEM_STATUS_LABEL[s] ?? s}
+    </span>
+  );
+};
 
 interface DataProps {
   isOpen: boolean;
@@ -67,7 +87,7 @@ export default function ViewPurchaseOrderModal({
       </div>
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-base font-bold text-zinc-900 dark:text-zinc-100">
               {initialData.order_no}
@@ -105,12 +125,14 @@ export default function ViewPurchaseOrderModal({
           </div>
 
           <div className="overflow-x-auto custom-scrollbar border border-zinc-200 dark:border-zinc-700 rounded-lg">
-            <table className="w-full text-left min-w-[720px]">
+            <table className="w-full text-left min-w-[900px]">
               <thead className="bg-zinc-50 dark:bg-zinc-800/60">
                 <tr className="text-[11px] uppercase tracking-widest text-zinc-500">
+                  <th className="py-2.5 px-3 font-bold">From PR</th>
                   <th className="py-2.5 px-3 font-bold">Product</th>
                   <th className="py-2.5 px-3 font-bold">UOM</th>
                   <th className="py-2.5 px-3 font-bold">Supplier</th>
+                  <th className="py-2.5 px-3 font-bold">Status</th>
                   <th className="py-2.5 px-3 font-bold text-right">Qty</th>
                   <th className="py-2.5 px-3 font-bold text-right">Price</th>
                   <th className="py-2.5 px-3 font-bold text-right">Subtotal</th>
@@ -120,7 +142,7 @@ export default function ViewPurchaseOrderModal({
                 {items.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={8}
                       className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-500"
                     >
                       No items.
@@ -132,14 +154,21 @@ export default function ViewPurchaseOrderModal({
                       key={index}
                       className="border-t border-zinc-100 dark:border-zinc-800 text-sm"
                     >
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                        {refDocNo(item.purchase_request_id)}
+                      </td>
                       <td className="py-2.5 px-3 text-zinc-800 dark:text-zinc-200">
                         {refLabel(item.product_id)}
                       </td>
+
                       <td className="py-2.5 px-3 text-zinc-600 dark:text-zinc-400">
                         {refLabel(item.uom_id)}
                       </td>
                       <td className="py-2.5 px-3 text-zinc-600 dark:text-zinc-400">
                         {refLabel(item.supplier_id)}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <ItemStatusBadge status={item.status} />
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-zinc-700 dark:text-zinc-300">
                         {formatAmount(item.quantity)}
@@ -161,7 +190,7 @@ export default function ViewPurchaseOrderModal({
                 <tr className="border-t-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 font-bold text-sm">
                   <td
                     className="py-3 px-3 text-right text-zinc-500"
-                    colSpan={5}
+                    colSpan={7}
                   >
                     Total
                   </td>

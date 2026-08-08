@@ -22,6 +22,8 @@ export interface PurchaseOrderApiDaum {
   status: ProcurementStatus;
   // PR sumber (opsional). Bisa kosong bila PO dibuat manual.
   pr_ids?: Ref[];
+  // Supplier PO (opsional) — diisi otomatis saat PO dibuat (group per-supplier).
+  supplier_id?: Ref | null;
   items: PurchaseItemApiDaum[];
   total_amount: number;
   created_at?: string;

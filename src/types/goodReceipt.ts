@@ -5,6 +5,7 @@
 // dihitung OTOMATIS dari received_qty (bukan dipilih manual):
 //   DRAFT (belum diterima) / PARTIAL (sebagian) / RECEIVED (diterima penuh).
 
+import { ImageRef } from "./api";
 import { PurchaseItemApiDaum, PurchaseItemPayload, Ref } from "./purchaseItem";
 
 export enum GoodReceiptStatus {
@@ -54,6 +55,8 @@ export interface GoodReceiptApiDaum {
   po_ids?: Ref[];
   warehouse_id?: Ref | null;
   warehouse_mode?: WarehouseMode;
+  // Bukti penerimaan (opsional) — populate { _id, path } dari koleksi Image.
+  received_proof_id?: ImageRef[];
   items: PurchaseItemApiDaum[];
   total_amount: number;
   created_at?: string;
@@ -77,5 +80,7 @@ export interface GoodReceiptPayload {
   po_ids: string[];
   warehouse_id?: string | null;
   warehouse_mode: WarehouseMode;
+  // Daftar id gambar bukti penerimaan (opsional).
+  received_proof_id?: string[];
   items: PurchaseItemPayload[];
 }

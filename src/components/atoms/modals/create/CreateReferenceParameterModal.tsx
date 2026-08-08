@@ -174,7 +174,7 @@ export default function CreateReferenceParameterModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 value={iconId}
                 onChange={(id) => setIconId(id)}
                 label="Icon (optional)"

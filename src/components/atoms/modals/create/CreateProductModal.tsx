@@ -14,6 +14,8 @@ import {
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import { ListResponse, SingleResponse } from "@/types/api";
+import { debounce } from "lodash";
+import AsyncSelect from "react-select/async";
 
 interface DataProps {
   isOpen: boolean;
@@ -33,6 +35,11 @@ interface UomDaum {
   name: string;
   code: string;
 }
+interface SupplierDaum {
+  _id: string;
+  name: string;
+  code: string;
+}
 
 const inputCls =
   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100";
@@ -45,6 +52,7 @@ const selectStyles = {
 
 const defaultValue: FormDataProductProps = {
   product_category_id: null,
+  supplier_id: null,
   uom_id: null,
   product_image_id: null,
   code: "",
@@ -62,10 +70,43 @@ export default function CreateProductModal({
 }: DataProps) {
   // FETCHED option lists — tetap state terpisah (hanya daftar option-nya).
   const [categories, setCategories] = useState<CategoryDaum[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierDaum[]>([]);
   const [uoms, setUoms] = useState<UomDaum[]>([]);
 
   const [formData, setFormData] = useState<FormDataProductProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedSupplier, setSelectedSupplier] = useState<Option | null>(null);
+
+  // ====================== S E L E C T * O P T I O N ======================
+  // Satu fungsi untuk semua: dipakai saat modal dibuka (via defaultOptions)
+  // maupun saat user mengetik (loadOptions AsyncSelect). Di-debounce 3 detik;
+  // leading:true agar saat modal pertama dibuka langsung hit, sedangkan saat
+  // mengetik menunggu jeda 3 detik sebelum hit ke server.
+  const supplierOptions = useMemo(
+    () =>
+      debounce(
+        (inputValue: string, callback: (options: Option[]) => void) => {
+          apiGet<ListResponse<SupplierDaum>>(
+            "/supplier",
+            { page: 1, limit: 5, search: inputValue },
+            false,
+          )
+            .then((result) =>
+              callback(
+                (result.data ?? []).map((role) => ({
+                  value: role._id,
+                  label: role.name,
+                })),
+              ),
+            )
+            .catch(() => callback([]));
+        },
+        3000,
+        { leading: true },
+      ),
+    [],
+  );
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -149,6 +190,7 @@ export default function CreateProductModal({
         product_category_id,
         uom_id,
         product_image_id: formData.product_image_id,
+        supplier_id: formData.supplier_id,
         // Kosongkan → backend auto-generate kode per kategori.
         code: code.trim() || undefined,
         name: name.trim(),
@@ -177,6 +219,7 @@ export default function CreateProductModal({
         });
         if (onSuccess) onSuccess();
         else onClose();
+        setSelectedSupplier(null);
       }
     } catch (error) {
       setIsLoading(false);
@@ -200,6 +243,14 @@ export default function CreateProductModal({
     null;
   const selectedUom =
     uomOptions.find((o) => o.value === formData.uom_id) ?? null;
+
+  const handleSelectedSupplier = (data: Option | null) => {
+    setSelectedSupplier(data);
+    setFormData((prev: FormDataProductProps) => ({
+      ...prev,
+      supplier_id: data?.value ?? "",
+    }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -292,6 +343,30 @@ export default function CreateProductModal({
             </div>
 
             <div className="group">
+              <label className={labelCls}>
+                Supplier<span className="text-red-500">*</span>
+              </label>
+              <AsyncSelect
+                isSearchable
+                cacheOptions
+                defaultOptions={true}
+                loadOptions={supplierOptions}
+                instanceId={`module-select`} // Pastikan unique per row
+                classNamePrefix="rs"
+                placeholder="Ketik untuk mencari..."
+                // value harus berupa objek Option (bukan string id) agar tampil.
+                value={selectedSupplier}
+                onChange={(vals) => handleSelectedSupplier(vals)}
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                styles={{
+                  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+                }}
+              />
+            </div>
+
+            <div className="group">
               <label className={labelCls}>Barcode</label>
               <input
                 value={formData.barcode}
@@ -337,7 +412,7 @@ export default function CreateProductModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 label="Product Image"
                 value={formData.product_image_id}
                 onChange={(imageId) =>

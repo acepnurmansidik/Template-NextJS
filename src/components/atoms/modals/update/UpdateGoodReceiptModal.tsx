@@ -6,7 +6,7 @@ import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPut } from "@/utils/api";
-import { ListResponse, SingleResponse } from "@/types/api";
+import { ImageRef, ListResponse, SingleResponse } from "@/types/api";
 import {
   FormDataGoodReceiptProps,
   GoodReceiptApiDaum,
@@ -33,6 +33,7 @@ import {
   labelCls,
 } from "@/utils/procurement";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
+import MultiImageUpload from "@/components/atoms/shared/MultiImageUpload";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
 
 interface DataProps {
@@ -85,6 +86,12 @@ export default function UpdateGoodReceiptModal({
       form.source_item_ids = it._id ? [String(it._id)] : [];
       return form;
     }),
+  );
+  const [receivedProofs, setReceivedProofs] = useState<ImageRef[]>(() =>
+    (initialData.received_proof_id ?? []).map((img) => ({
+      _id: img._id,
+      path: img.path,
+    })),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -236,6 +243,7 @@ export default function UpdateGoodReceiptModal({
         warehouse_mode: warehouseMode,
         warehouse_id:
           warehouseMode === WarehouseMode.SINGLE ? warehouseId : null,
+        received_proof_id: receivedProofs.map((p) => p._id),
         items: items.map(formItemToPayload),
       };
 
@@ -538,6 +546,18 @@ export default function UpdateGoodReceiptModal({
                 </tfoot>
               </table>
             </div>
+          </div>
+
+          {/* RECEIVED PROOF (opsional) */}
+          <div>
+            <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-100 mb-3">
+              Received Proof
+            </h3>
+            <MultiImageUpload
+              value={receivedProofs}
+              onChange={setReceivedProofs}
+              label="Bukti Penerimaan"
+            />
           </div>
         </div>
       </div>

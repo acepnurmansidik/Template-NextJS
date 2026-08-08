@@ -362,7 +362,7 @@ export default function CreateRoomUnitModal({
 
             <div className="group md:col-span-2">
               <ImageUpload
-                endpoint="/auth/upload-file"
+                endpoint="/upload/single"
                 value={imageId}
                 onChange={(id) => setImageId(id)}
                 label="Room Photo"
