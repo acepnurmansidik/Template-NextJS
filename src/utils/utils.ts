@@ -66,6 +66,8 @@ export const STATUS_BADGE: Record<string, string> = {
     "border-teal-300 bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700",
   PENDING:
     "border-zinc-300 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600",
+  SHIPPED:
+    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
 };
 
 export const CHART_COLORS = [

@@ -103,6 +103,7 @@ export interface PurchaseItemApiDaum {
   purchase_request_id?: Ref | null;
   purchase_order_id?: Ref | null;
   good_receipt_id?: Ref | null;
+  delivery_order_id?: Ref | null;
   quantity: number;
   // Qty yang benar-benar diterima (khusus Good Receipt).
   received_qty?: number;
@@ -128,9 +129,10 @@ export interface PurchaseItemForm {
   source_pr_id?: string | null;
   source_item_ids?: string[];
   // Label tampilan (frontend saja, tidak dikirim ke payload) — agar baris bisa
-  // menampilkan produk/uom tanpa memuat seluruh daftar product.
+  // menampilkan produk/uom/supplier tanpa memuat seluruh daftar master.
   product_label?: string;
   uom_label?: string;
+  supplier_label?: string;
 }
 
 // Bentuk item pada payload create/update (di-nest di payload dokumen induk;
@@ -159,6 +161,7 @@ export const emptyPurchaseItem: PurchaseItemForm = {
   source_item_ids: [],
   product_label: "",
   uom_label: "",
+  supplier_label: "",
 };
 
 // Total nilai dari sekumpulan baris (qty * harga beli).
@@ -199,6 +202,10 @@ export const apiItemToForm = (
     price: Number(it.price) || 0,
     product_label: refCodeName(it.product_id),
     uom_label: refCodeName(it.uom_id),
+    // Label supplier item; fallback ke supplier default produk bila item belum
+    // menyimpan supplier sendiri.
+    supplier_label:
+      refCodeName(it.supplier_id) || refCodeName(productSupplier),
     source_pr_id: sourcePrId,
     // _id detail item dipakai PO untuk reuse (shared doc) — HANYA bila item ini
     // memang milik sebuah PR (punya purchase_request_id). Item manual tidak

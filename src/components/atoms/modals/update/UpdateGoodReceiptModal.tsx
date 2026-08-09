@@ -15,9 +15,7 @@ import {
   WarehouseMode,
   deriveGrStatus,
 } from "@/types/goodReceipt";
-import { PurchaseOrderApiDaum } from "@/types/purchaseOrder";
 import {
-  ProcurementStatus,
   PurchaseItemForm,
   apiItemToForm,
   formItemToPayload,
@@ -25,13 +23,16 @@ import {
 } from "@/types/purchaseItem";
 import {
   Option,
+  PurchaseOrderOption,
   WarehouseSource,
   warehouseOptionsFrom,
+  fetchPurchaseOrderOptionsByIds,
   selectStyles,
   inputCls,
   readOnlyCls,
   labelCls,
 } from "@/utils/procurement";
+import PurchaseOrderMultiSelect from "@/components/atoms/shared/PurchaseOrderMultiSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import MultiImageUpload from "@/components/atoms/shared/MultiImageUpload";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
@@ -58,9 +59,6 @@ export default function UpdateGoodReceiptModal({
   onSuccess,
 }: DataProps) {
   const [warehouses, setWarehouses] = useState<WarehouseSource[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderApiDaum[]>(
-    [],
-  );
 
   const [formData, setFormData] = useState<FormDataGoodReceiptProps>(() => ({
     date: initialData.date?.slice(0, 10) ?? "",
@@ -68,10 +66,28 @@ export default function UpdateGoodReceiptModal({
     reference: initialData.reference ?? "",
     description: initialData.description ?? "",
   }));
-  const [poIds, setPoIds] = useState<string[]>(() =>
+  // PO terpilih. Seed awal dari po_ids (label order_no bila di-populate);
+  // data.items diisi belakangan via fetch by id agar rebuild item tetap benar.
+  const [selectedPos, setSelectedPos] = useState<PurchaseOrderOption[]>(() =>
     (initialData.po_ids ?? [])
-      .map((r) => refId(r))
-      .filter((v): v is string => !!v),
+      .map((r) => {
+        const id = refId(r);
+        if (!id) return null;
+        const label =
+          r && typeof r === "object" && "order_no" in r
+            ? String((r as { order_no?: string }).order_no ?? id)
+            : id;
+        return {
+          value: id,
+          label,
+          data: {
+            _id: id,
+            order_no: label,
+            items: [],
+          } as unknown as PurchaseOrderOption["data"],
+        };
+      })
+      .filter((o): o is PurchaseOrderOption => o !== null),
   );
   const [warehouseMode, setWarehouseMode] = useState<WarehouseMode>(
     (initialData.warehouse_mode as WarehouseMode) ?? WarehouseMode.SINGLE,
@@ -113,25 +129,35 @@ export default function UpdateGoodReceiptModal({
   useEffect(() => {
     (async () => {
       try {
-        const [whRes, poRes] = await Promise.all([
-          apiGet<ListResponse<WarehouseSource>>(
-            "/warehouse",
-            { limit: 1000 },
-            false,
-          ),
-          apiGet<ListResponse<PurchaseOrderApiDaum>>(
-            "/purchase-order",
-            { limit: 1000 },
-            false,
-          ),
-        ]);
+        const whRes = await apiGet<ListResponse<WarehouseSource>>(
+          "/warehouse",
+          { limit: 1000 },
+          false,
+        );
         setWarehouses(whRes.data ?? []);
-        setPurchaseOrders(poRes.data ?? []);
       } catch {
         setWarehouses([]);
-        setPurchaseOrders([]);
       }
     })();
+  }, []);
+
+  // Lengkapi data.items untuk PO yang sudah terpilih (hanya PO terkait, sedikit)
+  // supaya rebuild item saat pilihan PO diubah tetap benar.
+  useEffect(() => {
+    const ids = (initialData.po_ids ?? [])
+      .map((r) => refId(r))
+      .filter((v): v is string => !!v);
+    if (ids.length < 1) return;
+    let alive = true;
+    fetchPurchaseOrderOptionsByIds(ids).then((opts) => {
+      if (!alive || opts.length < 1) return;
+      const byId = new Map(opts.map((o) => [o.value, o]));
+      setSelectedPos((prev) => prev.map((o) => byId.get(o.value) ?? o));
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const warehouseOptions = useMemo(
@@ -139,29 +165,17 @@ export default function UpdateGoodReceiptModal({
     [warehouses],
   );
 
-  const poOptions: Option[] = useMemo(() => {
-    const currentIds = (initialData.po_ids ?? [])
-      .map((r) => refId(r))
-      .filter(Boolean);
-    return purchaseOrders
-      .filter(
-        (po) =>
-          po.status === ProcurementStatus.SUBMITTED ||
-          currentIds.includes(po._id),
-      )
-      .map((po) => ({ value: po._id, label: po.order_no }));
-  }, [purchaseOrders, initialData.po_ids]);
+  const poIds = selectedPos.map((o) => o.value);
 
-  const handlePoChange = (nextIds: string[]) => {
+  const handlePoChange = (nextOpts: PurchaseOrderOption[]) => {
     setItems((prev) => {
       const prevBySrc = new Map<string, PurchaseItemForm>();
       prev.forEach((it) =>
         (it.source_item_ids ?? []).forEach((sid) => prevBySrc.set(sid, it)),
       );
       const next: PurchaseItemForm[] = [];
-      for (const poId of nextIds) {
-        const po = purchaseOrders.find((p) => p._id === poId);
-        for (const raw of po?.items ?? []) {
+      for (const opt of nextOpts) {
+        for (const raw of opt.data.items ?? []) {
           const srcId = raw._id ? String(raw._id) : "";
           const form = apiItemToForm(raw);
           form.source_item_ids = srcId ? [srcId] : [];
@@ -173,7 +187,7 @@ export default function UpdateGoodReceiptModal({
       }
       return next;
     });
-    setPoIds(nextIds);
+    setSelectedPos(nextOpts);
   };
 
   const patchItem = (index: number, patch: Partial<PurchaseItemForm>) =>
@@ -284,7 +298,6 @@ export default function UpdateGoodReceiptModal({
 
   if (!isOpen) return null;
 
-  const selectedPoOptions = poOptions.filter((o) => poIds.includes(o.value));
   const selectedMode =
     MODE_OPTIONS.find((o) => o.value === warehouseMode) ?? MODE_OPTIONS[0];
   const selectedWarehouse =
@@ -325,20 +338,10 @@ export default function UpdateGoodReceiptModal({
               <label className={labelCls}>
                 Purchase Orders<span className="text-red-500">*</span>
               </label>
-              <Select
-                isMulti
+              <PurchaseOrderMultiSelect
                 instanceId="gr-po-select-update"
-                classNamePrefix="rs"
-                placeholder="Pilih satu / beberapa PO…"
-                options={poOptions}
-                value={selectedPoOptions}
-                onChange={(opts) =>
-                  handlePoChange((opts ?? []).map((o) => o.value))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
+                value={selectedPos}
+                onChange={handlePoChange}
               />
             </div>
 

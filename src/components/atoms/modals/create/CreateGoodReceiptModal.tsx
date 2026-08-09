@@ -15,15 +15,14 @@ import {
   WarehouseMode,
   deriveGrStatus,
 } from "@/types/goodReceipt";
-import { PurchaseOrderApiDaum } from "@/types/purchaseOrder";
 import {
-  ProcurementStatus,
   PurchaseItemForm,
   apiItemToForm,
   formItemToPayload,
 } from "@/types/purchaseItem";
 import {
   Option,
+  PurchaseOrderOption,
   WarehouseSource,
   warehouseOptionsFrom,
   selectStyles,
@@ -31,6 +30,7 @@ import {
   readOnlyCls,
   labelCls,
 } from "@/utils/procurement";
+import PurchaseOrderMultiSelect from "@/components/atoms/shared/PurchaseOrderMultiSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import MultiImageUpload from "@/components/atoms/shared/MultiImageUpload";
 import { formatAmount, STATUS_BADGE } from "@/utils/utils";
@@ -57,9 +57,6 @@ export default function CreateGoodReceiptModal({
   onSuccess,
 }: DataProps) {
   const [warehouses, setWarehouses] = useState<WarehouseSource[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderApiDaum[]>(
-    [],
-  );
 
   const [formData, setFormData] = useState<FormDataGoodReceiptProps>(() => ({
     date: today(),
@@ -67,7 +64,7 @@ export default function CreateGoodReceiptModal({
     reference: "",
     description: "",
   }));
-  const [poIds, setPoIds] = useState<string[]>([]);
+  const [selectedPos, setSelectedPos] = useState<PurchaseOrderOption[]>([]);
   const [warehouseMode, setWarehouseMode] = useState<WarehouseMode>(
     WarehouseMode.SINGLE,
   );
@@ -94,23 +91,14 @@ export default function CreateGoodReceiptModal({
   useEffect(() => {
     (async () => {
       try {
-        const [whRes, poRes] = await Promise.all([
-          apiGet<ListResponse<WarehouseSource>>(
-            "/warehouse",
-            { limit: 1000 },
-            false,
-          ),
-          apiGet<ListResponse<PurchaseOrderApiDaum>>(
-            "/purchase-order",
-            { limit: 1000 },
-            false,
-          ),
-        ]);
+        const whRes = await apiGet<ListResponse<WarehouseSource>>(
+          "/warehouse",
+          { limit: 1000 },
+          false,
+        );
         setWarehouses(whRes.data ?? []);
-        setPurchaseOrders(poRes.data ?? []);
       } catch {
         setWarehouses([]);
-        setPurchaseOrders([]);
       }
     })();
   }, []);
@@ -120,28 +108,21 @@ export default function CreateGoodReceiptModal({
     [warehouses],
   );
 
-  // Hanya PO SUBMITTED yang bisa diterima.
-  const poOptions: Option[] = useMemo(
-    () =>
-      purchaseOrders
-        .filter((po) => po.status === ProcurementStatus.SUBMITTED)
-        .map((po) => ({ value: po._id, label: po.order_no })),
-    [purchaseOrders],
-  );
+  const poIds = selectedPos.map((o) => o.value);
 
-  // Rebuild item dari PO terpilih. Tiap item PO = satu baris yang MEMAKAI ULANG
-  // detail PO (source_item_ids = _id detail PO), jadi backend tidak bikin baru.
-  // received_qty & warehouse dipertahankan per source item id.
-  const handlePoChange = (nextIds: string[]) => {
+  // Rebuild item dari PO terpilih (tiap opsi membawa data.items). Tiap item PO =
+  // satu baris yang MEMAKAI ULANG detail PO (source_item_ids = _id detail PO),
+  // jadi backend tidak bikin baru. received_qty & warehouse dipertahankan per
+  // source item id saat pilihan PO berubah.
+  const handlePoChange = (nextOpts: PurchaseOrderOption[]) => {
     setItems((prev) => {
       const prevBySrc = new Map<string, PurchaseItemForm>();
       prev.forEach((it) =>
         (it.source_item_ids ?? []).forEach((sid) => prevBySrc.set(sid, it)),
       );
       const next: PurchaseItemForm[] = [];
-      for (const poId of nextIds) {
-        const po = purchaseOrders.find((p) => p._id === poId);
-        for (const raw of po?.items ?? []) {
+      for (const opt of nextOpts) {
+        for (const raw of opt.data.items ?? []) {
           const srcId = raw._id ? String(raw._id) : "";
           const form = apiItemToForm(raw);
           form.source_item_ids = srcId ? [srcId] : [];
@@ -153,7 +134,7 @@ export default function CreateGoodReceiptModal({
       }
       return next;
     });
-    setPoIds(nextIds);
+    setSelectedPos(nextOpts);
   };
 
   const patchItem = (index: number, patch: Partial<PurchaseItemForm>) => {
@@ -162,14 +143,6 @@ export default function CreateGoodReceiptModal({
     );
   };
 
-  const total = useMemo(
-    () =>
-      items.reduce(
-        (a, it) => a + (Number(it.received_qty) || 0) * (Number(it.price) || 0),
-        0,
-      ),
-    [items],
-  );
   const derivedStatus = useMemo(() => deriveGrStatus(items), [items]);
 
   const handleSubmit = async () => {
@@ -270,7 +243,6 @@ export default function CreateGoodReceiptModal({
 
   if (!isOpen) return null;
 
-  const selectedPoOptions = poOptions.filter((o) => poIds.includes(o.value));
   const selectedMode =
     MODE_OPTIONS.find((o) => o.value === warehouseMode) ?? MODE_OPTIONS[0];
   const selectedWarehouse =
@@ -306,20 +278,10 @@ export default function CreateGoodReceiptModal({
               <label className={labelCls}>
                 Purchase Orders<span className="text-red-500">*</span>
               </label>
-              <Select
-                isMulti
+              <PurchaseOrderMultiSelect
                 instanceId="gr-po-select-create"
-                classNamePrefix="rs"
-                placeholder="Pilih satu / beberapa PO…"
-                options={poOptions}
-                value={selectedPoOptions}
-                onChange={(opts) =>
-                  handlePoChange((opts ?? []).map((o) => o.value))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
+                value={selectedPos}
+                onChange={handlePoChange}
               />
             </div>
 

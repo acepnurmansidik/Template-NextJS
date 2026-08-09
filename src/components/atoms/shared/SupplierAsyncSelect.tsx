@@ -3,39 +3,30 @@
 import { useEffect, useMemo, useState } from "react";
 import AsyncSelect from "react-select/async";
 import debounce from "lodash/debounce";
-import {
-  codeNameLabel,
-  fetchProductOptions,
-  Option,
-  ProductOption,
-  ProductSource,
-  selectStyles,
-} from "@/utils/procurement";
-import { apiGet } from "@/utils/api";
-import { ListResponse } from "@/types/api";
+import { fetchSupplierOptions, Option, selectStyles } from "@/utils/procurement";
 
 interface Props {
-  value: string; // product_id terpilih
-  label?: string; // label tampilan (product_label) untuk value terpilih
+  value: string | null; // supplier_id terpilih
+  label?: string; // label tampilan (supplier_label) untuk value terpilih
   instanceId: string;
-  onPick: (opt: ProductOption | null) => void;
+  onPick: (opt: Option | null) => void;
   isDisabled?: boolean;
 }
 
-// Product picker berbasis pencarian server: ambil 5 hasil, search by name/code,
-// debounce 3 detik. Dipakai di form PR & PO (baris manual).
-export default function ProductAsyncSelect({
+// Supplier picker berbasis pencarian server: ambil 5 hasil, search by name/code,
+// debounce 3 detik. Dipakai di form PO (supplier per baris) & Product (default).
+export default function SupplierAsyncSelect({
   value,
   label,
   instanceId,
   onPick,
   isDisabled,
 }: Props) {
-  const [defaultOptions, setDefaultOptions] = useState<ProductOption[]>([]);
+  const [defaultOptions, setDefaultOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     let alive = true;
-    fetchProductOptions("").then((opts) => {
+    fetchSupplierOptions("").then((opts) => {
       if (alive) setDefaultOptions(opts);
     });
     return () => {
@@ -45,8 +36,8 @@ export default function ProductAsyncSelect({
 
   const loadOptions = useMemo(
     () =>
-      debounce((input: string, cb: (options: ProductOption[]) => void) => {
-        fetchProductOptions(input)
+      debounce((input: string, cb: (options: Option[]) => void) => {
+        fetchSupplierOptions(input)
           .then((opts) => cb(opts))
           .catch(() => cb([]));
       }, 3000),
@@ -54,20 +45,18 @@ export default function ProductAsyncSelect({
   );
   useEffect(() => () => loadOptions.cancel(), [loadOptions]);
 
-  const selected = value
-    ? ({ value, label: label || value } as ProductOption)
-    : null;
+  const selected = value ? { value, label: label || value } : null;
 
   return (
     <AsyncSelect
       instanceId={instanceId}
       classNamePrefix="rs"
-      placeholder="Search product (name/code)…"
+      placeholder="Search supplier (name/code)…"
       cacheOptions
       defaultOptions={defaultOptions}
       loadOptions={loadOptions}
       value={selected}
-      onChange={(opt) => onPick((opt as ProductOption) ?? null)}
+      onChange={(opt) => onPick((opt as Option) ?? null)}
       isClearable
       isDisabled={isDisabled}
       menuPortalTarget={typeof document !== "undefined" ? document.body : null}

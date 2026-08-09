@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
-import Select from "react-select";
 import axios from "axios";
-import { apiGet, apiPut } from "@/utils/api";
-import { ListResponse, SingleResponse } from "@/types/api";
+import { apiPut } from "@/utils/api";
+import { SingleResponse } from "@/types/api";
 import {
   FormDataPurchaseOrderProps,
   PurchaseOrderApiDaum,
   PurchaseOrderPayload,
 } from "@/types/purchaseOrder";
-import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import {
   DetailItemStatus,
   ProcurementStatus,
@@ -26,16 +24,16 @@ import {
   sumItems,
 } from "@/types/purchaseItem";
 import {
-  Option,
   ProductOption,
-  SupplierSource,
-  supplierOptionsFrom,
-  selectStyles,
+  PurchaseRequestOption,
+  fetchPurchaseRequestOptionsByIds,
   inputCls,
   readOnlyCls,
   labelCls,
 } from "@/utils/procurement";
 import ProductAsyncSelect from "@/components/atoms/shared/ProductAsyncSelect";
+import SupplierAsyncSelect from "@/components/atoms/shared/SupplierAsyncSelect";
+import PurchaseRequestMultiSelect from "@/components/atoms/shared/PurchaseRequestMultiSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { formatAmount } from "@/utils/utils";
 
@@ -52,11 +50,6 @@ export default function UpdatePurchaseOrderModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  const [suppliers, setSuppliers] = useState<SupplierSource[]>([]);
-  const [purchaseRequests, setPurchaseRequests] = useState<
-    PurchaseRequestApiDaum[]
-  >([]);
-
   const [formData, setFormData] = useState<FormDataPurchaseOrderProps>(() => ({
     date: initialData.date?.slice(0, 10) ?? "",
     expected_date: initialData.expected_date?.slice(0, 10) ?? "",
@@ -69,10 +62,28 @@ export default function UpdatePurchaseOrderModal({
       apiItemToForm(it, refId(it.purchase_request_id)),
     ),
   );
-  const [selectedPrIds, setSelectedPrIds] = useState<string[]>(() =>
+  // PR terpilih. Seed awal dari pr_ids (label request_no bila di-populate);
+  // data.items diisi belakangan via fetch by id agar diff item tetap benar.
+  const [selectedPrs, setSelectedPrs] = useState<PurchaseRequestOption[]>(() =>
     (initialData.pr_ids ?? [])
-      .map((r) => refId(r))
-      .filter((v): v is string => !!v),
+      .map((r) => {
+        const id = refId(r);
+        if (!id) return null;
+        const label =
+          r && typeof r === "object" && "request_no" in r
+            ? String((r as { request_no?: string }).request_no ?? id)
+            : id;
+        return {
+          value: id,
+          label,
+          data: {
+            _id: id,
+            request_no: label,
+            items: [],
+          } as unknown as PurchaseRequestOption["data"],
+        };
+      })
+      .filter((o): o is PurchaseRequestOption => o !== null),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,51 +102,25 @@ export default function UpdatePurchaseOrderModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  // Lengkapi data.items untuk PR yang sudah terpilih (hanya PR terkait, sedikit)
+  // supaya jika user melepas lalu memilih ulang, diff item tetap benar.
   useEffect(() => {
-    (async () => {
-      try {
-        const [supRes, prRes] = await Promise.all([
-          apiGet<ListResponse<SupplierSource>>(
-            "/supplier",
-            { limit: 1000 },
-            false,
-          ),
-          apiGet<ListResponse<PurchaseRequestApiDaum>>(
-            "/purchase-request",
-            { limit: 1000 },
-            false,
-          ),
-        ]);
-        setSuppliers(supRes.data ?? []);
-        setPurchaseRequests(prRes.data ?? []);
-      } catch {
-        setSuppliers([]);
-        setPurchaseRequests([]);
-      }
-    })();
+    const ids = (initialData.pr_ids ?? [])
+      .map((r) => refId(r))
+      .filter((v): v is string => !!v);
+    if (ids.length < 1) return;
+    let alive = true;
+    fetchPurchaseRequestOptionsByIds(ids).then((opts) => {
+      if (!alive || opts.length < 1) return;
+      const byId = new Map(opts.map((o) => [o.value, o]));
+      setSelectedPrs((prev) => prev.map((o) => byId.get(o.value) ?? o));
+    });
+    return () => {
+      alive = false;
+    };
+    // initialData.pr_ids stabil selama modal terbuka.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const supplierOptions = useMemo(
-    () => supplierOptionsFrom(suppliers),
-    [suppliers],
-  );
-
-  // PR yang masih punya item PENDING (Submitted / Partial Ordered), ATAU sudah
-  // terhubung ke PO ini (purchase_order_id kini array).
-  const prOptions: Option[] = useMemo(
-    () =>
-      purchaseRequests
-        .filter((pr) => {
-          const linkedPoIds = (pr.purchase_order_id ?? []).map((r) => refId(r));
-          return (
-            pr.status === ProcurementStatus.SUBMITTED ||
-            pr.status === ProcurementStatus.PARTIAL_ORDERED ||
-            linkedPoIds.includes(initialData._id)
-          );
-        })
-        .map((pr) => ({ value: pr._id, label: pr.request_no })),
-    [purchaseRequests, initialData._id],
-  );
 
   const total = sumItems(items);
 
@@ -169,32 +154,38 @@ export default function UpdatePurchaseOrderModal({
           uom_id: refId(data?.uom_id ?? null),
           uom_label: refCodeName(data?.uom_id ?? null),
           price: it.price > 0 ? it.price : Number(data?.purchase_price) || 0,
+          supplier_id: it.supplier_id ?? refId(data.supplier_id ?? null),
+          supplier_label:
+            it.supplier_label || refCodeName(data.supplier_id ?? null),
         };
       }),
     );
   };
 
-  // Bangun ulang baris dari PR terpilih. Produk sama dari beberapa PR tetap
-  // baris terpisah (boleh duplikat); item manual dipertahankan.
-  const handlePrChange = (nextIds: string[]) => {
+  // PR dipilih/dilepas (diff): baris dari PR yang DILEPAS dihapus; baris dari PR
+  // yang DITAMBAH di-append (hanya item PENDING). Baris yang sudah ada (dari
+  // initialData atau PR lain) tidak tersentuh. Tiap opsi PR membawa data.items.
+  const handlePrChange = (nextOpts: PurchaseRequestOption[]) => {
+    const prevIds = selectedPrs.map((o) => o.value);
+    const nextIds = nextOpts.map((o) => o.value);
+    const removed = prevIds.filter((id) => !nextIds.includes(id));
+    const added = nextOpts.filter((o) => !prevIds.includes(o.value));
+
     setItems((prev) => {
-      const manual = prev.filter(
-        (it) => (it.source_item_ids?.length ?? 0) === 0,
+      let result = prev.filter(
+        (it) => !it.source_pr_id || !removed.includes(it.source_pr_id),
       );
-      const prItems: PurchaseItemForm[] = [];
-      for (const prId of nextIds) {
-        const pr = purchaseRequests.find((p) => p._id === prId);
-        for (const raw of pr?.items ?? []) {
-          // Muat item yang belum dipesan (PENDING) atau yang memang milik PO ini.
+      for (const opt of added) {
+        for (const raw of opt.data.items ?? []) {
           const onThisPo = refId(raw.purchase_order_id) === initialData._id;
           if (raw.status && raw.status !== DetailItemStatus.PENDING && !onThisPo)
             continue;
-          prItems.push(apiItemToForm(raw, prId));
+          result = [...result, apiItemToForm(raw, opt.value)];
         }
       }
-      return [...prItems, ...manual];
+      return result;
     });
-    setSelectedPrIds(nextIds);
+    setSelectedPrs(nextOpts);
   };
 
   const handleSubmit = async () => {
@@ -233,7 +224,7 @@ export default function UpdatePurchaseOrderModal({
         reference: reference.trim() || undefined,
         description: description.trim() || undefined,
         status,
-        pr_ids: selectedPrIds,
+        pr_ids: selectedPrs.map((o) => o.value),
         items: filled.map(formItemToPayload),
       };
 
@@ -273,10 +264,6 @@ export default function UpdatePurchaseOrderModal({
   };
 
   if (!isOpen) return null;
-
-  const selectedPrOptions = prOptions.filter((o) =>
-    selectedPrIds.includes(o.value),
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -340,20 +327,11 @@ export default function UpdatePurchaseOrderModal({
               <label className={labelCls}>
                 Source Purchase Requests (optional)
               </label>
-              <Select
-                isMulti
+              <PurchaseRequestMultiSelect
                 instanceId="po-pr-select-update"
-                classNamePrefix="rs"
-                placeholder="Pilih PR untuk mengisi item otomatis…"
-                options={prOptions}
-                value={selectedPrOptions}
-                onChange={(opts) =>
-                  handlePrChange((opts ?? []).map((o) => o.value))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
+                placeholder="Cari PR untuk mengisi item otomatis…"
+                value={selectedPrs}
+                onChange={handlePrChange}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
                 Melepas PR akan menghapus item terkait secara otomatis.
@@ -420,10 +398,6 @@ export default function UpdatePurchaseOrderModal({
                     </tr>
                   ) : (
                     items.map((item, index) => {
-                      const selectedSupplier =
-                        supplierOptions.find(
-                          (o) => o.value === item.supplier_id,
-                        ) ?? null;
                       const subtotal =
                         (Number(item.quantity) || 0) *
                         (Number(item.price) || 0);
@@ -458,24 +432,16 @@ export default function UpdatePurchaseOrderModal({
                             </div>
                           </td>
                           <td className="py-2 px-3 align-top">
-                            <Select
+                            <SupplierAsyncSelect
                               instanceId={`po-item-supplier-upd-${index}`}
-                              classNamePrefix="rs"
-                              placeholder="Select supplier..."
-                              isClearable
-                              options={supplierOptions}
-                              value={selectedSupplier}
-                              onChange={(opt) =>
+                              value={item.supplier_id}
+                              label={item.supplier_label}
+                              onPick={(opt) =>
                                 patchItem(index, {
                                   supplier_id: opt?.value ?? null,
+                                  supplier_label: opt?.label ?? "",
                                 })
                               }
-                              menuPortalTarget={
-                                typeof document !== "undefined"
-                                  ? document.body
-                                  : null
-                              }
-                              styles={selectStyles}
                             />
                           </td>
                           <td className="py-2 px-3 align-top">

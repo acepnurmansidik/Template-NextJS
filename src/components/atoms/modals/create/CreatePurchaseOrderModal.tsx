@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
-import Select from "react-select";
 import axios from "axios";
-import { apiGet, apiPost } from "@/utils/api";
+import { apiPost } from "@/utils/api";
 import { ListResponse } from "@/types/api";
 import {
   FormDataPurchaseOrderProps,
   PurchaseOrderApiDaum,
   PurchaseOrderPayload,
 } from "@/types/purchaseOrder";
-import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import {
   DetailItemStatus,
   ProcurementStatus,
@@ -26,16 +24,15 @@ import {
   sumItems,
 } from "@/types/purchaseItem";
 import {
-  Option,
   ProductOption,
-  SupplierSource,
-  supplierOptionsFrom,
-  selectStyles,
+  PurchaseRequestOption,
   inputCls,
   readOnlyCls,
   labelCls,
 } from "@/utils/procurement";
 import ProductAsyncSelect from "@/components/atoms/shared/ProductAsyncSelect";
+import SupplierAsyncSelect from "@/components/atoms/shared/SupplierAsyncSelect";
+import PurchaseRequestMultiSelect from "@/components/atoms/shared/PurchaseRequestMultiSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import { formatAmount } from "@/utils/utils";
 
@@ -52,13 +49,8 @@ export default function CreatePurchaseOrderModal({
   onClose,
   onSuccess,
 }: DataProps) {
-  // Opsi dropdown di-fetch dari API. Produk dicari server-side via
-  // ProductAsyncSelect (limit 5 + debounce).
-  const [suppliers, setSuppliers] = useState<SupplierSource[]>([]);
-  const [purchaseRequests, setPurchaseRequests] = useState<
-    PurchaseRequestApiDaum[]
-  >([]);
-
+  // Semua pencarian (produk/PR/supplier) server-side via AsyncSelect — tidak
+  // ada lagi pemuatan seluruh daftar.
   const [formData, setFormData] = useState<FormDataPurchaseOrderProps>(() => ({
     date: today(),
     expected_date: "",
@@ -69,7 +61,7 @@ export default function CreatePurchaseOrderModal({
   // PO: item biasanya berasal dari PR, jadi mulai kosong (tetap bisa tambah
   // manual). source_pr_id menandai baris berasal dari PR mana.
   const [items, setItems] = useState<PurchaseItemForm[]>([]);
-  const [selectedPrIds, setSelectedPrIds] = useState<string[]>([]);
+  const [selectedPrs, setSelectedPrs] = useState<PurchaseRequestOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (
@@ -86,50 +78,6 @@ export default function CreatePurchaseOrderModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const [supRes, prRes] = await Promise.all([
-          apiGet<ListResponse<SupplierSource>>(
-            "/supplier",
-            { limit: 1000 },
-            false,
-          ),
-          apiGet<ListResponse<PurchaseRequestApiDaum>>(
-            "/purchase-request",
-            { limit: 1000 },
-            false,
-          ),
-        ]);
-        setSuppliers(supRes.data ?? []);
-        setPurchaseRequests(prRes.data ?? []);
-      } catch {
-        setSuppliers([]);
-        setPurchaseRequests([]);
-      }
-    })();
-  }, []);
-
-  const supplierOptions = useMemo(
-    () => supplierOptionsFrom(suppliers),
-    [suppliers],
-  );
-
-  // PR yang masih punya item PENDING: SUBMITTED (belum dipesan) atau
-  // PARTIAL_ORDERED (sebagian sudah dipesan) tetap bisa dibuatkan PO.
-  const prOptions: Option[] = useMemo(
-    () =>
-      purchaseRequests
-        .filter(
-          (pr) =>
-            pr.status === ProcurementStatus.SUBMITTED ||
-            pr.status === ProcurementStatus.PARTIAL_ORDERED ||
-            pr.status === ProcurementStatus.PARTIAL_RECEIVED,
-        )
-        .map((pr) => ({ value: pr._id, label: pr.request_no })),
-    [purchaseRequests],
-  );
 
   const total = sumItems(items);
 
@@ -164,32 +112,36 @@ export default function CreatePurchaseOrderModal({
           uom_label: refCodeName(data?.uom_id ?? null),
           price: it.price > 0 ? it.price : Number(data?.purchase_price) || 0,
           supplier_id: refId(data.supplier_id ?? null),
+          supplier_label: refCodeName(data.supplier_id ?? null),
         };
       }),
     );
   };
 
-  // PR dipilih/dilepas → bangun ulang baris dari PR terpilih. Produk yang sama
-  // dari beberapa PR TETAP jadi baris terpisah (boleh duplikat); tiap baris
-  // membawa source_item_id-nya sendiri untuk reuse & cascade. Item manual tak
-  // tersentuh.
-  const handlePrChange = (nextIds: string[]) => {
+  // PR dipilih/dilepas (diff): baris dari PR yang DILEPAS dihapus; baris dari PR
+  // yang DITAMBAH di-append (hanya item PENDING). Item manual & baris dari PR
+  // lain yang tetap terpilih tidak tersentuh. Tiap opsi PR membawa data.items
+  // sendiri sehingga tak perlu memuat seluruh daftar PR.
+  const handlePrChange = (nextOpts: PurchaseRequestOption[]) => {
+    const prevIds = selectedPrs.map((o) => o.value);
+    const nextIds = nextOpts.map((o) => o.value);
+    const removed = prevIds.filter((id) => !nextIds.includes(id));
+    const added = nextOpts.filter((o) => !prevIds.includes(o.value));
+
     setItems((prev) => {
-      const manual = prev.filter(
-        (it) => (it.source_item_ids?.length ?? 0) === 0,
+      let result = prev.filter(
+        (it) => !it.source_pr_id || !removed.includes(it.source_pr_id),
       );
-      const prItems: PurchaseItemForm[] = [];
-      for (const prId of nextIds) {
-        const pr = purchaseRequests.find((p) => p._id === prId);
-        for (const raw of pr?.items ?? []) {
+      for (const opt of added) {
+        for (const raw of opt.data.items ?? []) {
           // Hanya item yang belum dipesan (PENDING) yang bisa dibuatkan PO.
           if (raw.status && raw.status !== DetailItemStatus.PENDING) continue;
-          prItems.push(apiItemToForm(raw, prId));
+          result = [...result, apiItemToForm(raw, opt.value)];
         }
       }
-      return [...prItems, ...manual];
+      return result;
     });
-    setSelectedPrIds(nextIds);
+    setSelectedPrs(nextOpts);
   };
 
   const handleSubmit = async () => {
@@ -229,7 +181,7 @@ export default function CreatePurchaseOrderModal({
         description: description.trim() || undefined,
         // Selalu DRAFT saat create — submit dilakukan dari daftar.
         status: ProcurementStatus.DRAFT,
-        pr_ids: selectedPrIds,
+        pr_ids: selectedPrs.map((o) => o.value),
         items: filled.map(formItemToPayload),
       };
 
@@ -270,10 +222,6 @@ export default function CreatePurchaseOrderModal({
   };
 
   if (!isOpen) return null;
-
-  const selectedPrOptions = prOptions.filter((o) =>
-    selectedPrIds.includes(o.value),
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
@@ -332,20 +280,11 @@ export default function CreatePurchaseOrderModal({
               <label className={labelCls}>
                 Source Purchase Requests (optional)
               </label>
-              <Select
-                isMulti
+              <PurchaseRequestMultiSelect
                 instanceId="po-pr-select-create"
-                classNamePrefix="rs"
-                placeholder="Pilih PR untuk mengisi item otomatis…"
-                options={prOptions}
-                value={selectedPrOptions}
-                onChange={(opts) =>
-                  handlePrChange((opts ?? []).map((o) => o.value))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
+                placeholder="Cari PR untuk mengisi item otomatis…"
+                value={selectedPrs}
+                onChange={handlePrChange}
               />
               <p className="mt-1 text-[11px] text-zinc-400">
                 PR ber-status Submitted / Partial Ordered (hanya item yang belum
@@ -414,10 +353,6 @@ export default function CreatePurchaseOrderModal({
                     </tr>
                   ) : (
                     items.map((item, index) => {
-                      const selectedSupplier =
-                        supplierOptions.find(
-                          (o) => o.value === item.supplier_id,
-                        ) ?? null;
                       const subtotal =
                         (Number(item.quantity) || 0) *
                         (Number(item.price) || 0);
@@ -452,24 +387,16 @@ export default function CreatePurchaseOrderModal({
                             </div>
                           </td>
                           <td className="py-2 px-3 align-top">
-                            <Select
+                            <SupplierAsyncSelect
                               instanceId={`po-item-supplier-${index}`}
-                              classNamePrefix="rs"
-                              placeholder="Select supplier..."
-                              isClearable
-                              options={supplierOptions}
-                              value={selectedSupplier}
-                              onChange={(opt) =>
+                              value={item.supplier_id}
+                              label={item.supplier_label}
+                              onPick={(opt) =>
                                 patchItem(index, {
                                   supplier_id: opt?.value ?? null,
+                                  supplier_label: opt?.label ?? "",
                                 })
                               }
-                              menuPortalTarget={
-                                typeof document !== "undefined"
-                                  ? document.body
-                                  : null
-                              }
-                              styles={selectStyles}
                             />
                           </td>
                           <td className="py-2 px-3 align-top">

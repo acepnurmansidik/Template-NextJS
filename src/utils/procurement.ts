@@ -3,14 +3,17 @@
 // dari master product, serta kelas styling seragam.
 
 import { apiGet } from "@/utils/api";
-import { ListResponse } from "@/types/api";
+import { ListResponse, SingleResponse } from "@/types/api";
 import {
   apiItemToForm,
+  ProcurementStatus,
   PurchaseItemApiDaum,
   PurchaseItemForm,
   Ref,
   refId,
 } from "@/types/purchaseItem";
+import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
+import { PurchaseOrderApiDaum } from "@/types/purchaseOrder";
 
 export type Option = { value: string; label: string };
 
@@ -76,6 +79,123 @@ export const supplierOptionsFrom = (suppliers: SupplierSource[]): Option[] =>
 
 export const warehouseOptionsFrom = (warehouses: WarehouseSource[]): Option[] =>
   warehouses.map((w) => ({ value: w._id, label: codeNameLabel(w) }));
+
+// Opsi supplier untuk AsyncSelect: cari server-side (search by name/code),
+// batasi 5 hasil. Dipakai form PO (supplier per item) & Product (default).
+export const fetchSupplierOptions = async (
+  search: string,
+): Promise<Option[]> => {
+  try {
+    const res = await apiGet<ListResponse<SupplierSource>>(
+      "/supplier",
+      { search: search || "", limit: 5 },
+      false,
+    );
+    return (res.data ?? []).map((s) => ({
+      value: s._id,
+      label: codeNameLabel(s),
+    }));
+  } catch {
+    return [];
+  }
+};
+
+// Opsi Purchase Request untuk AsyncSelect (multi) di form PO. `data` membawa PR
+// mentah (termasuk items) agar baris item bisa diisi tanpa memuat seluruh PR.
+// Hanya PR yang masih bisa dibuatkan PO: SUBMITTED / PARTIAL_ORDERED /
+// PARTIAL_RECEIVED (difilter sisi klien dari hasil pencarian).
+export type PurchaseRequestOption = Option & { data: PurchaseRequestApiDaum };
+export const fetchPurchaseRequestOptions = async (
+  search: string,
+): Promise<PurchaseRequestOption[]> => {
+  try {
+    const res = await apiGet<ListResponse<PurchaseRequestApiDaum>>(
+      "/purchase-request",
+      { search: search || "", limit: 10 },
+      false,
+    );
+    return (res.data ?? [])
+      .filter(
+        (pr) =>
+          pr.status === ProcurementStatus.SUBMITTED ||
+          pr.status === ProcurementStatus.PARTIAL_ORDERED ||
+          pr.status === ProcurementStatus.PARTIAL_RECEIVED,
+      )
+      .map((pr) => ({ value: pr._id, label: pr.request_no, data: pr }));
+  } catch {
+    return [];
+  }
+};
+
+// Opsi Purchase Order untuk AsyncSelect (multi) di form Good Receipt. `data`
+// membawa PO mentah (termasuk items). Hanya PO SUBMITTED yang bisa diterima —
+// difilter langsung di server via param status.
+export type PurchaseOrderOption = Option & { data: PurchaseOrderApiDaum };
+export const fetchPurchaseOrderOptions = async (
+  search: string,
+): Promise<PurchaseOrderOption[]> => {
+  try {
+    const res = await apiGet<ListResponse<PurchaseOrderApiDaum>>(
+      "/purchase-order",
+      { search: search || "", limit: 10, status: ProcurementStatus.SUBMITTED },
+      false,
+    );
+    return (res.data ?? []).map((po) => ({
+      value: po._id,
+      label: po.order_no,
+      data: po,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+// Ambil beberapa PR by id (untuk seed pilihan awal di form Update PO) — hanya
+// yang sudah terhubung, jumlahnya sedikit, jadi tidak memuat seluruh daftar.
+export const fetchPurchaseRequestOptionsByIds = async (
+  ids: string[],
+): Promise<PurchaseRequestOption[]> => {
+  const results = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const res = await apiGet<SingleResponse<PurchaseRequestApiDaum>>(
+          `/purchase-request/${id}`,
+          {},
+          false,
+        );
+        const pr = res.data;
+        return pr
+          ? { value: pr._id, label: pr.request_no, data: pr }
+          : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return results.filter((o): o is PurchaseRequestOption => o !== null);
+};
+
+// Ambil beberapa PO by id (untuk seed pilihan awal di form Update GR).
+export const fetchPurchaseOrderOptionsByIds = async (
+  ids: string[],
+): Promise<PurchaseOrderOption[]> => {
+  const results = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const res = await apiGet<SingleResponse<PurchaseOrderApiDaum>>(
+          `/purchase-order/${id}`,
+          {},
+          false,
+        );
+        const po = res.data;
+        return po ? { value: po._id, label: po.order_no, data: po } : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return results.filter((o): o is PurchaseOrderOption => o !== null);
+};
 
 // Label UOM dari sebuah Ref uom (populate: "CODE — Name", string: apa adanya).
 const uomLabelFromRef = (u?: Ref | null): string => {

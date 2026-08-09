@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
+import Select from "react-select";
 import { IoClose } from "react-icons/io5";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import axios from "axios";
-import { apiPost } from "@/utils/api";
-import { SingleResponse } from "@/types/api";
+import { apiGet, apiPost } from "@/utils/api";
+import { ListResponse, SingleResponse } from "@/types/api";
 import {
-  FormDataPurchaseRequestProps,
-  PurchaseRequestApiDaum,
-  PurchaseRequestPayload,
-} from "@/types/purchaseRequest";
+  DeliveryOrderApiDaum,
+  DeliveryOrderPayload,
+  FormDataDeliveryOrderProps,
+} from "@/types/deliveryOrder";
 import {
-  ProcurementStatus,
   PurchaseItemForm,
   emptyPurchaseItem,
   formItemToPayload,
   refCodeName,
   refId,
-  sumItems,
 } from "@/types/purchaseItem";
 import {
+  WarehouseSource,
+  warehouseOptionsFrom,
+  selectStyles,
   ProductOption,
   inputCls,
   readOnlyCls,
@@ -29,7 +31,6 @@ import {
 } from "@/utils/procurement";
 import ProductAsyncSelect from "@/components/atoms/shared/ProductAsyncSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
-import { formatAmount } from "@/utils/utils";
 
 interface DataProps {
   isOpen: boolean;
@@ -39,22 +40,20 @@ interface DataProps {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export default function CreatePurchaseRequestModal({
+export default function CreateDeliveryOrderModal({
   isOpen,
   onClose,
   onSuccess,
 }: DataProps) {
-  // Produk dicari server-side lewat ProductAsyncSelect (limit 5 + debounce).
-  const [formData, setFormData] = useState<FormDataPurchaseRequestProps>(
-    () => ({
-      date: today(),
-      needed_date: "",
-      requested_by: "",
-      reference: "",
-      description: "",
-      status: ProcurementStatus.DRAFT,
-    }),
-  );
+  const [formData, setFormData] = useState<FormDataDeliveryOrderProps>(() => ({
+    date: today(),
+    delivery_date: "",
+    recipient: "",
+    reference: "",
+    description: "",
+  }));
+  const [warehouses, setWarehouses] = useState<WarehouseSource[]>([]);
+  const [warehouseId, setWarehouseId] = useState<string | null>(null);
   const [items, setItems] = useState<PurchaseItemForm[]>([
     { ...emptyPurchaseItem },
   ]);
@@ -75,7 +74,27 @@ export default function CreatePurchaseRequestModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  const total = sumItems(items);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiGet<ListResponse<WarehouseSource>>(
+          "/warehouse",
+          { limit: 100 },
+          false,
+        );
+        setWarehouses(res.data ?? []);
+      } catch {
+        setWarehouses([]);
+      }
+    })();
+  }, []);
+
+  const warehouseOptions = useMemo(
+    () => warehouseOptionsFrom(warehouses),
+    [warehouses],
+  );
+  const selectedWarehouse =
+    warehouseOptions.find((o) => o.value === warehouseId) ?? null;
 
   const addItem = () => setItems((prev) => [...prev, { ...emptyPurchaseItem }]);
   const removeItem = (index: number) =>
@@ -85,8 +104,6 @@ export default function CreatePurchaseRequestModal({
       prev.map((it, i) => (i === index ? { ...it, ...patch } : it)),
     );
 
-  // Saat produk dipilih dari AsyncSelect: set uom + label + prefill harga beli
-  // dari master (bila baris masih 0). opt.data membawa product mentah.
   const handlePickProduct = (index: number, opt: ProductOption | null) => {
     setItems((prev) =>
       prev.map((it, i) => {
@@ -107,7 +124,6 @@ export default function CreatePurchaseRequestModal({
           product_label: opt.label,
           uom_id: refId(data?.uom_id ?? null),
           uom_label: refCodeName(data?.uom_id ?? null),
-          price: it.price > 0 ? it.price : Number(data?.purchase_price) || 0,
         };
       }),
     );
@@ -118,6 +134,14 @@ export default function CreatePurchaseRequestModal({
       Swal.fire({
         icon: "warning",
         title: "Date is required",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+    if (!warehouseId) {
+      Swal.fire({
+        icon: "warning",
+        title: "Source warehouse is required",
         confirmButtonColor: "#2563eb",
       });
       return;
@@ -136,7 +160,7 @@ export default function CreatePurchaseRequestModal({
       Swal.fire({
         icon: "warning",
         title: "Produk tidak boleh duplikat",
-        text: "Setiap produk hanya boleh muncul satu kali dalam satu request.",
+        text: "Setiap produk hanya boleh muncul satu kali dalam satu delivery order.",
         confirmButtonColor: "#2563eb",
       });
       return;
@@ -152,19 +176,20 @@ export default function CreatePurchaseRequestModal({
 
     setIsLoading(true);
     try {
-      const { date, needed_date, requested_by, reference, description } =
+      const { date, delivery_date, recipient, reference, description } =
         formData;
-      const payload: PurchaseRequestPayload = {
+      const payload: DeliveryOrderPayload = {
         date,
-        needed_date: needed_date || undefined,
-        requested_by: requested_by.trim() || undefined,
+        delivery_date: delivery_date || undefined,
+        recipient: recipient.trim() || undefined,
         reference: reference.trim() || undefined,
         description: description.trim() || undefined,
+        warehouse_id: warehouseId,
         items: filled.map(formItemToPayload),
       };
 
-      const result = await apiPost<SingleResponse<PurchaseRequestApiDaum>>(
-        "/purchase-request",
+      const result = await apiPost<SingleResponse<DeliveryOrderApiDaum>>(
+        "/delivery-order",
         payload,
         false,
         false,
@@ -204,7 +229,7 @@ export default function CreatePurchaseRequestModal({
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Purchase Request
+          Create Delivery Order
         </h2>
         <button
           onClick={onClose}
@@ -217,7 +242,7 @@ export default function CreatePurchaseRequestModal({
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div className="max-w-full px-5 mx-auto space-y-8">
           {/* HEADER FIELDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="group">
               <label className={labelCls}>
                 Date<span className="text-red-500">*</span>
@@ -232,23 +257,63 @@ export default function CreatePurchaseRequestModal({
             </div>
 
             <div className="group">
-              <label className={labelCls}>Needed Date</label>
+              <label className={labelCls}>Delivery Date</label>
               <input
                 type="date"
-                name="needed_date"
-                value={formData.needed_date}
+                name="delivery_date"
+                value={formData.delivery_date}
                 onChange={handleChange}
                 className={inputCls}
               />
             </div>
 
-            <div className="group md:col-span-2">
+            <div className="group">
+              <label className={labelCls}>
+                Source Warehouse<span className="text-red-500">*</span>
+              </label>
+              <Select
+                instanceId="do-warehouse-create"
+                classNamePrefix="rs"
+                options={warehouseOptions}
+                value={selectedWarehouse}
+                onChange={(opt) => setWarehouseId(opt?.value ?? null)}
+                placeholder="Select warehouse..."
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : undefined
+                }
+                styles={selectStyles}
+              />
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>Recipient</label>
+              <input
+                name="recipient"
+                value={formData.recipient}
+                onChange={handleChange}
+                placeholder="e.g. Gudang Cabang"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>Reference</label>
+              <input
+                name="reference"
+                value={formData.reference}
+                onChange={handleChange}
+                placeholder="e.g. DO-EXT-001"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="group">
               <label className={labelCls}>Description / Memo</label>
               <input
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="What is this request for?"
+                placeholder="What is this delivery for?"
                 className={inputCls}
               />
             </div>
@@ -271,99 +336,63 @@ export default function CreatePurchaseRequestModal({
             </div>
 
             <div className="overflow-x-auto custom-scrollbar border border-zinc-200 dark:border-zinc-700 rounded-lg">
-              <table className="w-full text-left min-w-[860px]">
+              <table className="w-full text-left min-w-[620px]">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60">
                   <tr className="text-[11px] uppercase tracking-widest text-zinc-500">
-                    <th className="py-2.5 px-3 font-bold w-[36%]">Product</th>
-                    <th className="py-2.5 px-3 font-bold w-[14%]">UOM</th>
-                    <th className="py-2.5 px-3 font-bold w-[14%] text-right">
-                      Qty
-                    </th>
+                    <th className="py-2.5 px-3 font-bold w-[52%]">Product</th>
+                    <th className="py-2.5 px-3 font-bold w-[24%]">UOM</th>
                     <th className="py-2.5 px-3 font-bold w-[18%] text-right">
-                      Price
-                    </th>
-                    <th className="py-2.5 px-3 font-bold w-[12%] text-right">
-                      Subtotal
+                      Qty
                     </th>
                     <th className="py-2.5 px-3 font-bold w-[6%]" />
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => {
-                    const subtotal =
-                      (Number(item.quantity) || 0) * (Number(item.price) || 0);
-                    return (
-                      <tr
-                        key={index}
-                        className="border-t border-zinc-100 dark:border-zinc-800"
-                      >
-                        <td className="py-2 px-3 align-top">
-                          <ProductAsyncSelect
-                            instanceId={`pr-item-product-${index}`}
-                            value={item.product_id}
-                            label={item.product_label}
-                            onPick={(opt) => handlePickProduct(index, opt)}
-                          />
-                        </td>
-                        <td className="py-2 px-3 align-top">
-                          <div className={readOnlyCls}>
-                            {item.uom_label || "—"}
-                          </div>
-                        </td>
-                        <td className="py-2 px-3 align-top">
-                          <CurrencyInput
-                            value={item.quantity}
-                            placeholder="0"
-                            aria-label={`Quantity item ${index + 1}`}
-                            onChange={(v) => patchItem(index, { quantity: v })}
-                            className={`${inputCls} text-right`}
-                          />
-                        </td>
-                        <td className="py-2 px-3 align-top">
-                          <CurrencyInput
-                            value={item.price}
-                            placeholder="0"
-                            aria-label={`Price item ${index + 1}`}
-                            onChange={(v) => patchItem(index, { price: v })}
-                            className={`${inputCls} text-right`}
-                          />
-                        </td>
-                        <td className="py-2 px-3 align-top text-right font-mono text-zinc-700 dark:text-zinc-300">
-                          {formatAmount(subtotal)}
-                        </td>
-                        <td className="py-2 px-3 align-top text-center">
-                          <button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            disabled={items.length <= 1}
-                            title={
-                              items.length <= 1
-                                ? "At least 1 item is required"
-                                : "Remove item"
-                            }
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                          >
-                            <FiTrash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 font-bold text-sm">
-                    <td
-                      className="py-3 px-3 text-right text-zinc-500"
-                      colSpan={4}
+                  {items.map((item, index) => (
+                    <tr
+                      key={index}
+                      className="border-t border-zinc-100 dark:border-zinc-800"
                     >
-                      Total
-                    </td>
-                    <td className="py-3 px-3 text-right text-zinc-800 dark:text-zinc-100 font-mono">
-                      {formatAmount(total)}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
+                      <td className="py-2 px-3 align-top">
+                        <ProductAsyncSelect
+                          instanceId={`do-item-product-${index}`}
+                          value={item.product_id}
+                          label={item.product_label}
+                          onPick={(opt) => handlePickProduct(index, opt)}
+                        />
+                      </td>
+                      <td className="py-2 px-3 align-top">
+                        <div className={readOnlyCls}>
+                          {item.uom_label || "—"}
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 align-top">
+                        <CurrencyInput
+                          value={item.quantity}
+                          placeholder="0"
+                          aria-label={`Quantity item ${index + 1}`}
+                          onChange={(v) => patchItem(index, { quantity: v })}
+                          className={`${inputCls} text-right`}
+                        />
+                      </td>
+                      <td className="py-2 px-3 align-top text-center">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          disabled={items.length <= 1}
+                          title={
+                            items.length <= 1
+                              ? "At least 1 item is required"
+                              : "Remove item"
+                          }
+                          className="h-9 w-9 inline-flex items-center justify-center rounded-md text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           </div>
@@ -384,7 +413,7 @@ export default function CreatePurchaseRequestModal({
             isLoading ? "opacity-70 cursor-not-allowed italic" : ""
           }`}
         >
-          {isLoading ? "Creating..." : "Save as Draft"}
+          {isLoading ? "Creating..." : "Save"}
         </button>
       </div>
     </div>
