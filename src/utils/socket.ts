@@ -2,7 +2,7 @@
 // Satu instance socket dipakai bersama supaya tidak membuka banyak koneksi.
 
 import { io, Socket } from "socket.io-client";
-import Cookies from "js-cookie";
+import { getToken } from "@/utils/secureCookie";
 
 // Base URL socket bisa dioverride lewat env NEXT_PUBLIC_SOCKET_URL.
 // Fallback ke NEXT_PUBLIC_API_URL bila belum diset.
@@ -17,7 +17,7 @@ let socket: Socket | null = null;
 export const getSocket = (): Socket => {
   if (socket) return socket;
 
-  const accessToken = Cookies.get("TT");
+  const accessToken = getToken();
 
   socket = io(SOCKET_URL, {
     transports: ["websocket"],
@@ -49,7 +49,7 @@ export const getSocket = (): Socket => {
 // Perbarui token auth lalu re-connect. Berguna setelah login/refresh token.
 export const refreshSocketAuth = (): void => {
   if (!socket) return;
-  const accessToken = Cookies.get("TT");
+  const accessToken = getToken();
   socket.auth = accessToken ? { token: accessToken } : {};
   socket.disconnect().connect();
 };

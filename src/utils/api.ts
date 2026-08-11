@@ -1,7 +1,7 @@
 // Helper API terpusat & dinamis dipakai oleh semua slice.
 
 import axios from "axios";
-import Cookies from "js-cookie";
+import { getToken } from "@/utils/secureCookie";
 
 // Base URL bisa dioverride lewat env NEXT_PUBLIC_API_URL.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -40,7 +40,7 @@ export const apiGet = async <T>(
   };
 
   if (token) {
-    const accessToken = Cookies.get("TT");
+    const accessToken = getToken();
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -70,9 +70,9 @@ const buildHeaders = (
     headers["Content-Type"] = "application/json";
   }
 
-  // Cek token — logika sama seperti apiGet.
+  // Cek token — logika sama seperti apiGet (didekripsi dari cookie "TT").
   if (token) {
-    const accessToken = Cookies.get("TT");
+    const accessToken = getToken();
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }

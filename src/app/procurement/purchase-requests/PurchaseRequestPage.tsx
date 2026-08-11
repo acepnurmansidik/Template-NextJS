@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import CreatePurchaseRequestModal from "@/components/atoms/modals/create/CreatePurchaseRequestModal";
@@ -15,6 +14,7 @@ import {
   PROCUREMENT_STATUS_LABEL,
   ProcurementStatus,
 } from "@/types/purchaseItem";
+import { getAccess } from "@/utils/secureCookie";
 
 interface DataProps {
   title: string;
@@ -39,7 +39,6 @@ const STATUS_REQUEST: ProcurementStatus[] = [
 ];
 
 export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
-  const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
@@ -87,14 +86,12 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
     fetchingData();
   }, [fetchingData]);
 
+  // Hak akses halaman ini diambil dari path_access (localStorage, terenkripsi):
+  // getAccess() -> Map<path, actions>, lalu ambil actions untuk pathname aktif.
   useEffect(() => {
-    if (currentUser) {
-      const matched = currentUser.role_id.path_access.find(
-        (item) => item.path === pathname,
-      );
-      setHasAccess(matched?.actions ?? {});
-    }
-  }, [currentUser, pathname]);
+    const perm = getAccess().get(pathname) ?? {};
+    setHasAccess(perm);
+  }, [pathname]);
 
   useEffect(() => {
     if (page > totalPage) setPage(1);
