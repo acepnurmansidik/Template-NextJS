@@ -10,6 +10,9 @@ import { PurchaseRequestApiDaum } from "@/types/purchaseRequest";
 import CreatePurchaseRequestModal from "@/components/atoms/modals/create/CreatePurchaseRequestModal";
 import { TablePurchaseRequest } from "@/components/atoms/table/tablePurchaseRequest";
 import { Column, ListResponse } from "@/types/api";
+import { CiImport, CiExport } from "react-icons/ci";
+import ImportModal from "@/components/atoms/modals/shared/ImportModal";
+import ExportModal from "@/components/atoms/modals/shared/ExportModal";
 import {
   PROCUREMENT_STATUS_LABEL,
   ProcurementStatus,
@@ -41,6 +44,12 @@ const STATUS_REQUEST: ProcurementStatus[] = [
 export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  // Hak akses halaman ini diambil dari path_access (localStorage, terenkripsi):
+  // getAccess() -> Map<path, actions>, lalu ambil actions untuk pathname aktif.
+  useEffect(() => {
+    const perm = getAccess().get(pathname) ?? {};
+    setHasAccess(perm);
+  }, [pathname]);
 
   const [data, setData] = useState<PurchaseRequestApiDaum[]>([]);
   const [page, setPage] = useState(1);
@@ -53,7 +62,9 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
   const [totalData, setTotalData] = useState(0);
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
-  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
+  const [isModalImport, setIsModalImport] = useState<boolean>(false);
+  const [isModalExport, setIsModalExport] = useState<boolean>(false);
 
   const debouncedSearch = useMemo(
     () =>
@@ -86,13 +97,6 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
     fetchingData();
   }, [fetchingData]);
 
-  // Hak akses halaman ini diambil dari path_access (localStorage, terenkripsi):
-  // getAccess() -> Map<path, actions>, lalu ambil actions untuk pathname aktif.
-  useEffect(() => {
-    const perm = getAccess().get(pathname) ?? {};
-    setHasAccess(perm);
-  }, [pathname]);
-
   useEffect(() => {
     if (page > totalPage) setPage(1);
   }, [totalPage, page]);
@@ -109,7 +113,7 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
     <CMSLayout>
       <div className="w-full px-6 transition-colors duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">
               {title}
             </h1>
@@ -118,7 +122,33 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            {hasAccess.import && (
+              <button
+                onClick={() => setIsModalImport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiImport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Import</span>
+              </button>
+            )}
+            {hasAccess.export && (
+              <button
+                onClick={() => setIsModalExport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiExport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Export</span>
+              </button>
+            )}
             {hasAccess.create && (
               <button
                 onClick={() => setIsModalCreateOpen(true)}
@@ -223,6 +253,23 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
             setIsModalCreateOpen(false);
             fetchingData();
           }}
+        />
+      )}
+
+      {isModalImport && (
+        <ImportModal
+          isOpen={isModalImport}
+          onClose={() => setIsModalImport(false)}
+          module={"purchase-request"}
+          label={"Purchase Request"}
+        />
+      )}
+      {isModalExport && (
+        <ExportModal
+          isOpen={isModalExport}
+          onClose={() => setIsModalExport(false)}
+          module={"purchase-request"}
+          label={"Purchase Request"}
         />
       )}
     </CMSLayout>

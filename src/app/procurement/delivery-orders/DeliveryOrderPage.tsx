@@ -1,11 +1,13 @@
 "use client";
 
 import CMSLayout from "@/components/atoms/layouts/CMSLayout";
+import { CiImport, CiExport } from "react-icons/ci";
+import ImportModal from "@/components/atoms/modals/shared/ImportModal";
+import ExportModal from "@/components/atoms/modals/shared/ExportModal";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
   DeliveryOrderApiDaum,
@@ -15,6 +17,7 @@ import {
 import CreateDeliveryOrderModal from "@/components/atoms/modals/create/CreateDeliveryOrderModal";
 import { TableDeliveryOrder } from "@/components/atoms/table/tableDeliveryOrder";
 import { Column, ListResponse } from "@/types/api";
+import { getAccess } from "@/utils/secureCookie";
 
 interface DataProps {
   title: string;
@@ -37,9 +40,12 @@ const columns: Column[] = [
 ];
 
 export const DeliveryOrderPage = ({ title, subtitle }: DataProps) => {
-  const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const perm = getAccess().get(pathname) ?? {};
+    setHasAccess(perm);
+  }, [pathname]);
 
   const [data, setData] = useState<DeliveryOrderApiDaum[]>([]);
   const [page, setPage] = useState(1);
@@ -52,7 +58,9 @@ export const DeliveryOrderPage = ({ title, subtitle }: DataProps) => {
   const [totalData, setTotalData] = useState(0);
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
-  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
+  const [isModalImport, setIsModalImport] = useState<boolean>(false);
+  const [isModalExport, setIsModalExport] = useState<boolean>(false);
 
   const debouncedSearch = useMemo(
     () =>
@@ -86,15 +94,6 @@ export const DeliveryOrderPage = ({ title, subtitle }: DataProps) => {
   }, [fetchingData]);
 
   useEffect(() => {
-    if (currentUser) {
-      const matched = currentUser.role_id.path_access.find(
-        (item) => item.path === pathname,
-      );
-      setHasAccess(matched?.actions ?? {});
-    }
-  }, [currentUser, pathname]);
-
-  useEffect(() => {
     if (page > totalPage) setPage(1);
   }, [totalPage, page]);
 
@@ -120,6 +119,32 @@ export const DeliveryOrderPage = ({ title, subtitle }: DataProps) => {
           </div>
 
           <div className="flex items-center gap-2">
+            {hasAccess.import && (
+              <button
+                onClick={() => setIsModalImport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiImport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Import</span>
+              </button>
+            )}
+            {hasAccess.export && (
+              <button
+                onClick={() => setIsModalExport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiExport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Export</span>
+              </button>
+            )}
             {hasAccess.create && (
               <button
                 onClick={() => setIsModalCreateOpen(true)}
@@ -224,6 +249,23 @@ export const DeliveryOrderPage = ({ title, subtitle }: DataProps) => {
             setIsModalCreateOpen(false);
             fetchingData();
           }}
+        />
+      )}
+
+      {isModalImport && (
+        <ImportModal
+          isOpen={isModalImport}
+          onClose={() => setIsModalImport(false)}
+          module={"delivery-order"}
+          label={"Delivery Order"}
+        />
+      )}
+      {isModalExport && (
+        <ExportModal
+          isOpen={isModalExport}
+          onClose={() => setIsModalExport(false)}
+          module={"delivery-order"}
+          label={"Delivery Order"}
         />
       )}
     </CMSLayout>
