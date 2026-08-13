@@ -92,10 +92,6 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
         return;
       }
 
-      // Rakit workbook di frontend.
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const headerKeys = Object.keys(rows[0] ?? {});
-
       // Header label: buang underscore -> spasi, tiap kata diawali huruf besar
       // (mis. "purchase_price" -> "Purchase Price"). Khusus "created_at"
       // ditampilkan sebagai "Created Time" (key respons tetap created_at).
@@ -122,10 +118,65 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
         },
       };
 
+      // Deteksi field yang bentuknya array (mis. finance: `accounts`). Jika ada,
+      // tiap record dipecah menjadi beberapa baris (satu per elemen array) dan
+      // kolom non-array (header) di-merge vertikal sepanjang jumlah elemennya.
+      const firstRow = (rows[0] ?? {}) as Record<string, unknown>;
+      const arrayKey = Object.keys(firstRow).find((k) =>
+        rows.some((r) => Array.isArray((r as Record<string, unknown>)[k])),
+      );
+
+      type Merge = { s: { r: number; c: number }; e: { r: number; c: number } };
+      let ws: XLSX.WorkSheet;
+      let columns: string[];
+
+      if (arrayKey) {
+        // Kolom = field skalar + field dari tiap elemen array.
+        const scalarKeys = Object.keys(firstRow).filter((k) => k !== arrayKey);
+        let elementKeys: string[] = [];
+        for (const r of rows) {
+          const arr = (r as Record<string, unknown>)[arrayKey];
+          if (Array.isArray(arr) && arr.length) {
+            elementKeys = Object.keys(arr[0] as Record<string, unknown>);
+            break;
+          }
+        }
+        columns = [...scalarKeys, ...elementKeys];
+
+        const aoa: unknown[][] = [columns.slice()]; // baris 0 = key (diprettify)
+        const merges: Merge[] = [];
+        let rowIdx = 1;
+        for (const rec of rows) {
+          const record = rec as Record<string, unknown>;
+          const arr = Array.isArray(record[arrayKey])
+            ? (record[arrayKey] as Record<string, unknown>[])
+            : [];
+          const n = Math.max(1, arr.length);
+          for (let j = 0; j < n; j++) {
+            const el = (arr[j] ?? {}) as Record<string, unknown>;
+            const line: unknown[] = [];
+            // Field skalar hanya diisi di baris pertama (sisanya di-merge).
+            scalarKeys.forEach((k) => line.push(j === 0 ? record[k] ?? "" : ""));
+            elementKeys.forEach((k) => line.push(el[k] ?? ""));
+            aoa.push(line);
+          }
+          if (n > 1) {
+            scalarKeys.forEach((_k, c) =>
+              merges.push({ s: { r: rowIdx, c }, e: { r: rowIdx + n - 1, c } }),
+            );
+          }
+          rowIdx += n;
+        }
+        ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws["!merges"] = merges;
+      } else {
+        ws = XLSX.utils.json_to_sheet(rows);
+        columns = Object.keys(firstRow);
+      }
+
       // Tulis ulang baris header (baris ke-1) dengan label rapi + gaya di atas.
-      headerKeys.forEach((key, c) => {
-        const addr = XLSX.utils.encode_cell({ r: 0, c });
-        const cell = ws[addr];
+      columns.forEach((key, c) => {
+        const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
         if (!cell) return;
         cell.v = prettify(key);
         cell.t = "s";
@@ -134,30 +185,34 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
 
       // Setiap sel bertipe number ditulis dengan format currency (pemisah
       // ribuan gaya id-ID, mis. 1.234.567) namun tetap numerik agar bisa
-      // dihitung di Excel. Rata kanan seperti lazimnya angka.
+      // dihitung di Excel. Pada sheet dengan merge (finance), SEMUA sel data
+      // (baik yang ter-merge maupun tidak) tulisannya dibuat rata tengah.
+      // Sekaligus hitung lebar kolom dari isi sel.
+      const centerData = Boolean(arrayKey);
       const sheetRange = XLSX.utils.decode_range(ws["!ref"] as string);
+      const widths = columns.map((k) => prettify(k).length);
       for (let r = 1; r <= sheetRange.e.r; r++) {
         for (let c = sheetRange.s.c; c <= sheetRange.e.c; c++) {
           const cell = ws[XLSX.utils.encode_cell({ r, c })];
-          if (!cell || cell.t !== "n") continue;
-          cell.z = "#,##0";
-          (cell as { s?: unknown }).s = {
-            numFmt: "#,##0",
-            alignment: { horizontal: "right" },
-          };
+          if (!cell) continue;
+          if (cell.t === "n") {
+            cell.z = "#,##0";
+            (cell as { s?: unknown }).s = {
+              numFmt: "#,##0",
+              alignment: centerData
+                ? { horizontal: "center", vertical: "center" }
+                : { horizontal: "right" },
+            };
+          } else if (centerData) {
+            (cell as { s?: unknown }).s = {
+              alignment: { horizontal: "center", vertical: "center" },
+            };
+          }
+          const len = cell.v == null ? 0 : String(cell.v).length;
+          if (len > widths[c]) widths[c] = len;
         }
       }
-
-      // Lebar kolom: mengikuti isi terpanjang (atau header), diberi kelonggaran.
-      ws["!cols"] = headerKeys.map((key) => {
-        const headerLen = prettify(key).length;
-        const dataLen = rows.reduce((max, row) => {
-          const val = row[key];
-          const len = val == null ? 0 : String(val).length;
-          return len > max ? len : max;
-        }, 0);
-        return { wch: Math.min(Math.max(headerLen, dataLen) + 6, 60) };
-      });
+      ws["!cols"] = widths.map((w) => ({ wch: Math.min(w + 6, 60) }));
 
       // Tinggikan baris header agar teks yang lebih besar tampak lega.
       ws["!rows"] = [{ hpt: 22 }];

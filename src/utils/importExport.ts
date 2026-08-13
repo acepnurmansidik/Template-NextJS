@@ -42,6 +42,12 @@ export const IMPORTABLE_MODULES = new Set<string>([
   "supplier",
   "stock-position",
   "stock-movement",
+  // Finance (line-based modules use merged account rows; COA is flat).
+  "journal-entry",
+  "journal-write-off",
+  "account-receivable",
+  "account-payable",
+  "chart-of-account",
 ]);
 
 export const isImportable = (module: string) => IMPORTABLE_MODULES.has(module);

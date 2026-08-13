@@ -4,8 +4,10 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
+import { CiImport, CiExport } from "react-icons/ci";
+import ImportModal from "@/components/atoms/modals/shared/ImportModal";
+import ExportModal from "@/components/atoms/modals/shared/ExportModal";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
 import {
   JOURNAL_STATUS_LABEL,
@@ -15,6 +17,7 @@ import {
 import CreateJournalEntryModal from "@/components/atoms/modals/create/CreateJournalEntryModal";
 import { TableJournalEntry } from "@/components/atoms/table/tableJournalEntry";
 import { Column, ListResponse } from "@/types/api";
+import { getAccess } from "@/utils/secureCookie";
 
 const columns: Column[] = [
   { title: "Entry No", value: "entry_no", classname: "w-[16%]" },
@@ -37,9 +40,12 @@ const STATUS_FILTERS: JournalStatus[] = [
 ];
 
 export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
-  const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const perm = getAccess().get(pathname) ?? {};
+    setHasAccess(perm);
+  }, [pathname]);
 
   const [data, setData] = useState<JournalEntryApiDaum[]>([]);
   const [page, setPage] = useState(1);
@@ -54,6 +60,8 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [isModalImport, setIsModalImport] = useState(false);
+  const [isModalExport, setIsModalExport] = useState(false);
 
   const debouncedSearch = useMemo(
     () =>
@@ -87,15 +95,6 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
   }, [fetchingData]);
 
   useEffect(() => {
-    if (currentUser) {
-      const matched = currentUser.role_id.path_access.find(
-        (item) => item.path === pathname,
-      );
-      setHasAccess(matched?.actions ?? {});
-    }
-  }, [currentUser, pathname]);
-
-  useEffect(() => {
     if (page > totalPage) setPage(1);
   }, [totalPage, page]);
 
@@ -121,6 +120,28 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsModalImport(true)}
+              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+            >
+              <CiImport
+                size={14}
+                strokeWidth={1.5}
+                className="text-gray-500 dark:text-zinc-400"
+              />
+              <span>Import</span>
+            </button>
+            <button
+              onClick={() => setIsModalExport(true)}
+              className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+            >
+              <CiExport
+                size={14}
+                strokeWidth={1.5}
+                className="text-gray-500 dark:text-zinc-400"
+              />
+              <span>Export</span>
+            </button>
             {hasAccess.create && (
               <button
                 onClick={() => setIsModalCreateOpen(true)}
@@ -225,6 +246,22 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
             setIsModalCreateOpen(false);
             fetchingData();
           }}
+        />
+      )}
+      {isModalImport && (
+        <ImportModal
+          isOpen={isModalImport}
+          onClose={() => setIsModalImport(false)}
+          module={"journal-entry"}
+          label={"Journal Entry"}
+        />
+      )}
+      {isModalExport && (
+        <ExportModal
+          isOpen={isModalExport}
+          onClose={() => setIsModalExport(false)}
+          module={"journal-entry"}
+          label={"Journal Entry"}
         />
       )}
     </CMSLayout>
