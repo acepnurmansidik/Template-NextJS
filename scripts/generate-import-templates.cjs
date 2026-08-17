@@ -40,8 +40,12 @@ const headerStyle = {
   },
 };
 
+// Odd-row shading: gray (#808080 at 0.4 opacity over white ≈ #CCCCCC) solid.
+const grayFill = { patternType: "solid", fgColor: { rgb: "CCCCCC" } };
+
 // Apply the shared styling to a worksheet given its ordered machine-key columns.
-const styleSheet = (ws, columns) => {
+// `shadeSet` holds the physical row numbers to shade (odd logical records).
+const styleSheet = (ws, columns, shadeSet = new Set()) => {
   columns.forEach((key, c) => {
     const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
     if (!cell) return;
@@ -50,8 +54,8 @@ const styleSheet = (ws, columns) => {
     cell.s = headerStyle;
   });
 
-  // On merged (finance) sheets, center EVERY data cell (merged header columns
-  // and per-line account cells alike).
+  // On merged (finance/procurement) sheets, center EVERY data cell (merged
+  // header columns and per-line item cells alike).
   const centerData = Array.isArray(ws["!merges"]) && ws["!merges"].length > 0;
 
   const range = XLSX.utils.decode_range(ws["!ref"]);
@@ -60,17 +64,18 @@ const styleSheet = (ws, columns) => {
     for (let c = range.s.c; c <= range.e.c; c++) {
       const cell = ws[XLSX.utils.encode_cell({ r, c })];
       if (!cell) continue;
+      const style = {};
       if (cell.t === "n") {
         cell.z = "#,##0";
-        cell.s = {
-          numFmt: "#,##0",
-          alignment: centerData
-            ? { horizontal: "center", vertical: "center" }
-            : { horizontal: "right" },
-        };
+        style.numFmt = "#,##0";
+        style.alignment = centerData
+          ? { horizontal: "center", vertical: "center" }
+          : { horizontal: "right" };
       } else if (centerData) {
-        cell.s = { alignment: { horizontal: "center", vertical: "center" } };
+        style.alignment = { horizontal: "center", vertical: "center" };
       }
+      if (shadeSet.has(r)) style.fill = grayFill;
+      if (Object.keys(style).length) cell.s = style;
       const len = cell.v == null ? 0 : String(cell.v).length;
       if (len > widths[c]) widths[c] = len;
     }
@@ -89,9 +94,15 @@ const buildSheet = (rows) => {
     rows.some((r) => Array.isArray(r[k])),
   );
 
+  // Physical rows to shade (odd logical records: 1st, 3rd, 5th …).
+  const shadeSet = new Set();
+
   if (!arrayKey) {
     const ws = XLSX.utils.json_to_sheet(rows);
-    return styleSheet(ws, Object.keys(firstRow));
+    for (let i = 0; i < rows.length; i++) {
+      if (i % 2 === 0) shadeSet.add(i + 1);
+    }
+    return styleSheet(ws, Object.keys(firstRow), shadeSet);
   }
 
   const scalarKeys = Object.keys(firstRow).filter((k) => k !== arrayKey);
@@ -107,6 +118,7 @@ const buildSheet = (rows) => {
   const aoa = [columns.slice()];
   const merges = [];
   let rowIdx = 1;
+  let recIndex = 0;
   for (const rec of rows) {
     const arr = Array.isArray(rec[arrayKey]) ? rec[arrayKey] : [];
     const n = Math.max(1, arr.length);
@@ -121,6 +133,10 @@ const buildSheet = (rows) => {
       scalarKeys.forEach((_k, c) =>
         merges.push({ s: { r: rowIdx, c }, e: { r: rowIdx + n - 1, c } }),
       );
+    }
+    // Record ganjil (indeks genap) diarsir; satu record = satu baris logis.
+    if (recIndex % 2 === 0) {
+      for (let rr = rowIdx; rr < rowIdx + n; rr++) shadeSet.add(rr);
     }
     rowIdx += n;
   }
@@ -138,7 +154,6 @@ const TEMPLATES = {
       name: "KOPI ARABIKA 250G",
       category: "BVG",
       uom: "PCS",
-      supplier: "SUP-001",
       purchase_price: 35000,
       selling_price: 52000,
       barcode: "8991234567890",
@@ -150,7 +165,6 @@ const TEMPLATES = {
       name: "GULA AREN 500G",
       category: "GRC",
       uom: "PCS",
-      supplier: "SUP-002",
       purchase_price: 18000,
       selling_price: 27500,
       barcode: "8991234567891",
@@ -245,6 +259,11 @@ const TEMPLATES = {
       note: "Pengeluaran penjualan",
       status: "DRAFT",
     },
+  ],
+
+  "supplier-pricing": [
+    { name: "KOPI ARABIKA 250G", supplier: "SUP-001", uom: "PCS", barcode: "8991234567890", price: 35000, is_active: true },
+    { name: "GULA AREN 500G", supplier: "SUP-002", uom: "PCS", barcode: "8991234567891", price: 18000, is_active: true },
   ],
 
   // ---- FINANCE (account lines expand into rows; header columns merged) ----

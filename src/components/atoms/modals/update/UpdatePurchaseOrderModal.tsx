@@ -154,9 +154,10 @@ export default function UpdatePurchaseOrderModal({
           uom_id: refId(data?.uom_id ?? null),
           uom_label: refCodeName(data?.uom_id ?? null),
           price: it.price > 0 ? it.price : Number(data?.purchase_price) || 0,
-          supplier_id: it.supplier_id ?? refId(data.supplier_id ?? null),
-          supplier_label:
-            it.supplier_label || refCodeName(data.supplier_id ?? null),
+          // Ganti produk -> reset supplier; supplier dipilih dari yang punya
+          // produk ini (supplier-pricing).
+          supplier_id: null,
+          supplier_label: "",
         };
       }),
     );
@@ -210,6 +211,20 @@ export default function UpdatePurchaseOrderModal({
       Swal.fire({
         icon: "warning",
         title: "Every item needs a quantity greater than 0",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+    // Setiap produk WAJIB punya supplier sebelum PO disimpan.
+    const missingSupplier = filled.filter((it) => !it.supplier_id);
+    if (missingSupplier.length > 0) {
+      const names = missingSupplier
+        .map((it, i) => it.product_label || `Item ${i + 1}`)
+        .join(", ");
+      Swal.fire({
+        icon: "warning",
+        title: "Supplier belum dipilih",
+        text: `Produk berikut belum memiliki supplier: ${names}`,
         confirmButtonColor: "#2563eb",
       });
       return;
@@ -398,9 +413,10 @@ export default function UpdatePurchaseOrderModal({
                     </tr>
                   ) : (
                     items.map((item, index) => {
-                      const subtotal =
-                        (Number(item.quantity) || 0) *
-                        (Number(item.price) || 0);
+                      // Harga efektif = new_price (hasil edit) bila ada, kalau
+                      // tidak pakai price asal.
+                      const unitPrice = Number(item.new_price ?? item.price) || 0;
+                      const subtotal = (Number(item.quantity) || 0) * unitPrice;
                       const fromPr = (item.source_item_ids?.length ?? 0) > 0;
                       return (
                         <tr
@@ -436,6 +452,8 @@ export default function UpdatePurchaseOrderModal({
                               instanceId={`po-item-supplier-upd-${index}`}
                               value={item.supplier_id}
                               label={item.supplier_label}
+                              product={item.product_label}
+                              isDisabled={!item.product_id}
                               onPick={(opt) =>
                                 patchItem(index, {
                                   supplier_id: opt?.value ?? null,
@@ -455,11 +473,11 @@ export default function UpdatePurchaseOrderModal({
                           </td>
                           <td className="py-2 px-3 align-top">
                             <CurrencyInput
-                              value={item.price}
+                              value={item.new_price ?? item.price}
                               placeholder="0"
                               aria-label={`Purchase price item ${index + 1}`}
                               onChange={(v) =>
-                                patchItem(index, { price: v })
+                                patchItem(index, { new_price: v })
                               }
                               className={`${inputCls} text-right`}
                             />

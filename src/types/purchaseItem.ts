@@ -108,6 +108,9 @@ export interface PurchaseItemApiDaum {
   // Qty yang benar-benar diterima (khusus Good Receipt).
   received_qty?: number;
   price: number;
+  // Harga hasil update user (bila berbeda dari `price`, master product ikut
+  // diperbarui di backend).
+  new_price?: number;
   // Status siklus item (PENDING/ORDERED/PARTIAL_RECEIVED/RECEIVED).
   status?: DetailItemStatus;
   created_at?: string;
@@ -126,6 +129,8 @@ export interface PurchaseItemForm {
   quantity: number;
   received_qty: number;
   price: number;
+  // Harga yang diedit user (PO). Kosong = mengikuti `price` (tidak ada update).
+  new_price?: number;
   source_pr_id?: string | null;
   source_item_ids?: string[];
   // Label tampilan (frontend saja, tidak dikirim ke payload) — agar baris bisa
@@ -145,6 +150,7 @@ export interface PurchaseItemPayload {
   quantity: number;
   received_qty?: number;
   price: number;
+  new_price?: number;
   source_item_ids?: string[];
 }
 
@@ -164,16 +170,18 @@ export const emptyPurchaseItem: PurchaseItemForm = {
   supplier_label: "",
 };
 
-// Total nilai dari sekumpulan baris (qty * harga beli).
+// Total nilai dari sekumpulan baris (qty * harga beli). Bila baris punya
+// `new_price` (harga hasil edit user, mis. di PO) maka itu yang dipakai —
+// sama seperti subtotal per baris — sehingga total ikut terkalkulasi saat
+// harga diubah.
 export const sumItems = (
-  items: { quantity: number; price: number }[],
+  items: { quantity: number; price: number; new_price?: number }[],
 ): number => {
   const round2 = (v: number) => Math.round((Number(v) || 0) * 100) / 100;
+  const unit = (it: { price: number; new_price?: number }) =>
+    Number(it.new_price) > 0 ? Number(it.new_price) : Number(it.price) || 0;
   return round2(
-    items.reduce(
-      (acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.price) || 0),
-      0,
-    ),
+    items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * unit(it), 0),
   );
 };
 
@@ -219,18 +227,25 @@ export const apiItemToForm = (
 // (dipakai PO untuk reuse detail PR).
 export const formItemToPayload = (
   it: PurchaseItemForm,
-): PurchaseItemPayload => ({
-  product_id: it.product_id,
-  uom_id: it.uom_id,
-  supplier_id: it.supplier_id,
-  warehouse_id: it.warehouse_id,
-  quantity: Number(it.quantity) || 0,
-  received_qty: Number(it.received_qty) || 0,
-  price: Number(it.price) || 0,
-  ...(it.source_item_ids && it.source_item_ids.length > 0
-    ? { source_item_ids: it.source_item_ids }
-    : {}),
-});
+): PurchaseItemPayload => {
+  const price = Number(it.price) || 0;
+  // new_price: pakai nilai edit user bila > 0, kalau tidak samakan dengan
+  // `price` agar backend tidak menganggapnya sebagai perubahan harga.
+  const new_price = Number(it.new_price) > 0 ? Number(it.new_price) : price;
+  return {
+    product_id: it.product_id,
+    uom_id: it.uom_id,
+    supplier_id: it.supplier_id,
+    warehouse_id: it.warehouse_id,
+    quantity: Number(it.quantity) || 0,
+    received_qty: Number(it.received_qty) || 0,
+    price,
+    new_price,
+    ...(it.source_item_ids && it.source_item_ids.length > 0
+      ? { source_item_ids: it.source_item_ids }
+      : {}),
+  };
+};
 
 // Gabung baris berdasarkan product_id (dipakai PO): qty dijumlahkan &
 // source_item_ids digabung. Baris tanpa source (manual) dibiarkan terpisah.

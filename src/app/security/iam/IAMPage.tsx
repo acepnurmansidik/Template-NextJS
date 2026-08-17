@@ -163,7 +163,7 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
         {/* =========================== DASHBOARD HEADER ============================ */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
           {/* SISI KIRI: Judul dan Deskripsi Dashboard */}
-          <div>
+          <div className="flex-4">
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">
               {title}
             </h1>
@@ -173,7 +173,7 @@ export const IAMPage = ({ title, subtitle }: DataProps) => {
           </div>
 
           {/* SISI KANAN: Tombol Asli (Tidak Diubah) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-3 justify-end">
             {hasAccess.import && (
               <button
                 onClick={() => setIsModalCreateOpen(true)}

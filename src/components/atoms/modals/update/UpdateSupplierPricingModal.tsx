@@ -5,30 +5,34 @@ import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
-import { apiGet, apiPost } from "@/utils/api";
-import {
-  FormDataProductProps,
-  ProductApiDaum,
-  ProductPayload,
-} from "@/types/product";
+import { apiGet, apiPut } from "@/utils/api";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import { ListResponse, SingleResponse } from "@/types/api";
+import { debounce } from "lodash";
+import AsyncSelect from "react-select/async";
+import {
+  FormDataSupplierPricingProps,
+  SupplierPricingApiDaum,
+  SupplierPricingPayload,
+  imageRefId,
+} from "@/types/supplierPricing";
 
 interface DataProps {
   isOpen: boolean;
+  initialData: SupplierPricingApiDaum;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 type Option = { value: string; label: string };
 
-interface CategoryDaum {
+interface UomDaum {
   _id: string;
   name: string;
-  prefix?: string;
+  code: string;
 }
-interface UomDaum {
+interface SupplierDaum {
   _id: string;
   name: string;
   code: string;
@@ -43,29 +47,62 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
-const defaultValue: FormDataProductProps = {
-  product_category_id: null,
-  uom_id: null,
-  product_image_id: null,
-  code: "",
-  name: "",
-  barcode: "",
-  description: "",
-  purchase_price: 0,
-  selling_price: 0,
-};
+// Ambil id string dari sebuah Ref (string atau objek populate).
+const refId = (r: unknown): string =>
+  r && typeof r === "object" ? ((r as { _id?: string })._id ?? "") : (r as string) ?? "";
 
-export default function CreateProductModal({
+export default function UpdateSupplierPricingModal({
   isOpen,
+  initialData,
   onClose,
   onSuccess,
 }: DataProps) {
-  // FETCHED option lists — tetap state terpisah (hanya daftar option-nya).
-  const [categories, setCategories] = useState<CategoryDaum[]>([]);
   const [uoms, setUoms] = useState<UomDaum[]>([]);
-
-  const [formData, setFormData] = useState<FormDataProductProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [formData, setFormData] = useState<FormDataSupplierPricingProps>({
+    uom_id: refId(initialData.uom_id) || null,
+    product_image_id: imageRefId(initialData.product_image_id),
+    supplier_id: initialData.supplier_id?._id ?? null,
+    name: initialData.name ?? "",
+    barcode: initialData.barcode ?? "",
+    price: initialData.price ?? 0,
+    is_active: initialData.is_active ?? true,
+  });
+
+  const [selectedSupplier, setSelectedSupplier] = useState<Option | null>(
+    initialData.supplier_id?._id
+      ? {
+          value: initialData.supplier_id._id,
+          label: initialData.supplier_id.name ?? initialData.supplier_id._id,
+        }
+      : null,
+  );
+
+  const supplierOptions = useMemo(
+    () =>
+      debounce(
+        (inputValue: string, callback: (options: Option[]) => void) => {
+          apiGet<ListResponse<SupplierDaum>>(
+            "/supplier",
+            { page: 1, limit: 5, search: inputValue },
+            false,
+          )
+            .then((result) =>
+              callback(
+                (result.data ?? []).map((s) => ({
+                  value: s._id,
+                  label: s.name,
+                })),
+              ),
+            )
+            .catch(() => callback([]));
+        },
+        3000,
+        { leading: true },
+      ),
+    [],
+  );
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -85,18 +122,6 @@ export default function CreateProductModal({
   useEffect(() => {
     (async () => {
       try {
-        const result = await apiGet<ListResponse<CategoryDaum>>(
-          "/product-category",
-          { limit: 1000 },
-          false,
-        );
-        setCategories(result.data ?? []);
-      } catch {
-        setCategories([]);
-      }
-    })();
-    (async () => {
-      try {
         const result = await apiGet<ListResponse<UomDaum>>(
           "/uom",
           { limit: 1000 },
@@ -109,35 +134,17 @@ export default function CreateProductModal({
     })();
   }, []);
 
-  const categoryOptions: Option[] = useMemo(
-    () =>
-      categories.map((c) => ({
-        value: c._id,
-        label: `${c.prefix ?? "—"} — ${c.name}`,
-      })),
-    [categories],
-  );
   const uomOptions: Option[] = useMemo(
     () => uoms.map((u) => ({ value: u._id, label: `${u.code} — ${u.name}` })),
     [uoms],
   );
 
   const handleSubmit = async () => {
-    const {
-      product_category_id,
-      uom_id,
-      code,
-      name,
-      description,
-      barcode,
-      purchase_price,
-      selling_price,
-    } = formData;
-
-    if (!product_category_id || !uom_id || !name.trim()) {
+    const { uom_id, name, barcode, price } = formData;
+    if (!price || !uom_id || !name.trim()) {
       Swal.fire({
         icon: "warning",
-        title: "Category, UOM & Name are required",
+        title: "Price, UOM & Name are required",
         confirmButtonColor: "#2563eb",
       });
       return;
@@ -145,21 +152,18 @@ export default function CreateProductModal({
 
     setIsLoading(true);
     try {
-      const payload: ProductPayload = {
-        product_category_id,
+      const payload: SupplierPricingPayload = {
         uom_id,
         product_image_id: formData.product_image_id,
-        // Kosongkan → backend auto-generate kode per kategori.
-        code: code.trim() || undefined,
+        supplier_id: formData.supplier_id,
         name: name.trim(),
-        description: description.trim(),
-        barcode: barcode.trim(),
-        purchase_price,
-        selling_price,
+        price,
+        barcode,
+        is_active: formData.is_active,
       };
 
-      const result = await apiPost<SingleResponse<ProductApiDaum>>(
-        "/product",
+      const result = await apiPut<SingleResponse<SupplierPricingApiDaum>>(
+        `/supplier-pricing/${initialData._id}`,
         payload,
         false,
         false,
@@ -168,8 +172,8 @@ export default function CreateProductModal({
       if (result.success) {
         await Swal.fire({
           icon: "success",
-          title: "Created successfully",
-          text: result.message || "Product created successfully.",
+          title: "Updated successfully",
+          text: result.message || "Supplier pricing updated successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
@@ -195,17 +199,19 @@ export default function CreateProductModal({
 
   if (!isOpen) return null;
 
-  const selectedCategory =
-    categoryOptions.find((o) => o.value === formData.product_category_id) ??
-    null;
   const selectedUom =
     uomOptions.find((o) => o.value === formData.uom_id) ?? null;
+
+  const handleSelectedSupplier = (data: Option | null) => {
+    setSelectedSupplier(data);
+    setFormData((prev) => ({ ...prev, supplier_id: data?.value ?? null }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Product
+          Update Supplier Pricing
         </h2>
         <button
           onClick={onClose}
@@ -220,62 +226,22 @@ export default function CreateProductModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="group">
               <label className={labelCls}>
-                Category<span className="text-red-500">*</span>
-              </label>
-              <Select
-                instanceId="product-category-create"
-                classNamePrefix="rs"
-                placeholder="Select category…"
-                options={categoryOptions}
-                value={selectedCategory}
-                onChange={(opt) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    product_category_id: opt?.value ?? null,
-                  }))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
-              />
-            </div>
-
-            <div className="group">
-              <label className={labelCls}>
                 UOM<span className="text-red-500">*</span>
               </label>
               <Select
-                instanceId="product-uom-create"
+                instanceId="supplier-pricing-uom-update"
                 classNamePrefix="rs"
                 placeholder="Select unit of measure…"
                 options={uomOptions}
                 value={selectedUom}
                 onChange={(opt) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    uom_id: opt?.value ?? null,
-                  }))
+                  setFormData((prev) => ({ ...prev, uom_id: opt?.value ?? null }))
                 }
                 menuPortalTarget={
                   typeof document !== "undefined" ? document.body : null
                 }
                 styles={selectStyles}
               />
-            </div>
-
-            <div className="group">
-              <label className={labelCls}>Code / SKU</label>
-              <input
-                value={formData.code}
-                name="code"
-                onChange={handleChange}
-                placeholder="Kosongkan untuk auto-generate"
-                className={inputCls}
-              />
-              <p className="mt-1 text-[11px] text-zinc-400">
-                Otomatis dibuat dari prefix kategori bila dikosongkan.
-              </p>
             </div>
 
             <div className="group">
@@ -292,6 +258,41 @@ export default function CreateProductModal({
             </div>
 
             <div className="group">
+              <label className={labelCls}>Supplier</label>
+              <AsyncSelect
+                isSearchable
+                cacheOptions
+                defaultOptions={true}
+                loadOptions={supplierOptions}
+                instanceId="supplier-pricing-supplier-update"
+                classNamePrefix="rs"
+                placeholder="Ketik untuk mencari..."
+                value={selectedSupplier}
+                onChange={(vals) => handleSelectedSupplier(vals as Option | null)}
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                styles={{
+                  menuPortal: (base: Record<string, unknown>) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+              />
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>
+                Price<span className="text-red-500">*</span>
+              </label>
+              <CurrencyInput
+                value={formData.price}
+                onChange={(v) => setFormData((prev) => ({ ...prev, price: v }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div className="group">
               <label className={labelCls}>Barcode</label>
               <input
                 value={formData.barcode}
@@ -303,35 +304,28 @@ export default function CreateProductModal({
             </div>
 
             <div className="group">
-              <label className={labelCls}>Purchase Price</label>
-              <CurrencyInput
-                value={formData.purchase_price}
-                onChange={(v) =>
-                  setFormData((prev) => ({ ...prev, purchase_price: v }))
+              <label className={labelCls}>Status</label>
+              <Select
+                instanceId="supplier-pricing-status-update"
+                classNamePrefix="rs"
+                options={[
+                  { value: "true", label: "Active" },
+                  { value: "false", label: "Inactive" },
+                ]}
+                value={{
+                  value: String(formData.is_active),
+                  label: formData.is_active ? "Active" : "Inactive",
+                }}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_active: opt?.value === "true",
+                  }))
                 }
-                className={inputCls}
-              />
-            </div>
-
-            <div className="group">
-              <label className={labelCls}>Selling Price</label>
-              <CurrencyInput
-                value={formData.selling_price}
-                onChange={(v) =>
-                  setFormData((prev) => ({ ...prev, selling_price: v }))
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
                 }
-                className={inputCls}
-              />
-            </div>
-
-            <div className="group md:col-span-2">
-              <label className={labelCls}>Description</label>
-              <textarea
-                value={formData.description}
-                name="description"
-                onChange={handleChange}
-                rows={3}
-                className={`${inputCls} resize-none`}
+                styles={selectStyles}
               />
             </div>
 
@@ -341,10 +335,7 @@ export default function CreateProductModal({
                 label="Product Image"
                 value={formData.product_image_id}
                 onChange={(imageId) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    product_image_id: imageId,
-                  }))
+                  setFormData((prev) => ({ ...prev, product_image_id: imageId }))
                 }
               />
             </div>
@@ -366,7 +357,7 @@ export default function CreateProductModal({
             isLoading ? "opacity-70 cursor-not-allowed italic" : ""
           }`}
         >
-          {isLoading ? "Creating..." : "Submit"}
+          {isLoading ? "Updating..." : "Save Changes"}
         </button>
       </div>
     </div>

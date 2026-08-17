@@ -104,7 +104,6 @@ export default function ViewProductModal({
               value={refLabel(initialData.product_category_id)}
             />
             <Field label="UOM" value={refLabel(initialData.uom_id)} />
-            <Field label="Supplier" value={refLabel(initialData.supplier_id)} />
             <Field label="Barcode" value={initialData.barcode?.trim() || "—"} />
             <Field
               label="Purchase Price"

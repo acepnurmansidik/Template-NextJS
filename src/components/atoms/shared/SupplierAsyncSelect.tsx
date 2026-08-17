@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import AsyncSelect from "react-select/async";
 import debounce from "lodash/debounce";
-import { fetchSupplierOptions, Option, selectStyles } from "@/utils/procurement";
+import {
+  fetchSupplierOptions,
+  fetchSuppliersForProductOptions,
+  Option,
+  selectStyles,
+} from "@/utils/procurement";
 
 interface Props {
   value: string | null; // supplier_id terpilih
@@ -11,37 +16,65 @@ interface Props {
   instanceId: string;
   onPick: (opt: Option | null) => void;
   isDisabled?: boolean;
+  // Bila di-set (mode PO): supplier dicari hanya dari yang MEMILIKI produk ini
+  // (via supplier-pricing, dicocokkan nama produk). `null`/"" = belum ada
+  // produk → daftar kosong (pilih produk dulu).
+  product?: string | null;
 }
 
-// Supplier picker berbasis pencarian server: ambil 5 hasil, search by name/code,
-// debounce 3 detik. Dipakai di form PO (supplier per baris) & Product (default).
+// Supplier picker. Dua mode:
+//  - Global (tanpa prop `product`): cari server-side ke /supplier (name/code).
+//  - Per-produk (prop `product` di-set, dipakai form PO): ambil supplier yang
+//    punya produk tsb dari supplier-pricing, lalu filter client-side.
 export default function SupplierAsyncSelect({
   value,
   label,
   instanceId,
   onPick,
   isDisabled,
+  product,
 }: Props) {
-  const [defaultOptions, setDefaultOptions] = useState<Option[]>([]);
+  const scoped = product !== undefined;
+  const [options, setOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     let alive = true;
-    fetchSupplierOptions("").then((opts) => {
-      if (alive) setDefaultOptions(opts);
-    });
+    if (scoped) {
+      if (!product) {
+        setOptions([]);
+        return;
+      }
+      fetchSuppliersForProductOptions(product).then((opts) => {
+        if (alive) setOptions(opts);
+      });
+    } else {
+      fetchSupplierOptions("").then((opts) => {
+        if (alive) setOptions(opts);
+      });
+    }
     return () => {
       alive = false;
     };
-  }, []);
+  }, [scoped, product]);
 
   const loadOptions = useMemo(
     () =>
       debounce((input: string, cb: (options: Option[]) => void) => {
-        fetchSupplierOptions(input)
-          .then((opts) => cb(opts))
-          .catch(() => cb([]));
-      }, 3000),
-    [],
+        if (scoped) {
+          // Filter client-side dari supplier milik produk ini.
+          const q = input.trim().toLowerCase();
+          cb(
+            q
+              ? options.filter((o) => o.label.toLowerCase().includes(q))
+              : options,
+          );
+        } else {
+          fetchSupplierOptions(input)
+            .then((opts) => cb(opts))
+            .catch(() => cb([]));
+        }
+      }, scoped ? 200 : 3000),
+    [scoped, options],
   );
   useEffect(() => () => loadOptions.cancel(), [loadOptions]);
 
@@ -51,9 +84,13 @@ export default function SupplierAsyncSelect({
     <AsyncSelect
       instanceId={instanceId}
       classNamePrefix="rs"
-      placeholder="Search supplier (name/code)…"
-      cacheOptions
-      defaultOptions={defaultOptions}
+      placeholder={
+        scoped && !product
+          ? "Pilih produk dulu…"
+          : "Search supplier (name/code)…"
+      }
+      cacheOptions={!scoped}
+      defaultOptions={options}
       loadOptions={loadOptions}
       value={selected}
       onChange={(opt) => onPick((opt as Option) ?? null)}

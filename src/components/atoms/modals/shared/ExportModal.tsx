@@ -129,6 +129,9 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
       type Merge = { s: { r: number; c: number }; e: { r: number; c: number } };
       let ws: XLSX.WorkSheet;
       let columns: string[];
+      // Baris fisik yang perlu diarsir (record ganjil: ke-1, 3, 5, …). Untuk
+      // record yang ter-merge, seluruh baris fisiknya dihitung satu record.
+      const shadeSet = new Set<number>();
 
       if (arrayKey) {
         // Kolom = field skalar + field dari tiap elemen array.
@@ -146,6 +149,7 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
         const aoa: unknown[][] = [columns.slice()]; // baris 0 = key (diprettify)
         const merges: Merge[] = [];
         let rowIdx = 1;
+        let recIndex = 0;
         for (const rec of rows) {
           const record = rec as Record<string, unknown>;
           const arr = Array.isArray(record[arrayKey])
@@ -165,13 +169,23 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
               merges.push({ s: { r: rowIdx, c }, e: { r: rowIdx + n - 1, c } }),
             );
           }
+          // Record ke-1, 3, 5 … (indeks genap) diarsir; satu record dihitung
+          // satu baris walau ter-merge jadi beberapa baris fisik.
+          if (recIndex % 2 === 0) {
+            for (let rr = rowIdx; rr < rowIdx + n; rr++) shadeSet.add(rr);
+          }
           rowIdx += n;
+          recIndex += 1;
         }
         ws = XLSX.utils.aoa_to_sheet(aoa);
         ws["!merges"] = merges;
       } else {
         ws = XLSX.utils.json_to_sheet(rows);
         columns = Object.keys(firstRow);
+        // Tanpa merge: tiap baris data = satu record. Baris ganjil diarsir.
+        for (let i = 0; i < rows.length; i++) {
+          if (i % 2 === 0) shadeSet.add(i + 1);
+        }
       }
 
       // Tulis ulang baris header (baris ke-1) dengan label rapi + gaya di atas.
@@ -183,11 +197,14 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
         (cell as { s?: unknown }).s = headerStyle;
       });
 
+      // Arsiran baris ganjil: abu-abu (gray #808080 pada opacity 0.4 di atas
+      // putih ≈ #CCCCCC) sebagai solid fill.
+      const grayFill = { patternType: "solid", fgColor: { rgb: "CCCCCC" } };
+
       // Setiap sel bertipe number ditulis dengan format currency (pemisah
       // ribuan gaya id-ID, mis. 1.234.567) namun tetap numerik agar bisa
-      // dihitung di Excel. Pada sheet dengan merge (finance), SEMUA sel data
-      // (baik yang ter-merge maupun tidak) tulisannya dibuat rata tengah.
-      // Sekaligus hitung lebar kolom dari isi sel.
+      // dihitung di Excel. Pada sheet dengan merge (finance/procurement), SEMUA
+      // sel data dibuat rata tengah. Sekaligus hitung lebar kolom dari isi sel.
       const centerData = Boolean(arrayKey);
       const sheetRange = XLSX.utils.decode_range(ws["!ref"] as string);
       const widths = columns.map((k) => prettify(k).length);
@@ -195,19 +212,18 @@ export default function ExportModal({ isOpen, onClose, module, label }: Props) {
         for (let c = sheetRange.s.c; c <= sheetRange.e.c; c++) {
           const cell = ws[XLSX.utils.encode_cell({ r, c })];
           if (!cell) continue;
+          const style: Record<string, unknown> = {};
           if (cell.t === "n") {
             cell.z = "#,##0";
-            (cell as { s?: unknown }).s = {
-              numFmt: "#,##0",
-              alignment: centerData
-                ? { horizontal: "center", vertical: "center" }
-                : { horizontal: "right" },
-            };
+            style.numFmt = "#,##0";
+            style.alignment = centerData
+              ? { horizontal: "center", vertical: "center" }
+              : { horizontal: "right" };
           } else if (centerData) {
-            (cell as { s?: unknown }).s = {
-              alignment: { horizontal: "center", vertical: "center" },
-            };
+            style.alignment = { horizontal: "center", vertical: "center" };
           }
+          if (shadeSet.has(r)) style.fill = grayFill;
+          if (Object.keys(style).length) (cell as { s?: unknown }).s = style;
           const len = cell.v == null ? 0 : String(cell.v).length;
           if (len > widths[c]) widths[c] = len;
         }

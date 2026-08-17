@@ -103,6 +103,7 @@ export const getSecureStorage = <T>(key: string): T | null => {
 export interface UserInfo {
   email: string;
   name: string;
+  role: string;
 }
 
 // path_access dari backend: { path, actions: Record<string, boolean> }.

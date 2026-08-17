@@ -2,6 +2,8 @@
 // Referenced models (product_category_id, uom_id) may arrive either as raw
 // id strings or populated objects depending on the endpoint.
 
+import { SupplierApiDaum } from "./supplier";
+
 export type Ref =
   | string
   | { _id: string; name?: string; code?: string; prefix?: string };
@@ -9,32 +11,26 @@ export type Ref =
 // Referensi gambar: string id atau objek populate { _id, path }.
 export type ImageRef = string | { _id: string; path?: string } | null;
 
-export interface ProductApiDaum {
+export interface SupplierPricingApiDaum {
   _id: string;
-  product_category_id: Ref;
+  supplier_id: SupplierApiDaum;
   uom_id: Ref;
   product_image_id?: ImageRef;
-  code: string;
   name: string;
   slug: string;
-  description?: string;
   barcode?: string;
-  purchase_price?: number;
-  selling_price?: number;
+  price: number;
   is_active: boolean;
   created_at?: string;
 }
 
-export interface ProductPayload {
-  product_category_id: string;
+export interface SupplierPricingPayload {
   uom_id: string;
   product_image_id?: string | null;
-  code?: string;
+  supplier_id?: string | null;
   name: string;
-  description?: string;
   barcode?: string;
-  purchase_price?: number;
-  selling_price?: number;
+  price: number;
   is_active?: boolean;
 }
 
@@ -53,15 +49,12 @@ export const refLabel = (r?: Ref): string =>
 // Bentuk form yang dikumpulkan modal Create/Update. Nilai select disimpan
 // sebagai id string (bukan daftar option yang di-fetch). `is_active` hanya
 // dipakai oleh Update.
-export interface FormDataProductProps {
-  product_category_id: string | null;
+export interface FormDataSupplierPricingProps {
   uom_id: string | null;
   product_image_id: string | null;
-  code: string;
+  supplier_id: string | null;
+  barcode?: string;
   name: string;
-  barcode: string;
-  description: string;
-  purchase_price: number;
-  selling_price: number;
+  price: number;
   is_active?: boolean;
 }

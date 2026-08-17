@@ -100,6 +100,35 @@ export const fetchSupplierOptions = async (
   }
 };
 
+// Opsi supplier yang MEMILIKI sebuah produk (via supplier-pricing, dicocokkan
+// dengan nama produk). Dipakai di form PO: supplier baru bisa dipilih setelah
+// produk dipilih, dan hanya supplier yang punya produk itu yang muncul.
+interface SupplierPricingRow {
+  supplier_id?: { _id: string; code?: string; name?: string } | string | null;
+}
+export const fetchSuppliersForProductOptions = async (
+  productName: string,
+): Promise<Option[]> => {
+  if (!productName) return [];
+  try {
+    const res = await apiGet<ListResponse<SupplierPricingRow>>(
+      "/supplier-pricing",
+      { name: productName, limit: 100 },
+      false,
+    );
+    const map = new Map<string, Option>();
+    for (const row of res.data ?? []) {
+      const sup = row.supplier_id;
+      if (sup && typeof sup === "object" && sup._id) {
+        map.set(sup._id, { value: sup._id, label: codeNameLabel(sup) });
+      }
+    }
+    return [...map.values()];
+  } catch {
+    return [];
+  }
+};
+
 // Opsi Purchase Request untuk AsyncSelect (multi) di form PO. `data` membawa PR
 // mentah (termasuk items) agar baris item bisa diisi tanpa memuat seluruh PR.
 // Hanya PR yang masih bisa dibuatkan PO: SUBMITTED / PARTIAL_ORDERED /

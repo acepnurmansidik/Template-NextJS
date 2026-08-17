@@ -45,10 +45,10 @@ interface DataProps {
 }
 
 const MODE_OPTIONS: Option[] = [
-  { value: WarehouseMode.SINGLE, label: "Satu gudang (semua item)" },
+  { value: WarehouseMode.SINGLE, label: "Single warehouse (all item)" },
   {
     value: WarehouseMode.MULTIPLE,
-    label: "Per item (pilih gudang tiap baris)",
+    label: "Multi wahrehouse (choose warehouse every row)",
   },
 ];
 

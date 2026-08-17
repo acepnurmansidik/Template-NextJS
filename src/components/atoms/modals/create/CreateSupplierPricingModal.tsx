@@ -6,14 +6,16 @@ import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
 import { apiGet, apiPost } from "@/utils/api";
-import {
-  FormDataProductProps,
-  ProductApiDaum,
-  ProductPayload,
-} from "@/types/product";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import { ListResponse, SingleResponse } from "@/types/api";
+import { debounce } from "lodash";
+import AsyncSelect from "react-select/async";
+import {
+  FormDataSupplierPricingProps,
+  SupplierPricingApiDaum,
+  SupplierPricingPayload,
+} from "@/types/supplierPricing";
 
 interface DataProps {
   isOpen: boolean;
@@ -33,6 +35,11 @@ interface UomDaum {
   name: string;
   code: string;
 }
+interface SupplierDaum {
+  _id: string;
+  name: string;
+  code: string;
+}
 
 const inputCls =
   "w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100";
@@ -43,19 +50,16 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
-const defaultValue: FormDataProductProps = {
-  product_category_id: null,
+const defaultValue: FormDataSupplierPricingProps = {
+  supplier_id: null,
   uom_id: null,
   product_image_id: null,
-  code: "",
   name: "",
   barcode: "",
-  description: "",
-  purchase_price: 0,
-  selling_price: 0,
+  price: 0,
 };
 
-export default function CreateProductModal({
+export default function CreateSupplierPricingModal({
   isOpen,
   onClose,
   onSuccess,
@@ -64,8 +68,41 @@ export default function CreateProductModal({
   const [categories, setCategories] = useState<CategoryDaum[]>([]);
   const [uoms, setUoms] = useState<UomDaum[]>([]);
 
-  const [formData, setFormData] = useState<FormDataProductProps>(defaultValue);
+  const [formData, setFormData] =
+    useState<FormDataSupplierPricingProps>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedSupplier, setSelectedSupplier] = useState<Option | null>(null);
+
+  // ====================== S E L E C T * O P T I O N ======================
+  // Satu fungsi untuk semua: dipakai saat modal dibuka (via defaultOptions)
+  // maupun saat user mengetik (loadOptions AsyncSelect). Di-debounce 3 detik;
+  // leading:true agar saat modal pertama dibuka langsung hit, sedangkan saat
+  // mengetik menunggu jeda 3 detik sebelum hit ke server.
+  const supplierOptions = useMemo(
+    () =>
+      debounce(
+        (inputValue: string, callback: (options: Option[]) => void) => {
+          apiGet<ListResponse<SupplierDaum>>(
+            "/supplier",
+            { page: 1, limit: 5, search: inputValue },
+            false,
+          )
+            .then((result) =>
+              callback(
+                (result.data ?? []).map((role) => ({
+                  value: role._id,
+                  label: role.name,
+                })),
+              ),
+            )
+            .catch(() => callback([]));
+        },
+        3000,
+        { leading: true },
+      ),
+    [],
+  );
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -123,21 +160,12 @@ export default function CreateProductModal({
   );
 
   const handleSubmit = async () => {
-    const {
-      product_category_id,
-      uom_id,
-      code,
-      name,
-      description,
-      barcode,
-      purchase_price,
-      selling_price,
-    } = formData;
+    const { uom_id, name, barcode, price } = formData;
 
-    if (!product_category_id || !uom_id || !name.trim()) {
+    if (!price || !uom_id || !name.trim()) {
       Swal.fire({
         icon: "warning",
-        title: "Category, UOM & Name are required",
+        title: "Price, UOM & Name are required",
         confirmButtonColor: "#2563eb",
       });
       return;
@@ -145,21 +173,17 @@ export default function CreateProductModal({
 
     setIsLoading(true);
     try {
-      const payload: ProductPayload = {
-        product_category_id,
+      const payload: SupplierPricingPayload = {
         uom_id,
         product_image_id: formData.product_image_id,
-        // Kosongkan → backend auto-generate kode per kategori.
-        code: code.trim() || undefined,
+        supplier_id: formData.supplier_id,
         name: name.trim(),
-        description: description.trim(),
-        barcode: barcode.trim(),
-        purchase_price,
-        selling_price,
+        price,
+        barcode,
       };
 
-      const result = await apiPost<SingleResponse<ProductApiDaum>>(
-        "/product",
+      const result = await apiPost<SingleResponse<SupplierPricingApiDaum>>(
+        "/supplier-pricing",
         payload,
         false,
         false,
@@ -169,7 +193,7 @@ export default function CreateProductModal({
         await Swal.fire({
           icon: "success",
           title: "Created successfully",
-          text: result.message || "Product created successfully.",
+          text: result.message || "Supplier pricing created successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
@@ -177,6 +201,7 @@ export default function CreateProductModal({
         });
         if (onSuccess) onSuccess();
         else onClose();
+        setSelectedSupplier(null);
       }
     } catch (error) {
       setIsLoading(false);
@@ -195,17 +220,22 @@ export default function CreateProductModal({
 
   if (!isOpen) return null;
 
-  const selectedCategory =
-    categoryOptions.find((o) => o.value === formData.product_category_id) ??
-    null;
   const selectedUom =
     uomOptions.find((o) => o.value === formData.uom_id) ?? null;
+
+  const handleSelectedSupplier = (data: Option | null) => {
+    setSelectedSupplier(data);
+    setFormData((prev: FormDataSupplierPricingProps) => ({
+      ...prev,
+      supplier_id: data?.value ?? "",
+    }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-          Create Product
+          Create Supplier Pricing
         </h2>
         <button
           onClick={onClose}
@@ -218,29 +248,6 @@ export default function CreateProductModal({
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <div className="max-w-full px-5 mx-auto space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="group">
-              <label className={labelCls}>
-                Category<span className="text-red-500">*</span>
-              </label>
-              <Select
-                instanceId="product-category-create"
-                classNamePrefix="rs"
-                placeholder="Select category…"
-                options={categoryOptions}
-                value={selectedCategory}
-                onChange={(opt) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    product_category_id: opt?.value ?? null,
-                  }))
-                }
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                styles={selectStyles}
-              />
-            </div>
-
             <div className="group">
               <label className={labelCls}>
                 UOM<span className="text-red-500">*</span>
@@ -265,20 +272,6 @@ export default function CreateProductModal({
             </div>
 
             <div className="group">
-              <label className={labelCls}>Code / SKU</label>
-              <input
-                value={formData.code}
-                name="code"
-                onChange={handleChange}
-                placeholder="Kosongkan untuk auto-generate"
-                className={inputCls}
-              />
-              <p className="mt-1 text-[11px] text-zinc-400">
-                Otomatis dibuat dari prefix kategori bila dikosongkan.
-              </p>
-            </div>
-
-            <div className="group">
               <label className={labelCls}>
                 Name<span className="text-red-500">*</span>
               </label>
@@ -292,6 +285,41 @@ export default function CreateProductModal({
             </div>
 
             <div className="group">
+              <label className={labelCls}>
+                Supplier<span className="text-red-500">*</span>
+              </label>
+              <AsyncSelect
+                isSearchable
+                cacheOptions
+                defaultOptions={true}
+                loadOptions={supplierOptions}
+                instanceId={`module-select`} // Pastikan unique per row
+                classNamePrefix="rs"
+                placeholder="Ketik untuk mencari..."
+                // value harus berupa objek Option (bukan string id) agar tampil.
+                value={selectedSupplier}
+                onChange={(vals) => handleSelectedSupplier(vals)}
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                styles={{
+                  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+                }}
+              />
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>
+                Price<span className="text-red-500">*</span>
+              </label>
+              <CurrencyInput
+                value={formData.price}
+                onChange={(v) => setFormData((prev) => ({ ...prev, price: v }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div className="group">
               <label className={labelCls}>Barcode</label>
               <input
                 value={formData.barcode}
@@ -299,39 +327,6 @@ export default function CreateProductModal({
                 onChange={handleChange}
                 placeholder="Barcode (optional)"
                 className={inputCls}
-              />
-            </div>
-
-            <div className="group">
-              <label className={labelCls}>Purchase Price</label>
-              <CurrencyInput
-                value={formData.purchase_price}
-                onChange={(v) =>
-                  setFormData((prev) => ({ ...prev, purchase_price: v }))
-                }
-                className={inputCls}
-              />
-            </div>
-
-            <div className="group">
-              <label className={labelCls}>Selling Price</label>
-              <CurrencyInput
-                value={formData.selling_price}
-                onChange={(v) =>
-                  setFormData((prev) => ({ ...prev, selling_price: v }))
-                }
-                className={inputCls}
-              />
-            </div>
-
-            <div className="group md:col-span-2">
-              <label className={labelCls}>Description</label>
-              <textarea
-                value={formData.description}
-                name="description"
-                onChange={handleChange}
-                rows={3}
-                className={`${inputCls} resize-none`}
               />
             </div>
 

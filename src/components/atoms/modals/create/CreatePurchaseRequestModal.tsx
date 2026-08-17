@@ -19,7 +19,6 @@ import {
   formItemToPayload,
   refCodeName,
   refId,
-  sumItems,
 } from "@/types/purchaseItem";
 import {
   ProductOption,
@@ -29,7 +28,6 @@ import {
 } from "@/utils/procurement";
 import ProductAsyncSelect from "@/components/atoms/shared/ProductAsyncSelect";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
-import { formatAmount } from "@/utils/utils";
 
 interface DataProps {
   isOpen: boolean;
@@ -74,8 +72,6 @@ export default function CreatePurchaseRequestModal({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
-
-  const total = sumItems(items);
 
   const addItem = () => setItems((prev) => [...prev, { ...emptyPurchaseItem }]);
   const removeItem = (index: number) =>
@@ -279,19 +275,11 @@ export default function CreatePurchaseRequestModal({
                     <th className="py-2.5 px-3 font-bold w-[14%] text-right">
                       Qty
                     </th>
-                    <th className="py-2.5 px-3 font-bold w-[18%] text-right">
-                      Price
-                    </th>
-                    <th className="py-2.5 px-3 font-bold w-[12%] text-right">
-                      Subtotal
-                    </th>
                     <th className="py-2.5 px-3 font-bold w-[6%]" />
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item, index) => {
-                    const subtotal =
-                      (Number(item.quantity) || 0) * (Number(item.price) || 0);
                     return (
                       <tr
                         key={index}
@@ -319,18 +307,6 @@ export default function CreatePurchaseRequestModal({
                             className={`${inputCls} text-right`}
                           />
                         </td>
-                        <td className="py-2 px-3 align-top">
-                          <CurrencyInput
-                            value={item.price}
-                            placeholder="0"
-                            aria-label={`Price item ${index + 1}`}
-                            onChange={(v) => patchItem(index, { price: v })}
-                            className={`${inputCls} text-right`}
-                          />
-                        </td>
-                        <td className="py-2 px-3 align-top text-right font-mono text-zinc-700 dark:text-zinc-300">
-                          {formatAmount(subtotal)}
-                        </td>
                         <td className="py-2 px-3 align-top text-center">
                           <button
                             type="button"
@@ -350,20 +326,6 @@ export default function CreatePurchaseRequestModal({
                     );
                   })}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 font-bold text-sm">
-                    <td
-                      className="py-3 px-3 text-right text-zinc-500"
-                      colSpan={4}
-                    >
-                      Total
-                    </td>
-                    <td className="py-3 px-3 text-right text-zinc-800 dark:text-zinc-100 font-mono">
-                      {formatAmount(total)}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </div>

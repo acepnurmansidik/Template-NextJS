@@ -110,7 +110,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
     <CMSLayout>
       <div className="w-full px-6 transition-colors duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-          <div>
+          <div className="flex-4">
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">
               {title}
             </h1>
@@ -119,7 +119,7 @@ export const JournalEntryPage = ({ title, subtitle }: DataProps) => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-3 justify-end">
             <button
               onClick={() => setIsModalImport(true)}
               className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"

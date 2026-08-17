@@ -63,6 +63,7 @@ export default function LoginPage() {
         setUserInfo({
           email: res.data.email || form.email,
           name: res.data.name || "",
+          role: res.data.role_id?.name || "",
         });
 
         await Swal.fire({

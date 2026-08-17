@@ -4,13 +4,16 @@ import CMSLayout from "@/components/atoms/layouts/CMSLayout";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import debounce from "lodash/debounce";
 import { FaPlus } from "react-icons/fa";
+import { CiImport, CiExport } from "react-icons/ci";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import CreateLayoutComponentModal from "@/components/atoms/modals/create/CreateLayoutComponentModal";
-import { TableLayoutComponent } from "@/components/atoms/table/tableLayoutComponent";
-import { LayoutComponentApiDaum } from "@/types/LayoutComponent";
 import { Column, ListResponse } from "@/types/api";
+import { getAccess } from "@/utils/secureCookie";
+import { SupplierPricingApiDaum } from "@/types/supplierPricing";
+import { TableSupplierPricing } from "@/components/atoms/table/tableSupplierPricing";
+import CreateSupplierPricingModal from "@/components/atoms/modals/create/CreateSupplierPricingModal";
+import ImportModal from "@/components/atoms/modals/shared/ImportModal";
+import ExportModal from "@/components/atoms/modals/shared/ExportModal";
 
 interface DataProps {
   title: string;
@@ -18,18 +21,23 @@ interface DataProps {
 }
 
 const columns: Column[] = [
-  { title: "Image", value: "image", classname: "w-[12%]" },
-  { title: "Name", value: "name", classname: "w-[46%]" },
-  { title: "Category", value: "category", classname: "w-[24%]" },
-  { title: "Action", value: "action", classname: "w-[18%]" },
+  { title: "Name", value: "name", classname: "w-[26%]" },
+  { title: "Supplier", value: "supplier", classname: "w-[20%]" },
+  { title: "UOM", value: "uom", classname: "w-[14%]" },
+  { title: "Price", value: "price", classname: "w-[14%]" },
+  { title: "Status", value: "status", classname: "w-[6%]" },
+  { title: "Action", value: "action", classname: "w-[14%]" },
 ];
 
-export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
-  const currentUser = useAppSelector((state) => state.iam.data);
+export const SupplierPricingPage = ({ title, subtitle }: DataProps) => {
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const perm = getAccess().get(pathname) ?? {};
+    setHasAccess(perm);
+  }, [pathname]);
 
-  const [data, setData] = useState<LayoutComponentApiDaum[]>([]);
+  const [data, setData] = useState<SupplierPricingApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -38,7 +46,9 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
   const [totalData, setTotalData] = useState(0);
   const totalPage = totalData === 0 ? 1 : Math.ceil(totalData / limit);
 
-  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState<boolean>(false);
+  const [isModalImport, setIsModalImport] = useState<boolean>(false);
+  const [isModalExport, setIsModalExport] = useState<boolean>(false);
 
   const debouncedSearch = useMemo(
     () =>
@@ -52,8 +62,8 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<ListResponse<LayoutComponentApiDaum>>(
-        "/layout-component",
+      const result = await apiGet<ListResponse<SupplierPricingApiDaum>>(
+        "/supplier-pricing",
         { page, limit, search },
         false,
       );
@@ -68,15 +78,6 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
   useEffect(() => {
     fetchingData();
   }, [fetchingData]);
-
-  useEffect(() => {
-    if (currentUser) {
-      const matched = currentUser.role_id.path_access.find(
-        (item) => item.path === pathname,
-      );
-      setHasAccess(matched?.actions ?? {});
-    }
-  }, [currentUser, pathname]);
 
   useEffect(() => {
     if (page > totalPage) setPage(1);
@@ -104,6 +105,32 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
           </div>
 
           <div className="flex items-center gap-2 flex-3 justify-end">
+            {hasAccess.import && (
+              <button
+                onClick={() => setIsModalImport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiImport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Import</span>
+              </button>
+            )}
+            {hasAccess.export && (
+              <button
+                onClick={() => setIsModalExport(true)}
+                className="h-8.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600/80 active:bg-gray-100 dark:active:bg-zinc-600 cursor-pointer px-4 flex items-center gap-2 outline-none text-gray-700 dark:text-zinc-200 transition-all shadow-sm"
+              >
+                <CiExport
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-gray-500 dark:text-zinc-400"
+                />
+                <span>Export</span>
+              </button>
+            )}
             {hasAccess.create && (
               <button
                 onClick={() => setIsModalCreateOpen(true)}
@@ -143,7 +170,7 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
             </div>
           </div>
 
-          <TableLayoutComponent
+          <TableSupplierPricing
             columns={columns}
             hasAccess={hasAccess}
             data={data}
@@ -160,13 +187,33 @@ export const LayoutComponentsPage = ({ title, subtitle }: DataProps) => {
       </div>
 
       {isModalCreateOpen && (
-        <CreateLayoutComponentModal
+        <CreateSupplierPricingModal
           isOpen={isModalCreateOpen}
           onClose={() => setIsModalCreateOpen(false)}
           onSuccess={() => {
             setIsModalCreateOpen(false);
             fetchingData();
           }}
+        />
+      )}
+
+      {isModalImport && (
+        <ImportModal
+          isOpen={isModalImport}
+          onClose={() => {
+            setIsModalImport(false);
+            fetchingData();
+          }}
+          module={"supplier-pricing"}
+          label={"Supplier Pricing"}
+        />
+      )}
+      {isModalExport && (
+        <ExportModal
+          isOpen={isModalExport}
+          onClose={() => setIsModalExport(false)}
+          module={"supplier-pricing"}
+          label={"Supplier Pricing"}
         />
       )}
     </CMSLayout>

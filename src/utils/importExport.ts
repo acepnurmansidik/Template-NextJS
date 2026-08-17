@@ -42,6 +42,7 @@ export const IMPORTABLE_MODULES = new Set<string>([
   "supplier",
   "stock-position",
   "stock-movement",
+  "supplier-pricing",
   // Finance (line-based modules use merged account rows; COA is flat).
   "journal-entry",
   "journal-write-off",

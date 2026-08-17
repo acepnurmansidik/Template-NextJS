@@ -98,7 +98,7 @@ export default function ViewGoodReceiptModal({
             />
             <Field
               label="Warehouse Mode"
-              value={isMulti ? "Per item" : "Satu gudang"}
+              value={isMulti ? "Multi warehouse" : "Single warehouse"}
             />
             <Field
               label="Warehouse"

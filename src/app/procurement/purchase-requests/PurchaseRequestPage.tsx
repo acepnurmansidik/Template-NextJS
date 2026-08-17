@@ -28,7 +28,6 @@ const columns: Column[] = [
   { title: "Request No", value: "request_no", classname: "w-[18%]" },
   { title: "Date", value: "date", classname: "w-[14%]" },
   { title: "Items", value: "items", classname: "w-[10%]" },
-  { title: "Total", value: "total", classname: "w-[16%]" },
   { title: "Status", value: "status", classname: "w-[14%]" },
   { title: "Action", value: "action", classname: "w-[16%]" },
 ];
@@ -113,7 +112,7 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
     <CMSLayout>
       <div className="w-full px-6 transition-colors duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-          <div className="flex-1">
+          <div className="flex-4">
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">
               {title}
             </h1>
@@ -122,7 +121,7 @@ export const PurchaseRequestPage = ({ title, subtitle }: DataProps) => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-1 justify-end">
+          <div className="flex items-center gap-2 flex-3 justify-end">
             {hasAccess.import && (
               <button
                 onClick={() => setIsModalImport(true)}
