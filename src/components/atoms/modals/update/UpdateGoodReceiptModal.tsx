@@ -448,14 +448,14 @@ export default function UpdateGoodReceiptModal({
                   <tr className="text-[11px] uppercase tracking-widest text-zinc-500">
                     <th className="py-2.5 px-3 font-bold w-[35%]">Product</th>
                     <th className="py-2.5 px-3 font-bold w-[15%]">UOM</th>
-                    <th className="py-2.5 px-3 font-bold w-[20%] text-right">
+                    <th className="py-2.5 px-3 font-bold w-[15%] text-right">
                       Ordered
                     </th>
-                    <th className="py-2.5 px-3 font-bold w-[30%] text-right">
+                    <th className="py-2.5 px-3 font-bold w-[15%] text-right">
                       Received
                     </th>
                     {isMulti && (
-                      <th className="py-2.5 px-3 font-bold w-[25%]">
+                      <th className="py-2.5 px-3 font-bold w-[45%]">
                         Warehouse
                       </th>
                     )}
@@ -483,7 +483,7 @@ export default function UpdateGoodReceiptModal({
                           key={index}
                           className="border-t border-zinc-100 dark:border-zinc-800"
                         >
-                          <td className="py-2 px-3 align-top text-sm text-zinc-800 dark:text-zinc-200">
+                          <td className="py-2 px-3 text-sm text-zinc-800 dark:text-zinc-200">
                             {item.product_label || "—"}
                           </td>
                           <td className="py-2 px-3 align-top">
@@ -491,7 +491,7 @@ export default function UpdateGoodReceiptModal({
                               {item.uom_label || "—"}
                             </div>
                           </td>
-                          <td className="py-2 px-3 align-top text-right font-mono text-zinc-600 dark:text-zinc-400">
+                          <td className="py-2 px-3 text-right font-mono text-zinc-600 dark:text-zinc-400">
                             {formatAmount(item.quantity)}
                           </td>
                           <td className="py-2 px-3 align-top">
