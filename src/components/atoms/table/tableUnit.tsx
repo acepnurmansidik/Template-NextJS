@@ -11,15 +11,15 @@ import {
   ROOM_STATUS_BADGE,
   ROOM_STATUS_LABEL,
   RoomStatus,
-  RoomUnitApiDaum,
+  UnitApiDaum,
 } from "@/types/facility";
-import UpdateRoomUnitModal from "../modals/update/UpdateRoomUnitModal";
-import ViewRoomUnitModal from "../modals/view/ViewRoomUnitModal";
+import UpdateUnitModal from "../modals/update/UpdateUnitModal";
+import ViewUnitModal from "../modals/view/ViewUnitModal";
 
 interface DataProps {
   columns: Column[];
   hasAccess: Record<string, boolean>;
-  data: RoomUnitApiDaum[];
+  data: UnitApiDaum[];
   page: number;
   limit: number;
   totalData: number;
@@ -30,12 +30,12 @@ interface DataProps {
   onRefresh?: () => void;
 }
 
-const floorName = (row: RoomUnitApiDaum): string =>
+const floorName = (row: UnitApiDaum): string =>
   row.floor_id && typeof row.floor_id === "object"
     ? (row.floor_id.name ?? row.floor_id.code ?? "—")
     : "—";
 
-export const TableRoomUnit = ({
+export const TableUnit = ({
   hasAccess,
   columns,
   data,
@@ -48,13 +48,11 @@ export const TableRoomUnit = ({
   windowPages,
   onRefresh,
 }: DataProps) => {
-  const [selectedData, setSelectedData] = useState<RoomUnitApiDaum | null>(
-    null,
-  );
+  const [selectedData, setSelectedData] = useState<UnitApiDaum | null>(null);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
   const [showModalView, setShowModalView] = useState(false);
 
-  const handleDelete = async (row: RoomUnitApiDaum) => {
+  const handleDelete = async (row: UnitApiDaum) => {
     try {
       const confirmation = await Swal.fire({
         title: "Are you sure?",
@@ -68,8 +66,8 @@ export const TableRoomUnit = ({
       });
       if (!confirmation.isConfirmed) return;
 
-      const result = await apiDelete<SingleResponse<RoomUnitApiDaum>>(
-        `/room-unit/${row._id}`,
+      const result = await apiDelete<SingleResponse<UnitApiDaum>>(
+        `/unit/${row._id}`,
         {},
         false,
       );
@@ -99,7 +97,7 @@ export const TableRoomUnit = ({
     }
   };
 
-  const renderCell = (row: RoomUnitApiDaum, value: string) => {
+  const renderCell = (row: UnitApiDaum, value: string) => {
     switch (value) {
       case "code":
         return (
@@ -351,7 +349,7 @@ export const TableRoomUnit = ({
       </div>
 
       {showModalUpdate && selectedData && (
-        <UpdateRoomUnitModal
+        <UpdateUnitModal
           isOpen={showModalUpdate}
           initialData={selectedData}
           onClose={() => setShowModalUpdate(false)}
@@ -363,7 +361,7 @@ export const TableRoomUnit = ({
       )}
 
       {showModalView && selectedData && (
-        <ViewRoomUnitModal
+        <ViewUnitModal
           isOpen={showModalView}
           initialData={selectedData}
           onClose={() => setShowModalView(false)}

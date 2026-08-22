@@ -1,30 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { SingleResponse } from "@/types/api";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { IoClose } from "react-icons/io5";
 import Select from "react-select";
 import axios from "axios";
-import { apiPut } from "@/utils/api";
+import { apiGet, apiPost } from "@/utils/api";
 import {
-  amenityIds,
-  FormDataRoomUnitProps,
-  refImagePath,
+  BuildingApiDaum,
+  BuildingFloorApiDaum,
+  FormDataUnitProps,
   RoomStatus,
   ROOM_STATUS_LABEL,
   ROOM_UNIT_TYPES,
-  RoomUnitApiDaum,
-  RoomUnitPayload,
+  UnitApiDaum,
+  UnitPayload,
   RoomUnitType,
 } from "@/types/facility";
 import ImageUpload from "@/components/atoms/shared/ImageUpload";
 import CurrencyInput from "@/components/atoms/shared/CurrencyInput";
 import AmenitiesSelect from "@/components/atoms/shared/AmenitiesSelect";
+import { ListResponse, SingleResponse } from "@/types/api";
 
 interface DataProps {
   isOpen: boolean;
-  initialData: RoomUnitApiDaum;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -49,31 +48,28 @@ const selectStyles = {
   menuPortal: (base: Record<string, unknown>) => ({ ...base, zIndex: 9999 }),
 };
 
-export default function UpdateRoomUnitModal({
+export default function CreateUnitModal({
   isOpen,
-  initialData,
   onClose,
   onSuccess,
 }: DataProps) {
-  const [formData, setFormData] = useState<FormDataRoomUnitProps>(() => ({
-    name: initialData.name,
-    unit_type: initialData.unit_type ?? "bedroom",
-    status: (initialData.status as RoomStatus) ?? RoomStatus.AVAILABLE,
-    capacity: initialData.capacity ?? 0,
-    area_sqm: initialData.area_sqm ?? 0,
-    notes: initialData.notes ?? "",
-    is_active: initialData.is_active,
-  }));
-  // State terpisah — bukan field payload plain: amenities (multi-select array),
-  // imageId (hasil upload gambar) & flag UI.
-  const [amenities, setAmenities] = useState<string[]>(
-    amenityIds(initialData.amenities),
-  );
-  const [imageId, setImageId] = useState<string | null>(
-    typeof initialData.image_id === "object" && initialData.image_id
-      ? initialData.image_id._id
-      : ((initialData.image_id as string) ?? null),
-  );
+  const [formData, setFormData] = useState<FormDataUnitProps>({
+    building_id: "",
+    floor_id: "",
+    name: "",
+    unit_type: "bedroom",
+    status: RoomStatus.AVAILABLE,
+    capacity: 0,
+    area_sqm: 0,
+    notes: "",
+    is_active: true,
+  });
+  // State terpisah — bukan field payload plain: daftar opsi (fetched),
+  // amenities (multi-select array), imageId (hasil upload) & flag UI.
+  const [buildings, setBuildings] = useState<BuildingApiDaum[]>([]);
+  const [floors, setFloors] = useState<BuildingFloorApiDaum[]>([]);
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [imageId, setImageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -87,26 +83,77 @@ export default function UpdateRoomUnitModal({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setFormData((prev) => {
-      if (type === "checkbox") return { ...prev, [name]: checked };
-      return {
-        ...prev,
-        [name as keyof FormDataRoomUnitProps]: value,
-      };
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof FormDataUnitProps]: value,
+    }));
   };
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await apiGet<ListResponse<BuildingApiDaum>>(
+          "/building",
+          { limit: 1000 },
+          false,
+        );
+        setBuildings(result.data ?? []);
+      } catch {
+        setBuildings([]);
+      }
+    })();
+  }, []);
+
+  // Ambil lantai saat building dipilih.
+  useEffect(() => {
+    if (!formData.building_id) {
+      setFloors([]);
+      setFormData((prev) => ({ ...prev, floor_id: "" }));
+      return;
+    }
+    (async () => {
+      try {
+        const result = await apiGet<ListResponse<BuildingFloorApiDaum>>(
+          "/building-floor",
+          { building_id: formData.building_id, limit: 1000 },
+          false,
+        );
+        setFloors(result.data ?? []);
+      } catch {
+        setFloors([]);
+      }
+      setFormData((prev) => ({ ...prev, floor_id: "" }));
+    })();
+  }, [formData.building_id]);
+
+  const buildingOptions: Option[] = useMemo(
+    () =>
+      buildings.map((b) => ({ value: b._id, label: `${b.code} — ${b.name}` })),
+    [buildings],
+  );
+  const floorOptions: Option[] = useMemo(
+    () => floors.map((f) => ({ value: f._id, label: `${f.code} — ${f.name}` })),
+    [floors],
+  );
+
   const handleSubmit = async () => {
-    const { name, unit_type, status, capacity, area_sqm, notes, is_active } =
+    const { floor_id, name, unit_type, status, capacity, area_sqm, notes } =
       formData;
+
+    if (!floor_id) {
+      Swal.fire({
+        icon: "warning",
+        title: "Building & floor are required",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const payload: Omit<RoomUnitPayload, "floor_id"> & {
-        is_active: boolean;
-      } = {
+      const payload: UnitPayload = {
+        floor_id,
         name: name.trim(),
         unit_type,
         status,
@@ -115,11 +162,10 @@ export default function UpdateRoomUnitModal({
         amenities,
         image_id: imageId,
         notes: notes.trim(),
-        is_active,
       };
 
-      const result = await apiPut<SingleResponse<RoomUnitApiDaum>>(
-        `/room-unit/${initialData._id}`,
+      const result = await apiPost<SingleResponse<UnitApiDaum>>(
+        "/unit",
         payload,
         false,
         false,
@@ -128,8 +174,8 @@ export default function UpdateRoomUnitModal({
       if (result.success) {
         await Swal.fire({
           icon: "success",
-          title: "Updated successfully",
-          text: result.message || "Your data has been updated successfully.",
+          title: "Created successfully",
+          text: result.message || "Room unit created successfully.",
           confirmButtonText: "OK",
           confirmButtonColor: "#2563eb",
           timer: 2500,
@@ -146,7 +192,7 @@ export default function UpdateRoomUnitModal({
       Swal.fire({
         icon: "error",
         title: "Something went wrong",
-        text: serverMessage || "Failed to update data. Please try again.",
+        text: serverMessage || "Failed to save data. Please try again.",
         confirmButtonText: "OK",
         confirmButtonColor: "#dc2626",
       });
@@ -155,6 +201,10 @@ export default function UpdateRoomUnitModal({
 
   if (!isOpen) return null;
 
+  const selectedBuilding =
+    buildingOptions.find((o) => o.value === formData.building_id) ?? null;
+  const selectedFloor =
+    floorOptions.find((o) => o.value === formData.floor_id) ?? null;
   const selectedType =
     TYPE_OPTIONS.find((o) => o.value === formData.unit_type) ?? null;
   const selectedStatus =
@@ -163,14 +213,9 @@ export default function UpdateRoomUnitModal({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
       <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-200 dark:border-zinc-800">
-        <div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-            Update Room Unit
-          </h2>
-          <p className="text-xs text-zinc-400 mt-0.5 font-mono">
-            {initialData.code}
-          </p>
-        </div>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          Create Room Unit
+        </h2>
         <button
           onClick={onClose}
           className="text-zinc-400 hover:text-zinc-900 flex items-center duration-300 justify-center dark:hover:text-zinc-100 text-sm font-medium hover:bg-zinc-300/20 rounded-md hover:cursor-pointer h-9 w-9"
@@ -183,18 +228,70 @@ export default function UpdateRoomUnitModal({
         <div className="max-w-full px-5 mx-auto space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="group">
-              <label className={labelCls}>Name</label>
+              <label className={labelCls}>
+                Building<span className="text-red-500">*</span>
+              </label>
+              <Select
+                instanceId="room-building-create"
+                classNamePrefix="rs"
+                placeholder="Select building…"
+                options={buildingOptions}
+                value={selectedBuilding}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    building_id: opt?.value ?? "",
+                  }))
+                }
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                styles={selectStyles}
+              />
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>
+                Floor<span className="text-red-500">*</span>
+              </label>
+              <Select
+                instanceId="room-floor-create"
+                classNamePrefix="rs"
+                placeholder="Select floor…"
+                isDisabled={!formData.building_id}
+                options={floorOptions}
+                value={selectedFloor}
+                onChange={(opt) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    floor_id: opt?.value ?? "",
+                  }))
+                }
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                styles={selectStyles}
+              />
+              <p className="mt-1 text-[11px] text-zinc-400">
+                Kode &amp; nama otomatis mengikuti urutan (Room 1, Room 2…).
+              </p>
+            </div>
+
+            <div className="group">
+              <label className={labelCls}>Name (optional)</label>
               <input
                 value={formData.name}
                 name="name"
                 onChange={handleChange}
+                placeholder="Kosongkan untuk otomatis (Room N)"
                 className={inputCls}
               />
             </div>
+
             <div className="group">
               <label className={labelCls}>Unit Type</label>
               <Select
-                instanceId="room-type-update"
+                instanceId="room-type-create"
                 classNamePrefix="rs"
                 options={TYPE_OPTIONS}
                 value={selectedType}
@@ -210,10 +307,11 @@ export default function UpdateRoomUnitModal({
                 styles={selectStyles}
               />
             </div>
+
             <div className="group">
               <label className={labelCls}>Status</label>
               <Select
-                instanceId="room-status-update"
+                instanceId="room-status-create"
                 classNamePrefix="rs"
                 options={STATUS_OPTIONS}
                 value={selectedStatus}
@@ -229,20 +327,7 @@ export default function UpdateRoomUnitModal({
                 styles={selectStyles}
               />
             </div>
-            <div className="group">
-              <label className="flex items-center gap-3 cursor-pointer select-none mt-7">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 accent-blue-600 cursor-pointer"
-                />
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  Active
-                </span>
-              </label>
-            </div>
+
             <div className="group">
               <label className={labelCls}>Capacity</label>
               <CurrencyInput
@@ -254,6 +339,7 @@ export default function UpdateRoomUnitModal({
                 className={inputCls}
               />
             </div>
+
             <div className="group">
               <label className={labelCls}>Area (m²)</label>
               <CurrencyInput
@@ -264,23 +350,25 @@ export default function UpdateRoomUnitModal({
                 className={inputCls}
               />
             </div>
+
             <div className="group md:col-span-2">
               <label className={labelCls}>Amenities</label>
               <AmenitiesSelect
-                instanceId="amenities-update-room"
+                instanceId="amenities-create-room"
                 value={amenities}
                 onChange={setAmenities}
               />
             </div>
+
             <div className="group md:col-span-2">
               <ImageUpload
                 endpoint="/upload/single"
                 value={imageId}
-                imagePath={refImagePath(initialData.image_id)}
                 onChange={(id) => setImageId(id)}
                 label="Room Photo"
               />
             </div>
+
             <div className="group md:col-span-2">
               <label className={labelCls}>Notes</label>
               <textarea
@@ -309,7 +397,7 @@ export default function UpdateRoomUnitModal({
             isLoading ? "opacity-70 cursor-not-allowed italic" : ""
           }`}
         >
-          {isLoading ? "Updating..." : "Update"}
+          {isLoading ? "Creating..." : "Submit"}
         </button>
       </div>
     </div>

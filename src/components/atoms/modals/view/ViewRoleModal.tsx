@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ListResponse } from "@/types/api";
-import AsyncSelect from "react-select/async";
 import Swal from "sweetalert2";
 
 type Option = { value: string; label: string; data: any };
@@ -10,8 +8,7 @@ type Option = { value: string; label: string; data: any };
 import { IoClose } from "react-icons/io5";
 import React from "react";
 import { RoleApiDaum, RoleFormData } from "@/types/role";
-import { MenuDetailResponseAPI, PermissionResponseAPI, ModuleApiDaum } from "@/types/module";
-import { apiGet, apiPut } from "@/utils/api";
+import { MenuDetailResponseAPI, PermissionResponseAPI } from "@/types/module";
 
 interface DataProps {
   initialData: RoleApiDaum;
@@ -29,57 +26,12 @@ export default function ViewRoleModal({
   onClose,
   initialData,
 }: DataProps) {
-  // ==================== C A C H E * F E T C H * D A T A ====================
-  const [cacheDataModule, setCacheDataModule] = useState<Option[]>([]);
-
   // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
-  const [dataModuleOptions, setDataModuleOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     setFormData(initialData);
   }, [isOpen]);
-
-  useEffect(() => {
-    const fetchModuleOptions = async () => {
-      try {
-        const result = await apiGet<ListResponse<ModuleApiDaum>>(
-          "/module",
-          { page: 1, limit: 5 },
-          false,
-        );
-        setDataModuleOptions(
-          result.data.map((mod) => ({
-            value: mod.name,
-            label: mod.title,
-            data: mod,
-          })) ?? [],
-        );
-      } catch (error) {
-        setDataModuleOptions([]);
-      }
-    };
-    fetchModuleOptions();
-  }, [isOpen]);
-
-  // Fetch module ke server berdasarkan kata kunci pencarian (server-side search).
-  // Dipakai AsyncSelect saat user mengetik.
-  const loadModuleOptions = async (inputValue: string): Promise<Option[]> => {
-    try {
-      const result = await apiGet<ListResponse<ModuleApiDaum>>(
-        "/module",
-        { page: 1, limit: 10, search: inputValue },
-        false,
-      );
-      return (result.data ?? []).map((mod) => ({
-        value: mod.name,
-        label: mod.title,
-        data: mod,
-      }));
-    } catch (error) {
-      return [];
-    }
-  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -297,36 +249,10 @@ export default function ViewRoleModal({
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
                       module <span className="text-red-600">*</span>
                     </label>
-                    <AsyncSelect
-                      isDisabled
-                      isSearchable
-                      cacheOptions
-                      defaultOptions={dataModuleOptions}
-                      loadOptions={loadModuleOptions}
-                      instanceId={`module-select-${modIdx}`} // Pastikan unique per row
-                      classNamePrefix="rs"
-                      placeholder="Ketik untuk mencari..."
-                      // 1. Logika untuk mengisi value berdasarkan state formData
-                      value={
-                        mod.name
-                          ? {
-                              value: mod.name,
-                              label: mod.title,
-                              data: {
-                                name: mod.name,
-                                title: mod.title,
-                                permission: mod.permission,
-                              },
-                            }
-                          : null
-                      }
-                      onChange={(vals) => handleSelectedModule(vals, modIdx)}
-                      menuPortalTarget={
-                        typeof document !== "undefined" ? document.body : null
-                      }
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
+                    <input
+                      disabled
+                      value={mod.name ?? ""}
+                      className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
                     />
                   </div>
 

@@ -28,13 +28,43 @@ type Option = { value: string; label: string; data: any };
 
 import { IoClose } from "react-icons/io5";
 import React from "react";
-import { RoleFormData, RoleApiDaum } from "@/types/role";
+import { RoleFormData, RoleApiDaum, RolePermissionItem } from "@/types/role";
 import {
   MenuDetailResponseAPI,
   PermissionResponseAPI,
   ModuleApiDaum,
 } from "@/types/module";
 import { apiGet, apiPost } from "@/utils/api";
+
+// actions (array string) -> { view: true, ... }
+const transformActions = (actions: string[] = []): Record<string, boolean> =>
+  actions.reduce(
+    (acc, a) => {
+      acc[a] = true;
+      return acc;
+    },
+    {} as Record<string, boolean>,
+  );
+
+// Konversi permission master (module) -> item permission milik role.
+const toRolePermission = (perm: PermissionResponseAPI): RolePermissionItem => ({
+  icon: perm.icon,
+  menu_name: perm.menu_name,
+  path: perm.path,
+  sequence: perm.sequence,
+  actions: transformActions(perm.actions),
+  children: (perm.children ?? []).map((c: MenuDetailResponseAPI) => ({
+    name: c.name,
+    path: c.path,
+    actions: transformActions(c.actions),
+  })),
+});
+
+// Urutkan menu mengikuti sequence (kecil -> besar); tanpa sequence ditaruh akhir.
+const sortBySeq = (perms: RolePermissionItem[]): RolePermissionItem[] =>
+  [...perms].sort(
+    (a, b) => (a.sequence ?? Infinity) - (b.sequence ?? Infinity),
+  );
 
 interface DataProps {
   isOpen: boolean;
@@ -106,6 +136,11 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
   // =============================== S T A T E ===============================
   const [formData, setFormData] = useState<RoleFormData>(defaultValue);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Katalog seluruh menu per module (name -> daftar menu) untuk fitur
+  // tambah/hapus menu di tiap module.
+  const [moduleCatalog, setModuleCatalog] = useState<
+    Record<string, RolePermissionItem[]>
+  >({});
 
   // ====================== S E L E C T * O P T I O N ======================
   // Satu fungsi untuk semua: dipakai saat modal dibuka (via defaultOptions)
@@ -146,6 +181,54 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  // Ambil seluruh module (untuk katalog menu tambah/hapus).
+  useEffect(() => {
+    if (!isOpen) return;
+    apiGet<ListResponse<ModuleApiDaum>>("/module", { limit: 1000 }, false)
+      .then((res) => {
+        const cat: Record<string, RolePermissionItem[]> = {};
+        for (const mod of res.data ?? []) {
+          cat[mod.name] = (mod.permission ?? []).map(toRolePermission);
+        }
+        setModuleCatalog(cat);
+      })
+      .catch(() => setModuleCatalog({}));
+  }, [isOpen]);
+
+  // Hapus sebuah menu dari sebuah module milik role.
+  const handleRemoveMenu = (modIdx: number, permIdx: number) => {
+    setFormData((prev) => {
+      const mods = [...prev.has_access_module];
+      mods[modIdx] = {
+        ...mods[modIdx],
+        permission: mods[modIdx].permission.filter((_, i) => i !== permIdx),
+      };
+      return { ...prev, has_access_module: mods };
+    });
+  };
+
+  // Tambah kembali sebuah menu (dari katalog module) ke sebuah module.
+  const handleAddMenu = (modIdx: number, path: string) => {
+    if (!path) return;
+    setFormData((prev) => {
+      const mods = [...prev.has_access_module];
+      const mod = mods[modIdx];
+      const all = moduleCatalog[mod.name] ?? [];
+      const found = all.find((p) => p.path === path);
+      if (!found) return prev;
+      if (mod.permission.some((p) => p.path === path)) return prev;
+      mods[modIdx] = {
+        ...mod,
+        // Auto-sort mengikuti sequence master module.
+        permission: sortBySeq([
+          ...mod.permission,
+          JSON.parse(JSON.stringify(found)),
+        ]),
+      };
+      return { ...prev, has_access_module: mods };
+    });
+  };
 
   // ====================== H A N D L E R * S U B M I T ======================
   const handleSubmit = async () => {
@@ -284,18 +367,9 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
       newAccessModules[modIdx] = {
         name: selectedData.name,
         title: selectedData.title,
-        permission: selectedData.permission.map(
-          (perm: PermissionResponseAPI) => ({
-            icon: perm.icon,
-            menu_name: perm.menu_name,
-            path: perm.path,
-            actions: transformActions(perm.actions),
-            children: perm.children.map((child: MenuDetailResponseAPI) => ({
-              name: child.name,
-              path: child.path,
-              actions: transformActions(child.actions),
-            })),
-          }),
+        // Bangun + urutkan menu mengikuti sequence master module.
+        permission: sortBySeq(
+          selectedData.permission.map(toRolePermission),
         ),
       };
 
@@ -463,9 +537,39 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
 
                         {/* MENU */}
                         <div className="col-span-8 order-3 lg:order-2">
-                          <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
-                            menu
-                          </label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                              menu
+                            </label>
+                            {(() => {
+                              const remaining = (
+                                moduleCatalog[mod.name] ?? []
+                              ).filter(
+                                (p) =>
+                                  !mod.permission.some(
+                                    (sel) => sel.path === p.path,
+                                  ),
+                              );
+                              if (remaining.length === 0) return null;
+                              return (
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    handleAddMenu(modIdx, e.target.value);
+                                    e.currentTarget.value = "";
+                                  }}
+                                  className="text-[11px] font-medium border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 px-2 py-1 outline-none focus:border-blue-500 dark:text-zinc-100 hover:cursor-pointer"
+                                >
+                                  <option value="">+ Tambah menu…</option>
+                                  {remaining.map((p) => (
+                                    <option key={p.path} value={p.path}>
+                                      {p.menu_name}
+                                    </option>
+                                  ))}
+                                </select>
+                              );
+                            })()}
+                          </div>
 
                           {mod.permission.length > 0 ? (
                             <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950">
@@ -502,6 +606,19 @@ export default function CreateRoleModal({ isOpen, onClose }: DataProps) {
                                               className="w-6 h-6 text-zinc-500"
                                             />
                                             {perm.menu_name}
+                                            <button
+                                              type="button"
+                                              title="Hapus menu"
+                                              onClick={() =>
+                                                handleRemoveMenu(
+                                                  modIdx,
+                                                  permIdx,
+                                                )
+                                              }
+                                              className="ml-auto text-zinc-300 hover:text-red-600 hover:cursor-pointer"
+                                            >
+                                              <FaTrash size={11} />
+                                            </button>
                                           </td>
                                           <td className="p-3 text-sm text-zinc-500">
                                             {perm.path}

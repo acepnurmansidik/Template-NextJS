@@ -14,6 +14,9 @@ export interface RolePermissionItem {
   icon: string;
   menu_name: string;
   path: string;
+  // Urutan menu (mengikuti sequence master module) — untuk auto-sort saat
+  // tambah/hapus menu.
+  sequence?: number;
   actions: Record<string, boolean>;
   children: RoleMenuDetail[];
 }

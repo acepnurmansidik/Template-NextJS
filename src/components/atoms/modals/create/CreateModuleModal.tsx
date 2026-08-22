@@ -48,8 +48,9 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
       // string (ambil value-nya saja) — baik di permission maupun children.
       const payload = {
         ...formData,
-        permission: formData.permission.map((row) => ({
+        permission: formData.permission.map((row, idx) => ({
           ...row,
+          sequence: Number(row.sequence) || idx + 1,
           actions: (row.actions ?? []).map((action) => action.value),
           children: (row.children ?? []).map((child) => ({
             ...child,
@@ -112,8 +113,28 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
     setFormData((prev: ModuleFormData) => {
       const newValue = [
         ...prev.permission,
-        { icon: "", menu_name: "", path: "", actions: [], children: [] },
+        {
+          icon: "",
+          menu_name: "",
+          path: "",
+          sequence: prev.permission.length + 1,
+          actions: [],
+          children: [],
+        },
       ];
+      return { ...prev, permission: newValue };
+    });
+  };
+
+  // Ubah sequence (urutan) sebuah menu.
+  const handleChangeSequence = (index: number, value: string) => {
+    setFormData((prev: ModuleFormData) => {
+      const newValue = [...prev.permission];
+      newValue[index] = {
+        ...newValue[index],
+        // Simpan apa adanya (text); dikonversi ke number saat submit.
+        sequence: value,
+      };
       return { ...prev, permission: newValue };
     });
   };
@@ -293,14 +314,26 @@ export default function CreateModuleModal({ isOpen, onClose }: DataProps) {
                               className={`p-3 ${formData.permission[indexRow].children.length > 0 ? "w-[29%]" : "w-[23%]"}`}
                             >
                               <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
-                                Menu Name
+                                Seq &amp; Menu Name
                               </label>
-                              <input
-                                onChange={(e) =>
-                                  handleChangeRow(e, indexRow, "menu_name")
-                                }
-                                className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
-                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  title="Sequence (urutan menu)"
+                                  value={row.sequence ?? ""}
+                                  onChange={(e) =>
+                                    handleChangeSequence(indexRow, e.target.value)
+                                  }
+                                  className="w-16 shrink-0 bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-center outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
+                                />
+                                <input
+                                  onChange={(e) =>
+                                    handleChangeRow(e, indexRow, "menu_name")
+                                  }
+                                  className="w-full bg-white dark:bg-zinc-950 p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-zinc-100"
+                                />
+                              </div>
                             </td>
                             <td
                               className={`p-3 ${formData.permission[indexRow].children.length > 0 ? "w-[29%]" : "w-[25%]"}`}

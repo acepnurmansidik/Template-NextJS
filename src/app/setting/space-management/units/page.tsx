@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { RoomUnitPage } from "./RoomUnitPage";
+import { UnitPage } from "./UnitPage";
 
 export const metadata: Metadata = {
-  title: "Room Unit",
+  title: "Unit",
 };
 
 const Page = () => {
   return (
-    <RoomUnitPage
-      title="Room Unit"
+    <UnitPage
+      title="Unit"
       subtitle="Kelola ruangan/unit. Kode & nama mengikuti urutan per lantai (AGRK-FLR1-RM1 / Room 1)."
     />
   );

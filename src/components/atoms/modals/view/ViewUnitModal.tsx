@@ -9,13 +9,13 @@ import {
   ROOM_STATUS_BADGE,
   ROOM_STATUS_LABEL,
   RoomStatus,
-  RoomUnitApiDaum,
+  UnitApiDaum,
 } from "@/types/facility";
 import { formatCurrencyPure } from "@/utils/formatter";
 
 interface DataProps {
   isOpen: boolean;
-  initialData: RoomUnitApiDaum;
+  initialData: UnitApiDaum;
   onClose: () => void;
 }
 
@@ -28,7 +28,7 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
-export default function ViewRoomUnitModal({
+export default function ViewUnitModal({
   isOpen,
   initialData,
   onClose,

@@ -13,7 +13,7 @@ import {
   BuildingFloorApiDaum,
   imageUrl,
   refImagePath,
-  RoomUnitApiDaum,
+  UnitApiDaum,
   RoomStatus,
   ROOM_STATUS_LABEL,
   ROOM_UNIT_TYPES,
@@ -61,7 +61,7 @@ const inputCls =
 const labelCls =
   "block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1";
 
-const roomToPlaced = (room: RoomUnitApiDaum): PlacedItem | null => {
+const roomToPlaced = (room: UnitApiDaum): PlacedItem | null => {
   const c = room.component;
   if (!c) return null;
   const cid =
@@ -195,8 +195,8 @@ export default function LayoutBuildingModal({
       return;
     }
     try {
-      const res = await apiGet<ListResponse<RoomUnitApiDaum>>(
-        "/room-unit",
+      const res = await apiGet<ListResponse<UnitApiDaum>>(
+        "/unit",
         { floor_id: floorId, limit: 1000 },
         false,
       );
@@ -254,11 +254,7 @@ export default function LayoutBuildingModal({
     setSaving(true);
     try {
       for (const id of deletedRef.current) {
-        await apiDelete<SingleResponse<RoomUnitApiDaum>>(
-          `/room-unit/${id}`,
-          {},
-          false,
-        );
+        await apiDelete<SingleResponse<UnitApiDaum>>(`/unit/${id}`, {}, false);
       }
       const next: PlacedItem[] = [];
       for (const it of itemsRef.current) {
@@ -273,16 +269,16 @@ export default function LayoutBuildingModal({
           component: itemToComponent(it),
         };
         if (it._state === "new") {
-          const res = await apiPost<SingleResponse<RoomUnitApiDaum>>(
-            "/room-unit",
+          const res = await apiPost<SingleResponse<UnitApiDaum>>(
+            "/unit",
             { floor_id: targetFloor, ...body },
             false,
             false,
           );
           next.push({ ...it, _id: res.data?._id ?? it._id, _state: "clean" });
         } else if (it._state === "dirty") {
-          await apiPut<SingleResponse<RoomUnitApiDaum>>(
-            `/room-unit/${it._id}`,
+          await apiPut<SingleResponse<UnitApiDaum>>(
+            `/unit/${it._id}`,
             body,
             false,
             false,

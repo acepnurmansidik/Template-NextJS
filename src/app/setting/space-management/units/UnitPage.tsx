@@ -7,14 +7,10 @@ import { FaPlus } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { apiGet } from "@/utils/api";
-import {
-  RoomStatus,
-  ROOM_STATUS_LABEL,
-  RoomUnitApiDaum,
-} from "@/types/facility";
-import CreateRoomUnitModal from "@/components/atoms/modals/create/CreateRoomUnitModal";
-import { TableRoomUnit } from "@/components/atoms/table/tableRoomUnit";
+import { RoomStatus, ROOM_STATUS_LABEL, UnitApiDaum } from "@/types/facility";
+import { TableUnit } from "@/components/atoms/table/tableUnit";
 import { Column, ListResponse } from "@/types/api";
+import CreateUnitModal from "@/components/atoms/modals/create/CreateUnitModal";
 
 interface DataProps {
   title: string;
@@ -46,12 +42,12 @@ const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: ROOM_STATUS_LABEL[RoomStatus.RESERVED], value: RoomStatus.RESERVED },
 ];
 
-export const RoomUnitPage = ({ title, subtitle }: DataProps) => {
+export const UnitPage = ({ title, subtitle }: DataProps) => {
   const currentUser = useAppSelector((state) => state.iam.data);
   const pathname = usePathname();
   const [hasAccess, setHasAccess] = useState<Record<string, boolean>>({});
 
-  const [data, setData] = useState<RoomUnitApiDaum[]>([]);
+  const [data, setData] = useState<UnitApiDaum[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -75,8 +71,8 @@ export const RoomUnitPage = ({ title, subtitle }: DataProps) => {
 
   const fetchingData = useCallback(async () => {
     try {
-      const result = await apiGet<ListResponse<RoomUnitApiDaum>>(
-        "/room-unit",
+      const result = await apiGet<ListResponse<UnitApiDaum>>(
+        "/unit",
         { page, limit, search, status },
         false,
       );
@@ -186,7 +182,7 @@ export const RoomUnitPage = ({ title, subtitle }: DataProps) => {
             </div>
           </div>
 
-          <TableRoomUnit
+          <TableUnit
             columns={columns}
             hasAccess={hasAccess}
             data={data}
@@ -203,7 +199,7 @@ export const RoomUnitPage = ({ title, subtitle }: DataProps) => {
       </div>
 
       {isModalCreateOpen && (
-        <CreateRoomUnitModal
+        <CreateUnitModal
           isOpen={isModalCreateOpen}
           onClose={() => setIsModalCreateOpen(false)}
           onSuccess={() => {

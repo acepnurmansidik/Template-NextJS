@@ -1,6 +1,6 @@
 // Tipe & konfigurasi bersama untuk modul Facility:
 // Branch, Building, Building Floor, Room Unit. Mirror endpoint backend
-// /branch, /building, /building-floor, /room-unit.
+// /branch, /building, /building-floor, /unit.
 
 import { API_BASE_URL } from "@/utils/api";
 import { ImageRef } from "./api";
@@ -292,7 +292,7 @@ export const amenityIds = (list?: AmenityRef[]): string[] =>
     .map((a) => (a && typeof a === "object" ? a._id : a))
     .filter((x): x is string => Boolean(x));
 
-export interface RoomUnitApiDaum {
+export interface UnitApiDaum {
   _id: string;
   branch_id: BranchRef;
   building_id: BranchRef;
@@ -314,7 +314,7 @@ export interface RoomUnitApiDaum {
   created_at?: string;
 }
 
-export interface RoomUnitPayload {
+export interface UnitPayload {
   floor_id: string;
   name?: string;
   unit_type?: RoomUnitType;
@@ -330,7 +330,7 @@ export interface RoomUnitPayload {
 // hanya dipakai di Create sebagai selector (building_id tidak dikirim, hanya
 // untuk filter lantai). amenities & image_id tetap state terpisah karena
 // multi-select array & hasil upload gambar. is_active dipakai di Update.
-export interface FormDataRoomUnitProps {
+export interface FormDataUnitProps {
   building_id?: string;
   floor_id?: string;
   name: string;

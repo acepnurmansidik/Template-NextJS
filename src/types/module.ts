@@ -17,6 +17,9 @@ export interface PermissionDataItem {
   icon: string;
   menu_name: string;
   path: string;
+  // Urutan tampil menu (kecil -> atas). Diinput sebagai text di form, dikirim
+  // sebagai number ke backend.
+  sequence?: number | string;
   actions: ActionOption[];
   children: MenuDetail[];
 }
@@ -39,6 +42,7 @@ export interface PermissionResponseAPI {
   icon: string;
   menu_name: string;
   path: string;
+  sequence?: number;
   actions: string[];
   children: MenuDetailResponseAPI[];
 }
